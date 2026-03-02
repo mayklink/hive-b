@@ -54,9 +54,13 @@ export function ModelSelector({ sessionId }: ModelSelectorProps): React.JSX.Elem
     return null
   })
   const agentSdk = session?.agent_sdk ?? 'opencode'
-  const globalModel = useSettingsStore(
-    (state) => state.selectedModelByProvider[agentSdk] ?? state.selectedModel
-  )
+  const globalModel = useSettingsStore((state) => {
+    const perProvider = state.selectedModelByProvider[agentSdk]
+    if (perProvider) return perProvider
+    // Legacy fallback only when per-provider feature not yet active (migration)
+    const hasAny = Object.keys(state.selectedModelByProvider).length > 0
+    return hasAny ? null : state.selectedModel
+  })
   const sessionModel =
     session?.model_id && session.model_provider_id
       ? {
