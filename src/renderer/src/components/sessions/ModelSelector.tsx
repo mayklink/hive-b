@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Check, ChevronDown, Search, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useSettingsStore, resolveModelForSdk } from '@/stores/useSettingsStore'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { toast } from '@/lib/toast'
 import {
@@ -53,14 +53,11 @@ export function ModelSelector({ sessionId }: ModelSelectorProps): React.JSX.Elem
     }
     return null
   })
-  const agentSdk = session?.agent_sdk ?? 'opencode'
-  const globalModel = useSettingsStore((state) => {
-    const perProvider = state.selectedModelByProvider[agentSdk]
-    if (perProvider) return perProvider
-    // Legacy fallback only when per-provider feature not yet active (migration)
-    const hasAny = Object.keys(state.selectedModelByProvider).length > 0
-    return hasAny ? null : state.selectedModel
-  })
+  const defaultAgentSdk = useSettingsStore((s) => s.defaultAgentSdk)
+  const agentSdk = session?.agent_sdk ?? defaultAgentSdk ?? 'opencode'
+  const globalModel = useSettingsStore((state) =>
+    resolveModelForSdk(agentSdk, state)
+  )
   const sessionModel =
     session?.model_id && session.model_provider_id
       ? {

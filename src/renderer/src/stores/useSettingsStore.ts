@@ -145,7 +145,8 @@ interface SettingsState extends AppSettings {
   ) => Promise<void>
   setSelectedModelForSdk: (
     agentSdk: AppSettings['defaultAgentSdk'],
-    model: SelectedModel
+    model: SelectedModel,
+    options?: { skipBackendPush?: boolean }
   ) => Promise<void>
   toggleFavoriteModel: (providerID: string, modelID: string) => void
   setModelVariantDefault: (providerID: string, modelID: string, variant: string) => void
@@ -206,6 +207,26 @@ function extractSettings(state: SettingsState): AppSettings {
   }
 }
 
+/**
+ * Resolve the default model for a given agent SDK using the per-provider priority chain.
+ * Priority: per-provider default → (legacy only) global selectedModel.
+ * Returns null when per-provider defaults exist but none matches the requested SDK.
+ *
+ * Accepts an optional state snapshot so it can be used inside Zustand selectors
+ * (where getState() must not be called). Falls back to store.getState() when omitted.
+ */
+export function resolveModelForSdk(
+  agentSdk: string,
+  state?: Pick<AppSettings, 'selectedModelByProvider' | 'selectedModel'>
+): SelectedModel | null {
+  const s = state ?? useSettingsStore.getState()
+  const perProvider = s.selectedModelByProvider[agentSdk]
+  if (perProvider) return perProvider
+  // Legacy fallback only when per-provider feature not yet active (migration)
+  if (Object.keys(s.selectedModelByProvider).length > 0) return null
+  return s.selectedModel
+}
+
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
@@ -260,12 +281,13 @@ export const useSettingsStore = create<SettingsState>()(
 
       setSelectedModelForSdk: async (
         agentSdk: AppSettings['defaultAgentSdk'],
-        model: SelectedModel
+        model: SelectedModel,
+        options?: { skipBackendPush?: boolean }
       ) => {
         const updated = { ...get().selectedModelByProvider, [agentSdk]: model }
-        set({ selectedModelByProvider: updated, selectedModel: model })
-        // Push to backend (skip for terminal — no backend service)
-        if (agentSdk !== 'terminal') {
+        set({ selectedModelByProvider: updated })
+        // Push to backend (skip for terminal — no backend service, or when caller already pushed)
+        if (agentSdk !== 'terminal' && !options?.skipBackendPush) {
           try {
             await window.opencodeOps.setModel({ ...model, agentSdk })
           } catch (error) {
@@ -275,8 +297,7 @@ export const useSettingsStore = create<SettingsState>()(
         // Persist to app settings DB
         const settings = extractSettings({
           ...get(),
-          selectedModelByProvider: updated,
-          selectedModel: model
+          selectedModelByProvider: updated
         } as SettingsState)
         saveToDatabase(settings)
       },

@@ -28,7 +28,7 @@ import {
   extractSelectedModel,
   extractModelUsage
 } from '@/lib/token-utils'
-import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useSettingsStore, resolveModelForSdk } from '@/stores/useSettingsStore'
 import type { SelectedModel } from '@/stores/useSettingsStore'
 import { useQuestionStore } from '@/stores/useQuestionStore'
 import { usePermissionStore } from '@/stores/usePermissionStore'
@@ -387,7 +387,10 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
     }
     return null
   })
-  const globalModel = useSettingsStore((state) => state.selectedModel)
+  const sessionAgentSdk = sessionRecord?.agent_sdk ?? 'opencode'
+  const globalModel = useSettingsStore((state) =>
+    resolveModelForSdk(sessionAgentSdk, state)
+  )
   const effectiveModel: SelectedModel | null =
     sessionRecord?.model_provider_id && sessionRecord.model_id
       ? {
@@ -507,28 +510,32 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
 
   const getModelForRequests = useCallback((): SelectedModel | undefined => {
     const state = useSessionStore.getState()
+
+    // Find session record (search both worktree and connection sessions)
+    let session: typeof sessionRecord = null
     for (const sessions of state.sessionsByWorktree.values()) {
-      const found = sessions.find((session) => session.id === sessionId)
-      if (found?.model_provider_id && found.model_id) {
-        return {
-          providerID: found.model_provider_id,
-          modelID: found.model_id,
-          variant: found.model_variant ?? undefined
-        }
-      }
+      const found = sessions.find((s) => s.id === sessionId)
+      if (found) { session = found; break }
     }
-    for (const sessions of state.sessionsByConnection.values()) {
-      const found = sessions.find((session) => session.id === sessionId)
-      if (found?.model_provider_id && found.model_id) {
-        return {
-          providerID: found.model_provider_id,
-          modelID: found.model_id,
-          variant: found.model_variant ?? undefined
-        }
+    if (!session) {
+      for (const sessions of state.sessionsByConnection.values()) {
+        const found = sessions.find((s) => s.id === sessionId)
+        if (found) { session = found; break }
       }
     }
 
-    return useSettingsStore.getState().selectedModel ?? undefined
+    // Session has an explicit model — use it
+    if (session?.model_provider_id && session.model_id) {
+      return {
+        providerID: session.model_provider_id,
+        modelID: session.model_id,
+        variant: session.model_variant ?? undefined
+      }
+    }
+
+    // Fall back to per-provider default for this session's SDK
+    const agentSdk = session?.agent_sdk ?? 'opencode'
+    return resolveModelForSdk(agentSdk) ?? undefined
   }, [sessionId])
 
   // Extract message role from OpenCode stream payloads across known shapes

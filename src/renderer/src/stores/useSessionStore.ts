@@ -273,44 +273,35 @@ export const useSessionStore = create<SessionState>()(
           let defaultModel: { providerID: string; modelID: string; variant?: string } | null = null
 
           if (!isTerminal) {
-            const settingsState = useSettingsStore.getState()
-            const hasPerProviderDefaults =
-              Object.keys(settingsState.selectedModelByProvider).length > 0
+            const { resolveModelForSdk } = await import('./useSettingsStore')
 
-            // Priority 1: per-provider default for this SDK
-            const perProviderModel = settingsState.selectedModelByProvider[defaultAgentSdk]
-            if (perProviderModel) {
-              defaultModel = perProviderModel
-            }
+            // Priority 1: per-provider default → (legacy) global default
+            defaultModel = resolveModelForSdk(defaultAgentSdk)
 
-            // Legacy fallbacks only when per-provider feature not yet active (migration)
-            if (!defaultModel && !hasPerProviderDefaults) {
-              // Fallback A: worktree's last-used model
-              const worktree = useWorktreeStore.getState().worktreesByProject
-              let worktreeRecord:
-                | {
-                    last_model_provider_id: string | null
-                    last_model_id: string | null
-                    last_model_variant: string | null
-                  }
-                | undefined
-              for (const worktrees of worktree.values()) {
-                worktreeRecord = worktrees.find((w) => w.id === worktreeId)
-                if (worktreeRecord) break
-              }
-              if (worktreeRecord?.last_model_id) {
-                defaultModel = {
-                  providerID: worktreeRecord.last_model_provider_id!,
-                  modelID: worktreeRecord.last_model_id,
-                  variant: worktreeRecord.last_model_variant ?? undefined
+            // Legacy worktree fallback only when per-provider feature not yet active
+            if (!defaultModel) {
+              const settingsState = useSettingsStore.getState()
+              const hasPerProviderDefaults =
+                Object.keys(settingsState.selectedModelByProvider).length > 0
+              if (!hasPerProviderDefaults) {
+                const worktree = useWorktreeStore.getState().worktreesByProject
+                let worktreeRecord:
+                  | {
+                      last_model_provider_id: string | null
+                      last_model_id: string | null
+                      last_model_variant: string | null
+                    }
+                  | undefined
+                for (const worktrees of worktree.values()) {
+                  worktreeRecord = worktrees.find((w) => w.id === worktreeId)
+                  if (worktreeRecord) break
                 }
-              }
-
-              // Fallback B: global default
-              if (!defaultModel) {
-                const globalModel = settingsState.selectedModel
-                if (globalModel) {
-                  defaultModel = globalModel
+                if (worktreeRecord?.last_model_id) {
+                  defaultModel = {
+                    providerID: worktreeRecord.last_model_provider_id!,
+                    modelID: worktreeRecord.last_model_id,
+                    variant: worktreeRecord.last_model_variant ?? undefined
+                  }
                 }
               }
             }
@@ -837,9 +828,10 @@ export const useSessionStore = create<SessionState>()(
         }
 
         // Update per-provider last-used model so new worktrees inherit it
+        // skipBackendPush: we already pushed to the backend above
         try {
           const { useSettingsStore } = await import('./useSettingsStore')
-          useSettingsStore.getState().setSelectedModelForSdk(agentSdk, model)
+          useSettingsStore.getState().setSelectedModelForSdk(agentSdk, model, { skipBackendPush: true })
         } catch {
           /* non-critical */
         }
@@ -1148,17 +1140,8 @@ export const useSessionStore = create<SessionState>()(
               agentSdkOverride ?? useSettingsStore.getState().defaultAgentSdk ?? 'opencode'
             // Terminal sessions skip model resolution
             if (defaultAgentSdk !== 'terminal') {
-              const settingsState = useSettingsStore.getState()
-              const perProviderModel = settingsState.selectedModelByProvider[defaultAgentSdk]
-              if (perProviderModel) {
-                defaultModel = perProviderModel
-              } else if (Object.keys(settingsState.selectedModelByProvider).length === 0) {
-                // Legacy fallback only when per-provider feature not yet active (migration)
-                const globalModel = settingsState.selectedModel
-                if (globalModel) {
-                  defaultModel = globalModel
-                }
-              }
+              const { resolveModelForSdk } = await import('./useSettingsStore')
+              defaultModel = resolveModelForSdk(defaultAgentSdk)
             }
           } catch {
             /* non-critical */
