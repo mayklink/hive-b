@@ -1,4 +1,5 @@
-import { readFileSync } from 'fs'
+import { existsSync } from 'fs'
+import { readFile } from 'fs/promises'
 import { join } from 'path'
 import { homedir } from 'os'
 import { createLogger } from './logger'
@@ -22,10 +23,14 @@ interface UsageResult {
   error?: string
 }
 
-function readAccessToken(): string | null {
+async function readAccessToken(): Promise<string | null> {
+  const credsPath = join(homedir(), '.claude', '.credentials.json')
+  if (!existsSync(credsPath)) {
+    log.warn('Credentials file not found')
+    return null
+  }
   try {
-    const credsPath = join(homedir(), '.claude', '.credentials.json')
-    const raw = readFileSync(credsPath, 'utf-8')
+    const raw = await readFile(credsPath, 'utf-8')
     const creds = JSON.parse(raw)
     return creds?.claudeAiOauth?.accessToken || null
   } catch {
@@ -34,7 +39,7 @@ function readAccessToken(): string | null {
 }
 
 export async function fetchClaudeUsage(): Promise<UsageResult> {
-  const token = readAccessToken()
+  const token = await readAccessToken()
   if (!token) {
     log.warn('No Claude OAuth access token found in ~/.claude/.credentials.json')
     return { success: false, error: 'No access token found' }
