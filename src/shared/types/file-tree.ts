@@ -15,9 +15,23 @@ export interface FlatFile {
   extension: string | null
 }
 
+export type FileEventType = 'add' | 'addDir' | 'unlink' | 'unlinkDir' | 'change'
+
+export interface FileTreeChangeEventItem {
+  eventType: FileEventType
+  changedPath: string
+  relativePath: string
+}
+
 export interface FileTreeChangeEvent {
   worktreePath: string
-  eventType: 'add' | 'addDir' | 'unlink' | 'unlinkDir' | 'change'
+  events: FileTreeChangeEventItem[]
+}
+
+/** Individual file change event (used by EventBus and GraphQL subscriptions) */
+export interface FileTreeIndividualChangeEvent {
+  worktreePath: string
+  eventType: FileEventType
   changedPath: string
   relativePath: string
 }

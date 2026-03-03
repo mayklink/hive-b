@@ -1,12 +1,12 @@
 import { EventEmitter } from 'events'
-import type { OpenCodeStreamEvent, FileTreeChangeEvent, ScriptOutputEvent } from '../shared/types'
+import type { OpenCodeStreamEvent, FileTreeIndividualChangeEvent, ScriptOutputEvent } from '../shared/types'
 
 interface EventBusEvents {
   'opencode:stream': [event: OpenCodeStreamEvent]
   'worktree:branchRenamed': [data: { worktreeId: string; newBranch: string }]
   'git:statusChanged': [data: { worktreePath: string }]
   'git:branchChanged': [data: { worktreePath: string }]
-  'file-tree:change': [event: FileTreeChangeEvent]
+  'file-tree:change': [event: FileTreeIndividualChangeEvent]
   'script:output': [channel: string, event: ScriptOutputEvent]
   'terminal:data': [worktreeId: string, data: string]
   'terminal:exit': [worktreeId: string, code: number]

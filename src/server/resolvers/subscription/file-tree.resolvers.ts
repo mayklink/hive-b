@@ -1,14 +1,14 @@
 import type { Resolvers } from '../../__generated__/resolvers-types'
-import type { FileTreeChangeEvent } from '../../../shared/types/file-tree'
+import type { FileTreeIndividualChangeEvent } from '../../../shared/types/file-tree'
 
 export const fileTreeSubscriptionResolvers: Resolvers = {
   Subscription: {
     fileTreeChange: {
       subscribe: async function* (_parent, args, ctx) {
-        const queue: FileTreeChangeEvent[] = []
+        const queue: FileTreeIndividualChangeEvent[] = []
         let resolve: (() => void) | null = null
 
-        const listener = (event: FileTreeChangeEvent) => {
+        const listener = (event: FileTreeIndividualChangeEvent) => {
           if (args.worktreePath && event.worktreePath !== args.worktreePath) return
           queue.push(event)
           resolve?.()

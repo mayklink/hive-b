@@ -1177,12 +1177,18 @@ declare global {
     extension: string | null
   }
 
-  // File tree change event type
-  interface FileTreeChangeEvent {
-    worktreePath: string
-    eventType: 'add' | 'addDir' | 'unlink' | 'unlinkDir' | 'change'
+  type FileEventType = 'add' | 'addDir' | 'unlink' | 'unlinkDir' | 'change'
+
+  interface FileTreeChangeEventItem {
+    eventType: FileEventType
     changedPath: string
     relativePath: string
+  }
+
+  // File tree change event type (batched)
+  interface FileTreeChangeEvent {
+    worktreePath: string
+    events: FileTreeChangeEventItem[]
   }
 
   // Git status types

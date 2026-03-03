@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { FlatFile } from '@/lib/file-search-utils'
+import type { FileTreeChangeEventItem } from '@shared/types/file-tree'
 
 // File tree node structure matching main process
 interface FileTreeNode {
@@ -44,9 +45,7 @@ interface FileTreeState {
   stopWatching: (worktreePath: string) => Promise<void>
   handleFileChange: (
     worktreePath: string,
-    eventType: string,
-    changedPath: string,
-    relativePath: string
+    events: FileTreeChangeEventItem[]
   ) => Promise<void>
 }
 
@@ -70,6 +69,10 @@ const deserializeExpandedPaths = (data: [string, string[]][]): Map<string, Set<s
 
 // Module-level map for onChange unsubscribe functions (not serializable, so outside persist store)
 const watchUnsubscribers = new Map<string, () => void>()
+
+// When a batch of file-change events exceeds this threshold (e.g. branch switch,
+// npm install), skip incremental index updates and do a full re-scan instead.
+const FULL_RESCAN_THRESHOLD = 20
 
 export const useFileTreeStore = create<FileTreeState>()(
   persist(
@@ -131,6 +134,11 @@ export const useFileTreeStore = create<FileTreeState>()(
             loadingMap.set(worktreePath, false)
             return { fileIndexByWorktree: indexMap, fileIndexLoadingByWorktree: loadingMap }
           })
+
+          // Ensure the file watcher subscription is active so incremental
+          // updates flow even when the Files sidebar tab is hidden.
+          // startWatching guards against duplicate subscriptions internally.
+          get().startWatching(worktreePath)
         } catch {
           set((state) => {
             const loadingMap = new Map(state.fileIndexLoadingByWorktree)
@@ -275,12 +283,7 @@ export const useFileTreeStore = create<FileTreeState>()(
           // Subscribe to change events and route to handleFileChange
           const unsubscribe = window.fileTreeOps.onChange((event) => {
             if (event.worktreePath === worktreePath) {
-              get().handleFileChange(
-                worktreePath,
-                event.eventType,
-                event.changedPath,
-                event.relativePath
-              )
+              get().handleFileChange(worktreePath, event.events)
             }
           })
           watchUnsubscribers.set(worktreePath, unsubscribe)
@@ -304,45 +307,65 @@ export const useFileTreeStore = create<FileTreeState>()(
         }
       },
 
-      // Handle file change event from watcher
+      // Handle batched file change events from watcher
       handleFileChange: async (
         worktreePath: string,
-        eventType: string,
-        changedPath: string,
-        relativePath: string
+        events: FileTreeChangeEventItem[]
       ) => {
-        // Refresh the tree display (shallow scan)
+        // Refresh the tree display once (not per-event)
         await get().refreshFileTree(worktreePath)
 
-        // Incrementally update the flat file index
+        // For large batches (branch switch, npm install, etc.), skip incremental
+        // updates and do a full re-scan — safer than processing hundreds of events.
+        if (events.length > FULL_RESCAN_THRESHOLD) {
+          await get().loadFileIndex(worktreePath)
+          return
+        }
+
+        // Incrementally update the flat file index by processing all events in sequence
         set((state) => {
           const currentIndex = state.fileIndexByWorktree.get(worktreePath)
           if (!currentIndex) return state // No index loaded yet
 
-          const newMap = new Map(state.fileIndexByWorktree)
+          let updatedIndex = [...currentIndex]
+          const knownPaths = new Set(currentIndex.map((f) => f.path))
+          let mutated = false
 
-          if (eventType === 'add') {
-            const name = relativePath.split('/').pop() || relativePath
-            const dotIdx = name.lastIndexOf('.')
-            const extension = dotIdx > 0 ? name.substring(dotIdx).toLowerCase() : null
-            newMap.set(worktreePath, [
-              ...currentIndex,
-              { name, path: changedPath, relativePath, extension }
-            ])
-          } else if (eventType === 'unlink') {
-            newMap.set(
-              worktreePath,
-              currentIndex.filter((f) => f.path !== changedPath)
-            )
-          } else if (eventType === 'unlinkDir') {
-            const prefix = changedPath + '/'
-            newMap.set(
-              worktreePath,
-              currentIndex.filter((f) => !f.path.startsWith(prefix))
-            )
+          for (const { eventType, changedPath, relativePath } of events) {
+            if (eventType === 'add' || eventType === 'change') {
+              // For 'add': ensure file is in the index (avoid duplicates)
+              // For 'change': if path is NOT in the index, treat as implicit 'add'
+              //   — recovers from lost add events (debounce race, missed watcher event)
+              if (!knownPaths.has(changedPath)) {
+                const name = relativePath.split('/').pop() || relativePath
+                const dotIdx = name.lastIndexOf('.')
+                const extension = dotIdx > 0 ? name.substring(dotIdx).toLowerCase() : null
+                updatedIndex.push({ name, path: changedPath, relativePath, extension })
+                knownPaths.add(changedPath)
+                mutated = true
+              }
+            } else if (eventType === 'unlink') {
+              updatedIndex = updatedIndex.filter((f) => f.path !== changedPath)
+              knownPaths.delete(changedPath)
+              mutated = true
+            } else if (eventType === 'unlinkDir') {
+              const prefix = changedPath + '/'
+              updatedIndex = updatedIndex.filter((f) => {
+                if (f.path.startsWith(prefix)) {
+                  knownPaths.delete(f.path)
+                  return false
+                }
+                return true
+              })
+              mutated = true
+            }
+            // 'addDir' events do not affect the flat file index
           }
-          // 'addDir' and 'change' events do not affect the flat file index
 
+          if (!mutated) return state
+
+          const newMap = new Map(state.fileIndexByWorktree)
+          newMap.set(worktreePath, updatedIndex)
           return { fileIndexByWorktree: newMap }
         })
       }

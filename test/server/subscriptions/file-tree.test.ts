@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach } from 'vitest'
 import { EventBus } from '../../../src/server/event-bus'
-import type { FileTreeChangeEvent } from '../../../src/shared/types/file-tree'
+import type { FileTreeIndividualChangeEvent } from '../../../src/shared/types/file-tree'
 import { fileTreeSubscriptionResolvers } from '../../../src/server/resolvers/subscription/file-tree.resolvers'
 
 function getSubscribeFn() {
@@ -21,7 +21,7 @@ describe('fileTreeChange subscription', () => {
     const subscribe = getSubscribeFn()
     const iter = subscribe({}, {}, { eventBus } as any, {} as any)
 
-    const event: FileTreeChangeEvent = {
+    const event: FileTreeIndividualChangeEvent = {
       worktreePath: '/tmp/project/main',
       eventType: 'change',
       changedPath: '/tmp/project/main/src/index.ts',
