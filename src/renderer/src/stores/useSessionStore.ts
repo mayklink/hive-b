@@ -329,6 +329,11 @@ export const useSessionStore = create<SessionState>()(
               : {})
           })
 
+          // Clear file viewer so the new session takes focus in MainPane
+          const { useFileViewerStore } = await import('./useFileViewerStore')
+          useFileViewerStore.getState().setActiveFile(null)
+          useFileViewerStore.getState().clearActiveDiff()
+
           set((state) => {
             const newSessionsMap = new Map(state.sessionsByWorktree)
             const existingSessions = newSessionsMap.get(worktreeId) || []
@@ -569,6 +574,14 @@ export const useSessionStore = create<SessionState>()(
 
       // Set active session
       setActiveSession: (sessionId: string | null) => {
+        // Clear file viewer so the session takes focus in MainPane
+        if (sessionId) {
+          import('./useFileViewerStore').then(({ useFileViewerStore }) => {
+            useFileViewerStore.getState().setActiveFile(null)
+            useFileViewerStore.getState().clearActiveDiff()
+          })
+        }
+
         const state = get()
         const worktreeId = state.activeWorktreeId
         const connectionId = state.activeConnectionId
