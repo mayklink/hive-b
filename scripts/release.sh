@@ -14,6 +14,19 @@ warn()  { echo -e "${YELLOW}⚠${NC} $1"; }
 err()   { echo -e "${RED}✗${NC} $1" >&2; }
 fatal() { err "$1"; exit 1; }
 
+# ── Parse flags ──────────────────────────────────────────────────
+SHUTDOWN_AFTER=false
+for arg in "$@"; do
+  case "$arg" in
+    --shutdown) SHUTDOWN_AFTER=true ;;
+    *) fatal "Unknown argument: $arg" ;;
+  esac
+done
+
+if $SHUTDOWN_AFTER; then
+  warn "Computer will shut down after release completes"
+fi
+
 # ── Constants ─────────────────────────────────────────────────────
 REPO="morapelker/hive"
 GHOSTTY_DEPS_TAG="ghostty-deps-v1"
@@ -58,6 +71,16 @@ source "$ENV_SIGNING"
 [[ -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" ]]  || fatal "APPLE_APP_SPECIFIC_PASSWORD not set in .env.signing"
 [[ -n "${APPLE_TEAM_ID:-}" ]]                || fatal "APPLE_TEAM_ID not set in .env.signing"
 ok "Signing credentials loaded"
+
+# Acquire sudo credentials early if shutdown is requested
+if $SHUTDOWN_AFTER; then
+  info "Shutdown requested — acquiring sudo credentials..."
+  sudo -v || fatal "Failed to acquire sudo credentials (needed for shutdown)"
+  # Keep sudo credentials alive in background for the duration of the build
+  (while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done) &
+  SUDO_KEEPALIVE_PID=$!
+  ok "Sudo credentials acquired (will shutdown after release)"
+fi
 
 # Read current version and suggest next patch
 CURRENT_VERSION=$(node -p "require('./package.json').version")
@@ -307,3 +330,11 @@ echo "    • Hive-${NEW_VERSION}-arm64-mac.zip"
 echo "    • Hive-${NEW_VERSION}-mac.zip"
 echo "    • latest-mac.yml (auto-updater)"
 echo ""
+
+# ── Shutdown (if requested) ─────────────────────────────────────
+if $SHUTDOWN_AFTER; then
+  kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+  warn "Shutting down in 10 seconds... (Ctrl+C to cancel)"
+  sleep 10
+  sudo shutdown -h now
+fi

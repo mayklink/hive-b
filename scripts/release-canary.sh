@@ -16,15 +16,25 @@ fatal() { err "$1"; exit 1; }
 
 # ── Parse flags ───────────────────────────────────────────────────
 DRY_RUN=false
+SHUTDOWN_AFTER=false
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=true ;;
+    --shutdown) SHUTDOWN_AFTER=true ;;
     *) fatal "Unknown argument: $arg" ;;
   esac
 done
 
+if $DRY_RUN && $SHUTDOWN_AFTER; then
+  fatal "Cannot combine --dry-run and --shutdown"
+fi
+
 if $DRY_RUN; then
   warn "DRY RUN — no git push, no publish, no homebrew update"
+fi
+
+if $SHUTDOWN_AFTER; then
+  warn "Computer will shut down after release completes"
 fi
 
 # ── Constants ─────────────────────────────────────────────────────
@@ -66,6 +76,16 @@ source "$ENV_SIGNING"
 [[ -n "${APPLE_APP_SPECIFIC_PASSWORD:-}" ]]  || fatal "APPLE_APP_SPECIFIC_PASSWORD not set in .env.signing"
 [[ -n "${APPLE_TEAM_ID:-}" ]]                || fatal "APPLE_TEAM_ID not set in .env.signing"
 ok "Signing credentials loaded"
+
+# Acquire sudo credentials early if shutdown is requested
+if $SHUTDOWN_AFTER; then
+  info "Shutdown requested — acquiring sudo credentials..."
+  sudo -v || fatal "Failed to acquire sudo credentials (needed for shutdown)"
+  # Keep sudo credentials alive in background for the duration of the build
+  (while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done) &
+  SUDO_KEEPALIVE_PID=$!
+  ok "Sudo credentials acquired (will shutdown after release)"
+fi
 
 # Compute next canary version
 # Strip any existing prerelease suffix to get base version
@@ -359,4 +379,12 @@ echo "    - canary-mac.yml (auto-updater)"
 echo ""
 if $DRY_RUN; then
   warn "This was a DRY RUN — nothing was actually published."
+fi
+
+# ── Shutdown (if requested) ─────────────────────────────────────
+if $SHUTDOWN_AFTER; then
+  kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+  warn "Shutting down in 10 seconds... (Ctrl+C to cancel)"
+  sleep 10
+  sudo shutdown -h now
 fi
