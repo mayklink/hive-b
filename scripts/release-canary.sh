@@ -110,14 +110,17 @@ tg() {
   fi
 }
 
-# Acquire sudo credentials early if shutdown is requested
-if $SHUTDOWN_AFTER; then
-  info "Shutdown requested — acquiring sudo credentials..."
-  sudo -v || fatal "Failed to acquire sudo credentials (needed for shutdown)"
+# Acquire sudo + prevent macOS sleep when --shutdown or --sleep is used
+if $SHUTDOWN_AFTER || $SLEEP_AFTER; then
+  info "Acquiring sudo credentials (needed to prevent sleep)..."
+  sudo -v || fatal "Failed to acquire sudo credentials"
   # Keep sudo credentials alive in background for the duration of the build
   (while true; do sudo -n true; sleep 50; kill -0 "$$" 2>/dev/null || exit; done) &
   SUDO_KEEPALIVE_PID=$!
-  ok "Sudo credentials acquired (will shutdown after release)"
+  sudo pmset -a disablesleep 1
+  ok "System sleep disabled (safe to close lid)"
+  # Restore sleep on early exit (before on_exit trap is armed)
+  trap 'sudo pmset -a disablesleep 0; kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
 fi
 
 # Compute next canary version
@@ -286,6 +289,11 @@ rollback() {
 }
 
 on_exit() {
+  # Re-enable system sleep if we disabled it
+  if $SHUTDOWN_AFTER || $SLEEP_AFTER; then
+    sudo pmset -a disablesleep 0 && ok "System sleep re-enabled" || true
+    kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+  fi
   if ! $RELEASE_SUCCEEDED; then
     if $PHASE2_STARTED; then
       rollback
@@ -294,7 +302,6 @@ on_exit() {
     fi
   fi
   if $SHUTDOWN_AFTER; then
-    kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
     warn "Shutting down in 10 seconds... (Ctrl+C to cancel)"
     sleep 10
     sudo shutdown -h now
