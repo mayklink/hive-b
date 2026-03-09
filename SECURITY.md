@@ -20,7 +20,7 @@ We take the security of Hive seriously. If you believe you have found a security
 
 ### Please DO
 
-- **Email us** at [INSERT SECURITY EMAIL] with details of the vulnerability
+- **Email us** at morapelker@gmail.com with details of the vulnerability
 - **Include** as much information as possible:
   - Type of vulnerability (e.g., remote code execution, SQL injection, cross-site scripting)
   - Full paths of source file(s) related to the vulnerability
@@ -116,7 +116,7 @@ We're grateful to the security researchers who have helped make Hive more secure
 
 If you have questions about this security policy, please:
 - Open a [discussion](https://github.com/morapelker/hive/discussions/new?category=q-a) (for non-sensitive topics)
-- Email us at [INSERT SECURITY EMAIL] (for sensitive topics)
+- Email us at morapelker@gmail.com (for sensitive topics)
 
 ---
 
