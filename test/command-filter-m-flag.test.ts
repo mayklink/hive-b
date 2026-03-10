@@ -22,10 +22,6 @@ describe('CommandFilterService - git commit with -m flag', () => {
     // Access private method using bracket notation
     const result = service['matchPattern'](command, pattern)
 
-    console.log('Pattern:', pattern)
-    console.log('Command:', command)
-    console.log('Result:', result)
-
     expect(result).toBe(true)
   })
 
@@ -40,10 +36,6 @@ describe('CommandFilterService - git commit with -m flag', () => {
     const command = 'git commit -m "Fix: Build Docker image for Linux/amd64 platform GKE requires Linux/amd64 images. Building on Apple Silicon without --platform flag creates arm64 images, causing \'no match for platform in manifest\' errors. Add --platform linux/amd64 to ensure the image works on GKE."'
 
     const result = service.evaluateToolUse('Bash', { command }, settings)
-
-    console.log('Settings:', settings)
-    console.log('Command:', command)
-    console.log('Result:', result)
 
     expect(result).toBe('allow')
   })
@@ -62,9 +54,6 @@ describe('CommandFilterService - git commit with -m flag', () => {
 
     testCases.forEach(({ cmd, expected }) => {
       const result = service['matchPattern'](cmd, pattern)
-      console.log(`Pattern: ${pattern}`)
-      console.log(`Command: ${cmd}`)
-      console.log(`Expected: ${expected}, Got: ${result}`)
       expect(result).toBe(expected)
     })
   })

@@ -41,7 +41,8 @@ export class CommandFilterService {
       const next = command[i + 1]
       const next2 = command[i + 2]
 
-      // Handle escape sequences
+      // Handle escape sequences (only in double quotes or unquoted context)
+      // In single quotes, backslash is literal
       if (escapeNext) {
         current += char
         escapeNext = false
@@ -49,7 +50,7 @@ export class CommandFilterService {
         continue
       }
 
-      if (char === '\\') {
+      if (char === '\\' && !inSingleQuote) {
         current += char
         escapeNext = true
         i++
@@ -170,8 +171,7 @@ export class CommandFilterService {
           log.info('CommandFilter: checking sub-command against allowlist', {
             subCommand: sub,
             formatted,
-            matches,
-            allowlist: settings.allowlist
+            matches
           })
           return matches
         })
@@ -193,8 +193,8 @@ export class CommandFilterService {
     log.info('CommandFilter: evaluating tool use', {
       toolName,
       commandStr,
-      allowlist: settings.allowlist,
-      blocklist: settings.blocklist,
+      allowlistCount: settings.allowlist.length,
+      blocklistCount: settings.blocklist.length,
       defaultBehavior: settings.defaultBehavior,
       enabled: settings.enabled
     })
@@ -258,13 +258,10 @@ export class CommandFilterService {
       const regex = new RegExp(`^${regexPattern}$`, 'i')
       const matches = regex.test(command)
 
-      log.info('CommandFilter: matchPattern', {
-        command,
-        pattern,
-        regexPattern,
-        isBashPattern,
-        matches
-      })
+      // Only log successful matches to reduce noise
+      if (matches) {
+        log.info('CommandFilter: pattern matched', { command, pattern })
+      }
 
       return matches
     } catch (error) {
