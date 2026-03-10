@@ -1095,7 +1095,7 @@ const opencodeOps = {
     modelID: string
     variant?: string
     agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'terminal'
-  }): Promise<{ success: boolean; error?: string }> =>
+  } | null): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('opencode:setModel', model),
 
   // Get model info (name, context limit)

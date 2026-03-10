@@ -306,13 +306,10 @@ export const useSettingsStore = create<SettingsState>()(
         }
         set({ selectedModel: model })
         // Persist to backend (settings DB + opencode service)
-        // Only call opencodeOps.setModel if model is non-null
-        if (model) {
-          try {
-            await window.opencodeOps.setModel(model)
-          } catch (error) {
-            console.error('Failed to persist model selection:', error)
-          }
+        try {
+          await window.opencodeOps.setModel(model)
+        } catch (error) {
+          console.error('Failed to persist model selection:', error)
         }
         // Always save to app settings (including null to clear)
         const settings = extractSettings({ ...get(), selectedModel: model } as SettingsState)
