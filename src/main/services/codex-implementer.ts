@@ -395,9 +395,23 @@ export class CodexImplementer implements AgentSdkImplementer {
     try {
       const model = resolveCodexModelSlug(modelOverride?.modelID ?? this.selectedModel)
 
+      // Determine interaction mode from DB session mode (same pattern as claude-code-implementer)
+      let interactionMode: 'default' | 'plan' = 'default'
+      if (this.dbService) {
+        try {
+          const dbSession = this.dbService.getSession(session.hiveSessionId)
+          if (dbSession?.mode === 'plan') {
+            interactionMode = 'plan'
+          }
+        } catch {
+          // Fall through to default mode
+        }
+      }
+
       await this.manager.sendTurn(session.threadId, {
         text,
-        model
+        model,
+        interactionMode
       })
 
       // Wait for turn completion (the sendTurn starts the turn, but

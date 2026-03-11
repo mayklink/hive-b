@@ -109,7 +109,8 @@ describe('Codex child session routing', () => {
 
       expect(mockManager.sendTurn).toHaveBeenCalledWith('thread-a', {
         text: 'Hello A',
-        model: expect.any(String)
+        model: expect.any(String),
+        interactionMode: 'default'
       })
 
       // Verify only session A got the user message
@@ -204,7 +205,8 @@ describe('Codex child session routing', () => {
 
       expect(mockManager.sendTurn).toHaveBeenCalledWith('thread-ctx', {
         text: contextMessage,
-        model: expect.any(String)
+        model: expect.any(String),
+        interactionMode: 'default'
       })
     })
 
@@ -238,7 +240,8 @@ describe('Codex child session routing', () => {
 
       expect(mockManager.sendTurn).toHaveBeenCalledWith('thread-ctx2', {
         text: '[Worktree Context]\nContext here\n\n[User Message]\nDo something',
-        model: expect.any(String)
+        model: expect.any(String),
+        interactionMode: 'default'
       })
     })
   })

@@ -106,7 +106,8 @@ describe('CodexImplementer.prompt()', () => {
 
     expect(mockManager.sendTurn).toHaveBeenCalledWith('thread-1', {
       text: 'Hello Codex',
-      model: expect.any(String)
+      model: expect.any(String),
+      interactionMode: 'default'
     })
   })
 
@@ -132,7 +133,8 @@ describe('CodexImplementer.prompt()', () => {
 
     expect(mockManager.sendTurn).toHaveBeenCalledWith('thread-1', {
       text: 'Part 1\nPart 2',
-      model: expect.any(String)
+      model: expect.any(String),
+      interactionMode: 'default'
     })
   })
 
@@ -486,7 +488,8 @@ describe('CodexImplementer.prompt()', () => {
 
     expect(mockManager.sendTurn).toHaveBeenCalledWith('thread-1', {
       text: 'test',
-      model: 'gpt-5.3-codex'
+      model: 'gpt-5.3-codex',
+      interactionMode: 'default'
     })
   })
 
