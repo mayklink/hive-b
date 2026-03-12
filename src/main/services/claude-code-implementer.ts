@@ -2123,6 +2123,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         enabled: filterSettings.enabled,
         allowlistCount: filterSettings.allowlist?.length,
         blocklistCount: filterSettings.blocklist?.length,
+        allowlist: filterSettings.allowlist,
         blocklist: filterSettings.blocklist,
         defaultBehavior: filterSettings.defaultBehavior
       })
@@ -2168,11 +2169,23 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         list.push(pattern)
         this.dbService.setSetting(APP_SETTINGS_DB_KEY, JSON.stringify(settings))
 
-        log.info('updateCommandFilter: added pattern', { pattern, action })
+        log.info('updateCommandFilter: added pattern', {
+          pattern,
+          action,
+          updatedAllowlist: settings.commandFilter.allowlist,
+          updatedBlocklist: settings.commandFilter.blocklist
+        })
 
         // Notify renderer to update settings store
         this.sendToRenderer('settings:updated', {
           commandFilter: settings.commandFilter
+        })
+      } else {
+        log.info('updateCommandFilter: pattern already exists', {
+          pattern,
+          action,
+          currentAllowlist: settings.commandFilter.allowlist,
+          currentBlocklist: settings.commandFilter.blocklist
         })
       }
     } catch (error) {
