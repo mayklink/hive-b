@@ -558,21 +558,21 @@ describe('mapCodexEventToStreamEvents', () => {
   // ── Manager-level error events ──────────────────────────────
 
   describe('error kind events', () => {
-    it('maps error-kind events to session.error', () => {
+    it('maps process/error to session.error', () => {
       const event = makeEvent({
         kind: 'error',
-        method: 'process/stderr',
-        message: 'codex stderr output'
+        method: 'process/error',
+        message: 'codex process crashed'
       })
 
       const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('session.error')
-      expect((result[0].data as any).error).toBe('codex stderr output')
+      expect((result[0].data as any).error).toBe('codex process crashed')
     })
 
-    it('uses "Unknown error" for error events without message', () => {
+    it('uses "Unknown error" for process/error events without message', () => {
       const event = makeEvent({
         kind: 'error',
         method: 'process/error'
@@ -582,6 +582,34 @@ describe('mapCodexEventToStreamEvents', () => {
 
       expect(result).toHaveLength(1)
       expect((result[0].data as any).error).toBe('Unknown error')
+    })
+
+    it('silently drops non-fatal error events (e.g. protocol errors)', () => {
+      const event = makeEvent({
+        kind: 'error',
+        method: 'protocol/parseError',
+        message: 'Received invalid JSON'
+      })
+
+      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+
+      expect(result).toHaveLength(0)
+    })
+  })
+
+  // ── Stderr output (downgraded to notification) ──────────────
+
+  describe('process/stderr events', () => {
+    it('silently drops stderr notification events', () => {
+      const event = makeEvent({
+        kind: 'notification',
+        method: 'process/stderr',
+        message: 'codex stderr output'
+      })
+
+      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+
+      expect(result).toHaveLength(0)
     })
   })
 

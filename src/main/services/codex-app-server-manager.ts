@@ -789,7 +789,19 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
           }
 
           log.warn('codex stderr', { message: classified.message })
-          this.emitErrorEvent(context, 'process/stderr', classified.message)
+          // Emit as a notification rather than an error — stderr output
+          // from the Codex app-server often includes benign warnings,
+          // progress info, or non-standard log formats that should not
+          // abort the current turn or trigger session error states.
+          this.emitEvent({
+            id: randomUUID(),
+            kind: 'notification',
+            provider: 'codex',
+            threadId: context.session.threadId ?? '',
+            createdAt: new Date().toISOString(),
+            method: 'process/stderr',
+            message: classified.message
+          })
         }
       })
     }

@@ -383,14 +383,25 @@ export function mapCodexEventToStreamEvents(
     }]
   }
 
-  // ── Manager-level error events (stderr, process errors) ─────
+  // ── Manager-level error events (process crashes only) ────────
   if (event.kind === 'error') {
-    const message = event.message ?? 'Unknown error'
-    return [{
-      type: 'session.error',
-      sessionId: hiveSessionId,
-      data: { error: message }
-    }]
+    // Only emit session.error for fatal process errors, not stderr warnings.
+    // Stderr output is now emitted as kind: 'notification' with method
+    // 'process/stderr' and silently dropped below.
+    if (event.method === 'process/error') {
+      const message = event.message ?? 'Unknown error'
+      return [{
+        type: 'session.error',
+        sessionId: hiveSessionId,
+        data: { error: message }
+      }]
+    }
+    return []
+  }
+
+  // ── Stderr output (informational, silently drop) ───────────
+  if (event.method === 'process/stderr') {
+    return []
   }
 
   // ── Unrecognized events → empty (silently drop) ─────────────

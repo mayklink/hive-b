@@ -398,6 +398,94 @@ describe('CodexImplementer.prompt()', () => {
     expect(errorEvents.length).toBeGreaterThanOrEqual(1)
   })
 
+  it('does not abort turn on non-fatal error events (e.g. stderr warnings)', async () => {
+    const session = seedSession()
+
+    // Simulate a non-fatal error event followed by turn/completed.
+    // Before the fix, ANY kind='error' event would abort the turn.
+    // Now only fatal events (process/error, session/exited, session/closed) abort.
+    simulateManagerEvents([
+      {
+        id: 'e1',
+        kind: 'notification',
+        provider: 'codex',
+        threadId: 'thread-1',
+        createdAt: new Date().toISOString(),
+        method: 'process/stderr',
+        message: 'Some benign stderr warning'
+      },
+      {
+        id: 'e2',
+        kind: 'notification',
+        provider: 'codex',
+        threadId: 'thread-1',
+        createdAt: new Date().toISOString(),
+        method: 'item/agentMessage/delta',
+        textDelta: 'Hello from Codex'
+      },
+      {
+        id: 'e3',
+        kind: 'notification',
+        provider: 'codex',
+        threadId: 'thread-1',
+        createdAt: new Date().toISOString(),
+        method: 'turn/completed',
+        payload: { turn: { status: 'completed' } }
+      }
+    ])
+
+    await impl.prompt('/test/project', 'thread-1', 'test')
+
+    // Turn should complete successfully — not error out
+    expect(session.status).toBe('ready')
+
+    // Assistant text should have been accumulated
+    expect(session.messages.length).toBeGreaterThanOrEqual(2)
+    const assistantMsg = session.messages.find((m: any) => m.role === 'assistant') as any
+    expect(assistantMsg).toBeTruthy()
+    expect(assistantMsg.parts[0].text).toBe('Hello from Codex')
+  })
+
+  it('rejects when session exits (session/exited)', async () => {
+    const session = seedSession()
+
+    simulateManagerEvents([
+      {
+        id: 'e1',
+        kind: 'session',
+        provider: 'codex',
+        threadId: 'thread-1',
+        createdAt: new Date().toISOString(),
+        method: 'session/exited',
+        message: 'codex app-server exited (code=1, signal=null).'
+      }
+    ])
+
+    await impl.prompt('/test/project', 'thread-1', 'test')
+
+    expect(session.status).toBe('error')
+  })
+
+  it('rejects when session closes (session/closed)', async () => {
+    const session = seedSession()
+
+    simulateManagerEvents([
+      {
+        id: 'e1',
+        kind: 'session',
+        provider: 'codex',
+        threadId: 'thread-1',
+        createdAt: new Date().toISOString(),
+        method: 'session/closed',
+        message: 'Session stopped'
+      }
+    ])
+
+    await impl.prompt('/test/project', 'thread-1', 'test')
+
+    expect(session.status).toBe('error')
+  })
+
   it('rejects when session.state.changed emits error', async () => {
     const session = seedSession()
 

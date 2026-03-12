@@ -906,9 +906,16 @@ export class CodexImplementer implements AgentSdkImplementer {
           return
         }
 
-        // Reject immediately on error events so prompt() doesn't hang
-        // when the Codex process crashes or enters an unrecoverable state.
-        if (event.kind === 'error') {
+        // Only reject on truly fatal errors — not stderr warnings.
+        // The Codex app-server may output benign stderr content (warnings,
+        // progress info, non-standard log formats) that should not abort
+        // the turn. Only process crashes and session exits are fatal.
+        const isFatalError =
+          event.method === 'process/error' ||
+          event.method === 'session/exited' ||
+          event.method === 'session/closed'
+
+        if (isFatalError) {
           cleanup()
           reject(new Error(event.message ?? 'Codex process error'))
           return
