@@ -23,6 +23,10 @@ vi.mock('node:child_process', async (importOriginal) => {
   }
 })
 
+vi.mock('../../../src/main/services/git-service', () => ({
+  autoRenameWorktreeBranch: vi.fn()
+}))
+
 import {
   CodexAppServerManager,
   type CodexSessionContext,

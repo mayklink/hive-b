@@ -137,10 +137,10 @@ describe('CodexAppServerManager — collaborationMode in sendTurn', () => {
     expect(params.collaborationMode.settings).toBeDefined()
     expect(params.collaborationMode.settings.developer_instructions).toContain('plan')
     expect(params.collaborationMode.settings.developer_instructions).toContain(
-      'Do NOT make code changes'
+      'Writing, editing, or deleting files'
     )
     expect(params.collaborationMode.settings.developer_instructions).toContain(
-      'present the plan and stop'
+      'Stop after producing the plan block'
     )
   })
 

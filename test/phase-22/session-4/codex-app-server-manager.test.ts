@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { EventEmitter } from 'node:events'
+import { spawn } from 'node:child_process'
 import { PassThrough } from 'node:stream'
 
 // Mock logger
@@ -20,6 +21,19 @@ vi.mock('node:child_process', async (importOriginal) => {
     ...actual,
     spawn: vi.fn(),
     spawnSync: vi.fn()
+  }
+})
+
+vi.mock('node:readline', () => {
+  const createInterface = vi.fn(() => ({
+    on: vi.fn(),
+    close: vi.fn(),
+    removeAllListeners: vi.fn()
+  }))
+
+  return {
+    default: { createInterface },
+    createInterface
   }
 })
 
@@ -561,6 +575,84 @@ describe('CodexAppServerManager', () => {
   })
 
   // ── stopSession ─────────────────────────────────────────────────
+
+  describe('startSession', () => {
+    it('starts fresh sessions in full-access mode', async () => {
+      const child = new EventEmitter() as any
+      child.stdin = { writable: true, write: vi.fn() }
+      child.stdout = {}
+      child.stderr = { on: vi.fn() }
+      child.pid = 12345
+      child.killed = false
+      child.kill = vi.fn(() => {
+        child.killed = true
+      })
+      vi.mocked(spawn).mockReturnValue(child)
+
+      const sendRequestSpy = vi
+        .spyOn(manager, 'sendRequest')
+        .mockResolvedValueOnce({} as never)
+        .mockResolvedValueOnce({} as never)
+        .mockResolvedValueOnce({ thread: { id: 'thread-live-1' } } as never)
+
+      const session = await manager.startSession({
+        cwd: '/test/project',
+        model: 'gpt-5.4'
+      })
+
+      expect(session.threadId).toBe('thread-live-1')
+      expect(sendRequestSpy).toHaveBeenNthCalledWith(
+        3,
+        expect.anything(),
+        'thread/start',
+        expect.objectContaining({
+          model: 'gpt-5.4',
+          cwd: '/test/project',
+          approvalPolicy: 'never',
+          sandbox: 'danger-full-access'
+        })
+      )
+    })
+
+    it('resumes sessions in full-access mode', async () => {
+      const child = new EventEmitter() as any
+      child.stdin = { writable: true, write: vi.fn() }
+      child.stdout = {}
+      child.stderr = { on: vi.fn() }
+      child.pid = 12345
+      child.killed = false
+      child.kill = vi.fn(() => {
+        child.killed = true
+      })
+      vi.mocked(spawn).mockReturnValue(child)
+
+      const sendRequestSpy = vi
+        .spyOn(manager, 'sendRequest')
+        .mockResolvedValueOnce({} as never)
+        .mockResolvedValueOnce({} as never)
+        .mockResolvedValueOnce({ thread: { id: 'thread-live-2' } } as never)
+
+      const session = await manager.startSession({
+        cwd: '/test/project',
+        model: 'gpt-5.4',
+        resumeThreadId: 'thread-live-2'
+      })
+
+      expect(session.threadId).toBe('thread-live-2')
+      expect(sendRequestSpy).toHaveBeenNthCalledWith(
+        3,
+        expect.anything(),
+        'thread/resume',
+        expect.objectContaining({
+          threadId: 'thread-live-2',
+          model: 'gpt-5.4',
+          cwd: '/test/project',
+          approvalPolicy: 'never',
+          sandbox: 'danger-full-access'
+        })
+      )
+    })
+  })
 
   describe('stopSession', () => {
     it('rejects all pending requests', () => {
