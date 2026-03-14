@@ -10,6 +10,7 @@ import {
 } from './codex-models'
 import { createLogger } from './logger'
 import { CodexAppServerManager, type CodexManagerEvent } from './codex-app-server-manager'
+import { mapCodexManagerEventToActivity } from './codex-activity-mapper'
 import { mapCodexEventToStreamEvents, contentStreamKindFromMethod } from './codex-event-mapper'
 import { asObject, asString } from './codex-utils'
 import { generateCodexSessionTitle } from './codex-session-title'
@@ -72,18 +73,6 @@ interface CodexPermissionRequest {
   patterns: string[]
   metadata: Record<string, unknown>
   always: string[]
-}
-
-function looksLikeCodexProposedPlan(text: string): boolean {
-  const trimmed = text.trim()
-  if (!trimmed) return false
-
-  const firstLine = trimmed.split(/\r?\n/, 1)[0]?.trim() ?? ''
-  const hasPlanHeading = /^(plan(?:\s+[^\n]+)?|#{1,6}\s+[^\n]+)$/i.test(firstLine)
-  const hasSteps = /(^|\n)\s*(?:[-*]|\d+\.)\s+\S/m.test(trimmed)
-  const startsWithQuestion = /^[^\n]*\?\s*(?:\n|$)/.test(trimmed)
-
-  return hasPlanHeading && hasSteps && !startsWithQuestion
 }
 
 /**
@@ -153,6 +142,11 @@ export class CodexImplementer implements AgentSdkImplementer {
       })
     }
 
+    const targetSession = this.findSessionByThreadId(event.threadId)
+    if (targetSession) {
+      this.persistActivity(targetSession, event)
+    }
+
     // Clean up stale pending entries when a session closes
     if (
       event.kind === 'session' &&
@@ -171,14 +165,6 @@ export class CodexImplementer implements AgentSdkImplementer {
     // Only handle request events (approvals + user inputs)
     if (event.kind !== 'request') return
 
-    // Find the session for this event's threadId
-    let targetSession: CodexSessionState | undefined
-    for (const session of this.sessions.values()) {
-      if (session.threadId === event.threadId) {
-        targetSession = session
-        break
-      }
-    }
     if (!targetSession) return
 
     const requestId = event.requestId
@@ -476,6 +462,7 @@ export class CodexImplementer implements AgentSdkImplementer {
       parts: [{ type: 'text', text, timestamp: syntheticTimestamp }],
       timestamp: syntheticTimestamp
     })
+    this.persistCanonicalMessages(session)
     this.resetLiveAssistantDraft(session)
 
     // Emit busy status
@@ -503,6 +490,13 @@ export class CodexImplementer implements AgentSdkImplementer {
 
       const streamEvents = mapCodexEventToStreamEvents(event, session.hiveSessionId)
       for (const streamEvent of streamEvents) {
+        if (
+          event.method === 'turn/completed' &&
+          streamEvent.type === 'session.status' &&
+          streamEvent.statusPayload?.type === 'idle'
+        ) {
+          continue
+        }
         this.sendToRenderer('opencode:stream', streamEvent)
         this.updateLiveAssistantDraftFromStreamEvent(session, streamEvent)
       }
@@ -598,6 +592,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         if (parsed.length > 0) {
           session.messages = parsed
         }
+        this.persistCanonicalMessages(session)
         session.liveAssistantDraft = null
       } catch (readError) {
         log.warn('prompt: readThread after turn failed, falling back to accumulated text', {
@@ -627,6 +622,7 @@ export class CodexImplementer implements AgentSdkImplementer {
             timestamp: new Date().toISOString()
           })
         }
+        this.persistCanonicalMessages(session)
         session.liveAssistantDraft = null
       }
 
@@ -661,6 +657,14 @@ export class CodexImplementer implements AgentSdkImplementer {
       if (interactionMode === 'plan' && pendingPlanText) {
         const toolUseID = `codex-exitplan-${session.threadId}-${Date.now()}`
         const requestId = `codex-plan:${session.threadId}`
+        this.persistSyntheticActivity(session, {
+          id: requestId,
+          kind: 'plan.ready',
+          tone: 'info',
+          summary: 'Plan ready',
+          requestId,
+          payload: { plan: pendingPlanText, toolUseID }
+        })
         this.sendToRenderer('opencode:stream', {
           type: 'plan.ready',
           sessionId: session.hiveSessionId,
@@ -754,6 +758,31 @@ export class CodexImplementer implements AgentSdkImplementer {
       }
     }
 
+    if (this.dbService) {
+      try {
+        const persistedMessages = this.dbService.getSessionMessages(session.hiveSessionId)
+        if (persistedMessages.length > 0) {
+          const parsed = persistedMessages.flatMap((message) => {
+            if (!message.opencode_message_json) return []
+            try {
+              return [JSON.parse(message.opencode_message_json)]
+            } catch {
+              return []
+            }
+          })
+          if (parsed.length > 0) {
+            session.messages = parsed
+            return [...parsed]
+          }
+        }
+      } catch (error) {
+        log.warn('getMessages: failed to load persisted Codex messages', {
+          agentSessionId,
+          error: error instanceof Error ? error.message : String(error)
+        })
+      }
+    }
+
     // Fallback: try reading from thread via the server
     if (session.status !== 'closed') {
       try {
@@ -761,6 +790,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         const parsed = this.parseThreadSnapshot(threadSnapshot)
         if (parsed.length > 0) {
           session.messages = parsed
+          this.persistCanonicalMessages(session)
           log.info('getMessages: warmed in-memory cache from thread/read', {
             agentSessionId,
             count: parsed.length
@@ -848,6 +878,17 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     this.manager.respondToUserInput(pending.threadId, requestId, codexAnswers)
     this.pendingQuestions.delete(requestId)
+    const session = this.findSessionByThreadId(pending.threadId)
+    if (session) {
+      this.persistSyntheticActivity(session, {
+        id: `${requestId}:resolved`,
+        kind: 'user-input.resolved',
+        tone: 'approval',
+        summary: 'User input answered',
+        requestId,
+        payload: { answers: codexAnswers }
+      })
+    }
 
     this.sendToRenderer('opencode:stream', {
       type: 'question.replied',
@@ -869,6 +910,17 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     this.manager.rejectUserInput(pending.threadId, requestId)
     this.pendingQuestions.delete(requestId)
+    const session = this.findSessionByThreadId(pending.threadId)
+    if (session) {
+      this.persistSyntheticActivity(session, {
+        id: `${requestId}:resolved`,
+        kind: 'user-input.resolved',
+        tone: 'approval',
+        summary: 'User input dismissed',
+        requestId,
+        payload: { dismissed: true }
+      })
+    }
 
     this.sendToRenderer('opencode:stream', {
       type: 'question.rejected',
@@ -895,6 +947,17 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     this.manager.respondToApproval(pending.threadId, requestId, decision)
     this.pendingApprovalSessions.delete(requestId)
+    const session = this.findSessionByThreadId(pending.threadId)
+    if (session) {
+      this.persistSyntheticActivity(session, {
+        id: `${requestId}:resolved`,
+        kind: 'approval.resolved',
+        tone: 'approval',
+        summary: 'Approval resolved',
+        requestId,
+        payload: { decision }
+      })
+    }
 
     this.sendToRenderer('opencode:stream', {
       type: 'permission.replied',
@@ -1146,6 +1209,15 @@ export class CodexImplementer implements AgentSdkImplementer {
     }
   }
 
+  private findSessionByThreadId(threadId: string): CodexSessionState | undefined {
+    for (const session of this.sessions.values()) {
+      if (session.threadId === threadId) {
+        return session
+      }
+    }
+    return undefined
+  }
+
   private getSessionKey(worktreePath: string, agentSessionId: string): string {
     return `${worktreePath}::${agentSessionId}`
   }
@@ -1155,6 +1227,104 @@ export class CodexImplementer implements AgentSdkImplementer {
       this.mainWindow.webContents.send(channel, data)
     } else {
       log.debug('sendToRenderer: no window (headless)')
+    }
+  }
+
+  private persistActivity(session: CodexSessionState, event: CodexManagerEvent): void {
+    if (!this.dbService) return
+
+    const activity = mapCodexManagerEventToActivity(session.hiveSessionId, session.threadId, event)
+    if (!activity) return
+
+    try {
+      this.dbService.upsertSessionActivity(activity)
+    } catch (error) {
+      log.warn('Failed to persist Codex activity', {
+        hiveSessionId: session.hiveSessionId,
+        method: event.method,
+        error: error instanceof Error ? error.message : String(error)
+      })
+    }
+  }
+
+  private persistSyntheticActivity(
+    session: CodexSessionState,
+    params: {
+      id: string
+      kind:
+        | 'approval.resolved'
+        | 'user-input.resolved'
+        | 'plan.ready'
+        | 'plan.resolved'
+        | 'session.error'
+        | 'session.info'
+      tone: 'approval' | 'info' | 'error'
+      summary: string
+      requestId?: string
+      payload?: unknown
+    }
+  ): void {
+    if (!this.dbService) return
+
+    try {
+      this.dbService.upsertSessionActivity({
+        id: params.id,
+        session_id: session.hiveSessionId,
+        agent_session_id: session.threadId,
+        thread_id: session.threadId,
+        request_id: params.requestId ?? null,
+        kind: params.kind,
+        tone: params.tone,
+        summary: params.summary,
+        payload_json: params.payload ? JSON.stringify(params.payload) : null
+      })
+    } catch (error) {
+      log.warn('Failed to persist synthetic Codex activity', {
+        hiveSessionId: session.hiveSessionId,
+        kind: params.kind,
+        error: error instanceof Error ? error.message : String(error)
+      })
+    }
+  }
+
+  private persistCanonicalMessages(session: CodexSessionState): void {
+    if (!this.dbService) return
+
+    try {
+      const rows = session.messages.flatMap((message) => {
+        const record = asObject(message)
+        if (!record) return []
+
+        const role = asString(record.role)
+        const timestamp = asString(record.timestamp) ?? new Date().toISOString()
+        if (role !== 'user' && role !== 'assistant' && role !== 'system') return []
+
+        const parts = Array.isArray(record.parts) ? record.parts : []
+        const textContent = parts
+          .map((part) => asObject(part))
+          .filter((part) => part?.type === 'text' || part?.type === 'reasoning')
+          .map((part) => asString(part?.text) ?? '')
+          .join('')
+
+        return [
+          {
+            session_id: session.hiveSessionId,
+            role,
+            content: textContent,
+            opencode_message_id: asString(record.id) ?? null,
+            opencode_message_json: JSON.stringify(message),
+            opencode_parts_json: JSON.stringify(parts),
+            created_at: timestamp
+          }
+        ]
+      })
+
+      this.dbService.replaceSessionMessages(session.hiveSessionId, rows)
+    } catch (error) {
+      log.warn('Failed to persist Codex canonical messages', {
+        hiveSessionId: session.hiveSessionId,
+        error: error instanceof Error ? error.message : String(error)
+      })
     }
   }
 

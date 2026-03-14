@@ -43,6 +43,7 @@ import { useConnectionStore } from '@/stores/useConnectionStore'
 import { useFileTreeStore } from '@/stores/useFileTreeStore'
 import { mapOpencodeMessagesToSessionViewMessages } from '@/lib/opencode-transcript'
 import { appendStreamedAssistantFallback } from '@/lib/transcript-refresh'
+import { deriveCodexTimelineMessages, mergeCodexActivityMessages } from '@/lib/codex-timeline'
 import { COMPLETION_WORDS, formatCompletionDuration, formatElapsedTimer } from '@/lib/format-utils'
 import { messageSendTimes, lastSendMode, userExplicitSendTimes } from '@/lib/message-send-times'
 import { buildPlanImplementationPrompt, looksLikeCodexProposedPlan } from '@/lib/proposedPlan'
@@ -216,6 +217,22 @@ function createLocalMessage(role: OpenCodeMessage['role'], content: string): Ope
     role,
     content,
     timestamp: new Date().toISOString()
+  }
+}
+
+async function loadCodexDurableState(
+  sessionId: string
+): Promise<{ messages: OpenCodeMessage[]; activities: SessionActivity[] }> {
+  if (!window.db.sessionMessage?.list || !window.db.sessionActivity?.list) {
+    return { messages: [], activities: [] }
+  }
+  const [messageRows, activityRows] = await Promise.all([
+    window.db.sessionMessage.list(sessionId),
+    window.db.sessionActivity.list(sessionId)
+  ])
+  return {
+    messages: deriveCodexTimelineMessages(messageRows, activityRows),
+    activities: activityRows
   }
 }
 
@@ -980,6 +997,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
       worktreePath?: string | null
       opencodeSessionId?: string | null
     }): Promise<OpenCodeMessage[]> => {
+      const isCodexSession = sessionRecord?.agent_sdk === 'codex'
       const sourceWorktreePath = source?.worktreePath ?? transcriptSourceRef.current.worktreePath
       const sourceOpencodeSessionId =
         source?.opencodeSessionId ?? transcriptSourceRef.current.opencodeSessionId
@@ -1000,8 +1018,23 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
 
       let loadedMessages: OpenCodeMessage[] = []
       let loadedFromOpenCode = false
+      let codexActivities: SessionActivity[] = []
+      const currentStoredStatus = useWorktreeStatusStore.getState().sessionStatuses[sessionId]
 
-      if (canUseOpenCodeSource) {
+      if (isCodexSession) {
+        const durableState = await loadCodexDurableState(sessionId)
+        loadedMessages = durableState.messages
+        codexActivities = durableState.activities
+      }
+
+      const preferLiveCodexSource =
+        isCodexSession &&
+        canUseOpenCodeSource &&
+        (currentStoredStatus?.status === 'working' ||
+          currentStoredStatus?.status === 'planning' ||
+          loadedMessages.length === 0)
+
+      if ((!isCodexSession || loadedMessages.length === 0 || preferLiveCodexSource) && canUseOpenCodeSource) {
         const result = await window.opencodeOps.getMessages(
           sourceWorktreePath,
           sourceOpencodeSessionId
@@ -1010,7 +1043,14 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           loadedFromOpenCode = true
 
           const opencodeMessages = Array.isArray(result.messages) ? result.messages : []
-          loadedMessages = mapOpencodeMessagesToSessionViewMessages(opencodeMessages)
+          if (isCodexSession) {
+            loadedMessages = mergeCodexActivityMessages(
+              mapOpencodeMessagesToSessionViewMessages(opencodeMessages),
+              codexActivities
+            )
+          } else if (loadedMessages.length === 0) {
+            loadedMessages = mapOpencodeMessagesToSessionViewMessages(opencodeMessages)
+          }
 
           let totalCost = 0
           let snapshotTokens: TokenInfo | null = null
@@ -1078,7 +1118,9 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
         }
       }
 
-      if (loadedFromOpenCode) {
+      if (isCodexSession && loadedMessages.length > 0) {
+        setMessages(loadedMessages)
+      } else if (loadedFromOpenCode) {
         // Guard: don't replace existing messages with an empty transcript.
         // This prevents a race where getMessages returns before the SDK has
         // committed the final transcript, which would wipe the visible chat.
@@ -1163,6 +1205,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
         })
 
         if (
+          !isCodexSession &&
           refreshedMessages.length === 0 &&
           (streamedPartsSnapshot.length > 0 || streamedContentSnapshot.length > 0)
         ) {
@@ -1185,7 +1228,10 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           })
         }
 
-        if (streamedPartsSnapshot.length > 0 || streamedContentSnapshot.length > 0) {
+        if (
+          !isCodexSession &&
+          (streamedPartsSnapshot.length > 0 || streamedContentSnapshot.length > 0)
+        ) {
           setMessages((currentMessages) =>
             appendStreamedAssistantFallback(currentMessages, {
               streamedContent: streamedContentSnapshot,
@@ -2748,6 +2794,28 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
   )
 
   const refreshMessagesFromOpenCode = useCallback(async (): Promise<boolean> => {
+    if (sessionRecord?.agent_sdk === 'codex') {
+      const durableState = await loadCodexDurableState(sessionId)
+      if (worktreePath && opencodeSessionId) {
+        const transcriptResult = await window.opencodeOps.getMessages(worktreePath, opencodeSessionId)
+        if (transcriptResult.success) {
+          const liveMessages = mergeCodexActivityMessages(
+            mapOpencodeMessagesToSessionViewMessages(
+              Array.isArray(transcriptResult.messages) ? transcriptResult.messages : []
+            ),
+            durableState.activities
+          )
+          setMessages(liveMessages)
+          return liveMessages.length > 0
+        }
+      }
+
+      if (durableState.messages.length > 0) {
+        setMessages(durableState.messages)
+        return true
+      }
+    }
+
     if (!worktreePath || !opencodeSessionId) return false
 
     const transcriptResult = await window.opencodeOps.getMessages(worktreePath, opencodeSessionId)
@@ -2761,7 +2829,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
     )
     setMessages(loadedMessages)
     return true
-  }, [worktreePath, opencodeSessionId])
+  }, [opencodeSessionId, sessionId, sessionRecord?.agent_sdk, worktreePath])
 
   const handleForkFromAssistantMessage = useCallback(
     async (message: OpenCodeMessage) => {
@@ -3975,6 +4043,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
   }, [messages, revertMessageID])
 
   useEffect(() => {
+    if (sessionRecord?.agent_sdk === 'codex') return
     if (messages.length === 0) return
     // Defense-in-depth: don't overwrite the cache with a degraded state.
     // If the only messages are local-* (optimistic user messages not yet
@@ -3984,7 +4053,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
     const hasServerMessages = messages.some((m) => !m.id.startsWith('local-'))
     if (!hasServerMessages) return
     writeTranscriptCache(sessionId, messages)
-  }, [sessionId, messages])
+  }, [sessionId, messages, sessionRecord?.agent_sdk])
 
   // Determine if there's streaming content to show
   const hasStreamingContent = streamingParts.length > 0 || streamingContent.length > 0
