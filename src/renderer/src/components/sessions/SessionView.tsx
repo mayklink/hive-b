@@ -684,7 +684,10 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
         scrollToBottom('instant')
       })
     }
-  }, [viewState.status, sessionId, messages.length, scrollToBottom])
+    // Only trigger on viewState and sessionId changes, NOT on every messages update
+    // (streaming appends messages continuously and should use smooth scroll instead)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewState.status, sessionId])
 
   // Reset prompt history navigation on session change
   useEffect(() => {
