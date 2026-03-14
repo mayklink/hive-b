@@ -42,6 +42,7 @@ import {
   getLspOperationColor,
   getLspResultCount
 } from './tools/LspToolView'
+import { FileChangeToolView } from './tools/FileChangeToolView'
 import { ToolCallContextMenu } from './ToolCallContextMenu'
 import { extractCommandText } from '@/lib/tool-input-utils'
 import { useSessionStore } from '@/stores/useSessionStore'
@@ -77,6 +78,12 @@ const FIGMA_ICON_COLOR = 'text-[#a259ff]'
 /** Check if a tool name refers to a Figma MCP tool */
 function isFigmaTool(name: string): boolean {
   return name.toLowerCase().startsWith('mcp__figma__')
+}
+
+/** Check if a tool name refers to a Codex file change tool */
+function isFileChangeTool(name: string): boolean {
+  const lower = name.toLowerCase()
+  return lower === 'filechange' || lower === 'file_change' || lower === 'apply_patch'
 }
 
 /** Extract the operation name from a Figma tool name */
@@ -173,6 +180,9 @@ function getToolIcon(name: string): React.JSX.Element {
   if (isFigmaTool(name)) {
     return <Figma className={cn(iconClass, FIGMA_ICON_COLOR)} />
   }
+  if (isFileChangeTool(lowerName)) {
+    return <Pencil className={iconClass} />
+  }
   // Default
   return <Terminal className={iconClass} />
 }
@@ -256,6 +266,18 @@ function getToolLabel(name: string, input: Record<string, unknown>, cwd?: string
     return getFigmaOperationLabel(getFigmaOperation(name))
   }
 
+  // Show file path for fileChange (Codex)
+  if (isFileChangeTool(lowerName)) {
+    const changes = Array.isArray(input.changes)
+      ? (input.changes as Array<{ path: string }>)
+      : []
+    if (changes.length > 0) {
+      const firstPath = changes[0]?.path || ''
+      const label = shortenPath(firstPath, cwd)
+      return changes.length > 1 ? `${label} +${changes.length - 1} more` : label
+    }
+  }
+
   return ''
 }
 
@@ -320,7 +342,10 @@ const TOOL_RENDERERS: Record<string, React.FC<ToolViewProps>> = {
   WebFetch: WebFetchToolView,
   webfetch: WebFetchToolView,
   web_fetch: WebFetchToolView,
-  'mcp__hive-lsp__lsp': LspToolView
+  'mcp__hive-lsp__lsp': LspToolView,
+  fileChange: FileChangeToolView,
+  file_change: FileChangeToolView,
+  apply_patch: FileChangeToolView
 }
 
 /** Resolve a tool name to its rich renderer, falling back to FallbackToolView */
@@ -348,6 +373,7 @@ function getToolRenderer(name: string): React.FC<ToolViewProps> {
   if (isLspTool(name)) return LspToolView
   // Figma: explicit fallback for now, will get a dedicated FigmaToolView later
   if (isFigmaTool(name)) return FallbackToolView
+  if (isFileChangeTool(lower)) return FileChangeToolView
   // Fallback
   return FallbackToolView
 }
@@ -664,6 +690,31 @@ function CollapsedContent({
     )
   }
 
+  // FileChange (Codex)
+  if (isFileChangeTool(lowerName)) {
+    const changes = Array.isArray(input.changes)
+      ? (input.changes as Array<{ path: string; kind: { type: string } }>)
+      : []
+    const firstPath = changes[0]?.path || ''
+    const changeCount = changes.length
+    return (
+      <>
+        <span className="text-muted-foreground shrink-0">
+          <Pencil className="h-3.5 w-3.5" />
+        </span>
+        <span className="font-medium text-foreground shrink-0">Edit</span>
+        <span className="font-mono text-muted-foreground truncate min-w-0">
+          {shortenPath(firstPath, cwd)}
+        </span>
+        {changeCount > 1 && (
+          <span className="text-[10px] bg-blue-500/15 text-blue-500 dark:text-blue-400 rounded px-1 py-0.5 font-medium shrink-0">
+            +{changeCount - 1} more
+          </span>
+        )}
+      </>
+    )
+  }
+
   // Default fallback
   const label = getToolLabel(name, input, cwd)
   return (
@@ -684,6 +735,7 @@ function isSkillTool(name: string): boolean {
 /** Detect file operation tools that should use the compact inline layout */
 export function isFileOperation(name: string): boolean {
   if (isTodoWriteTool(name)) return false
+  if (isFileChangeTool(name)) return true
   const lower = name.toLowerCase()
   return (
     lower.includes('read') ||
@@ -733,6 +785,7 @@ const CompactFileToolCard = memo(function CompactFileToolCard({
   const isSkill = isSkillTool(toolUse.name)
   const isLsp = isLspTool(toolUse.name)
   const isFigma = isFigmaTool(toolUse.name)
+  const isFileChange = isFileChangeTool(toolUse.name)
   const filePath = (toolUse.input.filePath ||
     toolUse.input.file_path ||
     toolUse.input.path ||
@@ -748,8 +801,8 @@ const CompactFileToolCard = memo(function CompactFileToolCard({
 
   const Renderer = useMemo(() => getToolRenderer(toolUse.name), [toolUse.name])
 
-  // Use CollapsedContent for search, LSP, and Figma tools (they have rich collapsed headers)
-  const useCollapsedContent = isSearch || isLsp || isFigma
+  // Use CollapsedContent for search, LSP, Figma, and fileChange tools (they have rich collapsed headers)
+  const useCollapsedContent = isSearch || isLsp || isFigma || isFileChange
 
   const icon = useMemo(() => {
     if (isExpanded) {
