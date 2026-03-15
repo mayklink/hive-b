@@ -64,6 +64,7 @@ interface PendingHitlEntry {
   threadId: string
   hiveSessionId: string
   worktreePath: string
+  turnId?: string
 }
 
 interface CodexPermissionRequest {
@@ -196,7 +197,8 @@ export class CodexImplementer implements AgentSdkImplementer {
       this.pendingApprovalSessions.set(requestId, {
         threadId: targetSession.threadId,
         hiveSessionId: targetSession.hiveSessionId,
-        worktreePath: targetSession.worktreePath
+        worktreePath: targetSession.worktreePath,
+        turnId: event.turnId
       })
 
       const payload = asObject(event.payload)
@@ -220,7 +222,8 @@ export class CodexImplementer implements AgentSdkImplementer {
       this.pendingQuestions.set(requestId, {
         threadId: targetSession.threadId,
         hiveSessionId: targetSession.hiveSessionId,
-        worktreePath: targetSession.worktreePath
+        worktreePath: targetSession.worktreePath,
+        turnId: event.turnId
       })
 
       const payload = asObject(event.payload)
@@ -246,7 +249,9 @@ export class CodexImplementer implements AgentSdkImplementer {
     })
     const title = asString(payload?.threadName)
     if (!title) {
-      log.warn('DEBUG handleProviderTitleUpdate: threadName field empty/missing, tried payload?.threadName')
+      log.warn(
+        'DEBUG handleProviderTitleUpdate: threadName field empty/missing, tried payload?.threadName'
+      )
       return
     }
 
@@ -500,6 +505,7 @@ export class CodexImplementer implements AgentSdkImplementer {
     let pendingPlanText: string | null = null
     let turnCompleted = false
     let turnFailed = false
+    let completedTurnId: string | undefined
 
     const handleEvent = (event: CodexManagerEvent) => {
       // Only handle events for this thread
@@ -567,6 +573,8 @@ export class CodexImplementer implements AgentSdkImplementer {
         turnCompleted = true
         const payload = event.payload as Record<string, unknown> | undefined
         const turnObj = payload?.turn as Record<string, unknown> | undefined
+        completedTurnId =
+          event.turnId ?? (typeof turnObj?.id === 'string' ? (turnObj.id as string) : undefined)
         const status = (turnObj?.status as string) ?? (payload?.state as string)
         if (status === 'failed') {
           turnFailed = true
@@ -680,6 +688,7 @@ export class CodexImplementer implements AgentSdkImplementer {
           tone: 'info',
           summary: 'Plan ready',
           requestId,
+          turnId: completedTurnId,
           payload: { plan: pendingPlanText, toolUseID }
         })
         this.sendToRenderer('opencode:stream', {
@@ -903,6 +912,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         tone: 'approval',
         summary: 'User input answered',
         requestId,
+        turnId: pending.turnId,
         payload: { answers: codexAnswers }
       })
     }
@@ -935,6 +945,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         tone: 'approval',
         summary: 'User input dismissed',
         requestId,
+        turnId: pending.turnId,
         payload: { dismissed: true }
       })
     }
@@ -972,6 +983,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         tone: 'approval',
         summary: 'Approval resolved',
         requestId,
+        turnId: pending.turnId,
         payload: { decision }
       })
     }
@@ -1278,6 +1290,7 @@ export class CodexImplementer implements AgentSdkImplementer {
       tone: 'approval' | 'info' | 'error'
       summary: string
       requestId?: string
+      turnId?: string
       payload?: unknown
     }
   ): void {
@@ -1289,6 +1302,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         session_id: session.hiveSessionId,
         agent_session_id: session.threadId,
         thread_id: session.threadId,
+        turn_id: params.turnId ?? null,
         request_id: params.requestId ?? null,
         kind: params.kind,
         tone: params.tone,
@@ -1719,10 +1733,7 @@ export class CodexImplementer implements AgentSdkImplementer {
     }
   }
 
-  private async applyGeneratedTitle(
-    session: CodexSessionState,
-    title: string
-  ): Promise<void> {
+  private async applyGeneratedTitle(session: CodexSessionState, title: string): Promise<void> {
     const trimmedTitle = title.trim()
     if (!trimmedTitle) return
 
@@ -1857,9 +1868,35 @@ export class CodexImplementer implements AgentSdkImplementer {
       const turnObj = asObject(turn)
       if (!turnObj) continue
 
+      const turnId = asString(turnObj.id)
       const turnTimestamp = asString(turnObj.createdAt) ?? asString(turnObj.updatedAt)
       const items = turnObj.items as unknown[] | undefined
       if (Array.isArray(items) && items.length > 0) {
+        let assistantItemOrdinal = 0
+        let userItemOrdinal = 0
+
+        const makeUserMessageId = (itemId?: string): string | undefined => {
+          if (!turnId) return itemId
+          if (userItemOrdinal === 0) {
+            userItemOrdinal += 1
+            return `${turnId}:user`
+          }
+          const suffix = itemId ?? `item-${userItemOrdinal + 1}`
+          userItemOrdinal += 1
+          return `${turnId}:user:${suffix}`
+        }
+
+        const makeAssistantMessageId = (itemId?: string): string | undefined => {
+          if (!turnId) return itemId
+          if (assistantItemOrdinal === 0) {
+            assistantItemOrdinal += 1
+            return `${turnId}:assistant`
+          }
+          const suffix = itemId ?? `item-${assistantItemOrdinal + 1}`
+          assistantItemOrdinal += 1
+          return `${turnId}:assistant:${suffix}`
+        }
+
         for (const item of items) {
           const itemObj = asObject(item)
           if (!itemObj) continue
@@ -1886,9 +1923,10 @@ export class CodexImplementer implements AgentSdkImplementer {
             }
 
             if (textParts.length > 0) {
+              const messageId = makeUserMessageId(itemId)
               pushMessage(
                 {
-                  ...(itemId ? { id: itemId } : {}),
+                  ...(messageId ? { id: messageId } : {}),
                   role: 'user',
                   parts: textParts,
                   timestamp: itemTimestamp
@@ -1902,9 +1940,10 @@ export class CodexImplementer implements AgentSdkImplementer {
           if (itemType === 'agentMessage' || itemType === 'plan') {
             const text = asString(itemObj.text)
             if (text) {
+              const messageId = makeAssistantMessageId(itemId)
               pushMessage(
                 {
-                  ...(itemId ? { id: itemId } : {}),
+                  ...(messageId ? { id: messageId } : {}),
                   role: 'assistant',
                   parts: [
                     {
@@ -1931,9 +1970,10 @@ export class CodexImplementer implements AgentSdkImplementer {
             const reasoningText = [...summary, ...content].join('\n').trim()
 
             if (reasoningText) {
+              const messageId = makeAssistantMessageId(itemId)
               pushMessage(
                 {
-                  ...(itemId ? { id: itemId } : {}),
+                  ...(messageId ? { id: messageId } : {}),
                   role: 'assistant',
                   parts: [
                     {
@@ -1971,7 +2011,7 @@ export class CodexImplementer implements AgentSdkImplementer {
           const timestamp = asString(turnObj.createdAt) ?? new Date().toISOString()
           pushMessage(
             {
-              ...(asString(turnObj.id) ? { id: `${asString(turnObj.id)}:user` } : {}),
+              ...(turnId ? { id: `${turnId}:user` } : {}),
               role: 'user',
               parts: textParts,
               timestamp
@@ -1988,7 +2028,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         const timestamp = asString(turnObj.updatedAt) ?? new Date().toISOString()
         pushMessage(
           {
-            ...(asString(turnObj.id) ? { id: `${asString(turnObj.id)}:assistant` } : {}),
+            ...(turnId ? { id: `${turnId}:assistant` } : {}),
             role: 'assistant',
             parts: [
               {
@@ -2018,7 +2058,7 @@ export class CodexImplementer implements AgentSdkImplementer {
           const timestamp = asString(turnObj.updatedAt) ?? new Date().toISOString()
           pushMessage(
             {
-              ...(asString(turnObj.id) ? { id: `${asString(turnObj.id)}:assistant` } : {}),
+              ...(turnId ? { id: `${turnId}:assistant` } : {}),
               role: 'assistant',
               parts: assistantParts,
               timestamp

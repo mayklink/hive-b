@@ -2783,9 +2783,12 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
         return
       }
 
-      const loadedMessages = mapOpencodeMessagesToSessionViewMessages(
-        Array.isArray(transcriptResult.messages) ? transcriptResult.messages : []
-      )
+      const rawMessages = Array.isArray(transcriptResult.messages) ? transcriptResult.messages : []
+      let loadedMessages = mapOpencodeMessagesToSessionViewMessages(rawMessages)
+      if (session.agent_sdk === 'codex') {
+        const durableState = await loadCodexDurableState(sessionId)
+        loadedMessages = mergeCodexActivityMessages(loadedMessages, durableState.activities)
+      }
       setMessages(loadedMessages)
       setViewState({ status: 'connected' })
     } catch (error) {

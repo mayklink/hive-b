@@ -685,8 +685,10 @@ describe('Codex Abort & getMessages', () => {
       const messages = await impl.getMessages('/test', 'thread-msg-1')
 
       expect(messages).toHaveLength(2)
+      expect((messages[0] as any).id).toBe('turn-1:user')
       expect((messages[0] as any).role).toBe('user')
       expect((messages[0] as any).parts[0].text).toBe('Saved user message')
+      expect((messages[1] as any).id).toBe('turn-1:assistant')
       expect((messages[1] as any).role).toBe('assistant')
       expect((messages[1] as any).parts[0].text).toBe('Saved assistant reply')
     })
