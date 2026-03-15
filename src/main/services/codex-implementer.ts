@@ -185,13 +185,16 @@ export class CodexImplementer implements AgentSdkImplementer {
 
       const payload = asObject(event.payload)
       const tokenUsage = asObject(payload?.tokenUsage)
-      const total = asObject(tokenUsage?.total)
+      // Use "last" (per-turn prompt size) not "total" (cumulative).
+      // The context window shows how full the current prompt is,
+      // not the sum of all tokens consumed across every turn.
+      const last = asObject(tokenUsage?.last)
       const contextWindow = asNumber(tokenUsage?.modelContextWindow) ?? 0
 
-      const inputTokens = asNumber(total?.inputTokens) ?? 0
-      const cachedInputTokens = asNumber(total?.cachedInputTokens) ?? 0
-      const outputTokens = asNumber(total?.outputTokens) ?? 0
-      const reasoningOutputTokens = asNumber(total?.reasoningOutputTokens) ?? 0
+      const inputTokens = asNumber(last?.inputTokens) ?? 0
+      const cachedInputTokens = asNumber(last?.cachedInputTokens) ?? 0
+      const outputTokens = asNumber(last?.outputTokens) ?? 0
+      const reasoningTokens = asNumber(last?.reasoningOutputTokens) ?? 0
 
       const modelID = resolveCodexModelSlug(
         asString(payload?.model) ?? this.selectedModel
@@ -202,13 +205,13 @@ export class CodexImplementer implements AgentSdkImplementer {
         sessionId: targetSession.hiveSessionId,
         data: {
           tokens: {
-            // OpenAI inputTokens includes cached; subtract so
+            // inputTokens includes cached; subtract so
             // input + cacheRead = total prompt tokens in store
             input: inputTokens - cachedInputTokens,
             cacheRead: cachedInputTokens,
             cacheWrite: 0,
             output: outputTokens,
-            reasoning: reasoningOutputTokens
+            reasoning: reasoningTokens
           },
           model: { providerID: 'codex', modelID },
           contextWindow
@@ -385,6 +388,10 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     // Otherwise, start a new session with thread resume
     try {
+      // Ensure the manager event listener is attached so notifications
+      // like thread/tokenUsage/updated reach handleManagerEvent.
+      this.attachManagerListener()
+
       const resolvedModel = resolveCodexModelSlug(this.selectedModel)
       const providerSession = await this.manager.startSession({
         cwd: worktreePath,
@@ -859,8 +866,6 @@ export class CodexImplementer implements AgentSdkImplementer {
     if (session.status !== 'closed') {
       try {
         const threadSnapshot = await this.manager.readThread(session.threadId)
-        // Extract token usage from the snapshot (hydrates context bar on reconnect)
-        this.emitTokenUsageFromSnapshot(session, threadSnapshot)
         const parsed = this.parseThreadSnapshot(threadSnapshot)
         if (parsed.length > 0) {
           session.messages = parsed
@@ -1284,71 +1289,95 @@ export class CodexImplementer implements AgentSdkImplementer {
   }
 
   /**
-   * Read the thread snapshot and extract token usage, emitting it to the
-   * renderer so the context bar shows accumulated usage on reconnect.
+   * Hydrate token usage on reconnect by reading the session JSONL file.
+   *
+   * thread/read does NOT include tokenUsage data, but the JSONL session
+   * file contains event_msg entries with type "token_count" that carry
+   * full cumulative token data.  We read the file, find the LAST
+   * token_count event, and emit a session.context_usage event.
    */
   private async hydrateTokenUsageFromThread(session: CodexSessionState): Promise<void> {
     try {
+      // 1. Get the JSONL path from thread/read
       const snapshot = await this.manager.readThread(session.threadId)
-      this.emitTokenUsageFromSnapshot(session, snapshot)
+      const obj = asObject(snapshot)
+      const threadObj = asObject(obj?.thread) ?? obj
+      const jsonlPath = asString(threadObj?.path)
+      if (!jsonlPath) {
+        log.debug('hydrateTokenUsage: no path in thread/read response')
+        return
+      }
+
+      // 2. Read the JSONL file and find the last token_count event
+      const { readFile } = await import('node:fs/promises')
+      const content = await readFile(jsonlPath, 'utf-8')
+      const lines = content.split('\n').filter((l) => l.trim())
+
+      let lastTokenCount: Record<string, unknown> | undefined
+      for (let i = lines.length - 1; i >= 0; i--) {
+        try {
+          const entry = JSON.parse(lines[i]) as Record<string, unknown>
+          const msg = asObject(entry.msg)
+          if (msg?.type === 'token_count') {
+            lastTokenCount = asObject(msg.info)
+            break
+          }
+        } catch {
+          continue
+        }
+      }
+
+      if (!lastTokenCount) {
+        log.debug('hydrateTokenUsage: no token_count in JSONL')
+        return
+      }
+
+      // 3. Extract token data (snake_case fields from JSONL)
+      // Use last_token_usage (per-turn prompt size), not total_token_usage
+      // (cumulative). The context bar shows current prompt fill, not
+      // lifetime consumption.
+      const lastUsage = asObject(lastTokenCount.last_token_usage)
+      if (!lastUsage) return
+
+      const inputTokens = asNumber(lastUsage.input_tokens) ?? 0
+      const cachedInputTokens = asNumber(lastUsage.cached_input_tokens) ?? 0
+      const outputTokens = asNumber(lastUsage.output_tokens) ?? 0
+      const reasoningTokens = asNumber(lastUsage.reasoning_output_tokens) ?? 0
+      const contextWindow =
+        asNumber(lastTokenCount.model_context_window) ?? 0
+
+      if (inputTokens === 0 && outputTokens === 0) return
+
+      const modelID = resolveCodexModelSlug(this.selectedModel)
+
+      this.sendToRenderer('opencode:stream', {
+        type: 'session.context_usage',
+        sessionId: session.hiveSessionId,
+        data: {
+          tokens: {
+            input: inputTokens - cachedInputTokens,
+            cacheRead: cachedInputTokens,
+            cacheWrite: 0,
+            output: outputTokens,
+            reasoning: reasoningTokens
+          },
+          model: { providerID: 'codex', modelID },
+          contextWindow
+        }
+      })
+
+      log.info('hydrateTokenUsage: emitted context_usage from JSONL', {
+        hiveSessionId: session.hiveSessionId,
+        inputTokens,
+        contextWindow,
+        modelID
+      })
     } catch (error) {
-      log.debug('hydrateTokenUsageFromThread: readThread failed', {
+      log.debug('hydrateTokenUsage: failed', {
         hiveSessionId: session.hiveSessionId,
         error: error instanceof Error ? error.message : String(error)
       })
     }
-  }
-
-  /**
-   * Extract tokenUsage from a thread/read snapshot and send it to the
-   * renderer as a session.context_usage event.
-   */
-  private emitTokenUsageFromSnapshot(session: CodexSessionState, snapshot: unknown): void {
-    const obj = asObject(snapshot)
-    const threadObj = asObject(obj?.thread) ?? obj
-    const tokenUsage = asObject(threadObj?.tokenUsage)
-    if (!tokenUsage) return
-
-    const total = asObject(tokenUsage.total)
-    if (!total) return
-
-    const inputTokens = asNumber(total.inputTokens) ?? 0
-    const cachedInputTokens = asNumber(total.cachedInputTokens) ?? 0
-    const outputTokens = asNumber(total.outputTokens) ?? 0
-    const reasoningOutputTokens = asNumber(total.reasoningOutputTokens) ?? 0
-    const contextWindow = asNumber(tokenUsage.modelContextWindow) ?? 0
-
-    // Only emit if there's actual usage data
-    if (inputTokens === 0 && outputTokens === 0) return
-
-    const modelID = resolveCodexModelSlug(
-      asString(threadObj?.model) ?? this.selectedModel
-    )
-
-    this.sendToRenderer('opencode:stream', {
-      type: 'session.context_usage',
-      sessionId: session.hiveSessionId,
-      data: {
-        tokens: {
-          // OpenAI inputTokens includes cached; subtract so
-          // input + cacheRead = total prompt tokens in store
-          input: inputTokens - cachedInputTokens,
-          cacheRead: cachedInputTokens,
-          cacheWrite: 0,
-          output: outputTokens,
-          reasoning: reasoningOutputTokens
-        },
-        model: { providerID: 'codex', modelID },
-        contextWindow
-      }
-    })
-
-    log.info('hydrateTokenUsageFromThread: emitted context_usage', {
-      hiveSessionId: session.hiveSessionId,
-      inputTokens,
-      contextWindow,
-      modelID
-    })
   }
 
   private findSessionByThreadId(threadId: string): CodexSessionState | undefined {
