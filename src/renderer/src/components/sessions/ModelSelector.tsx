@@ -250,12 +250,15 @@ export function ModelSelector({ sessionId, value, onChange }: ModelSelectorProps
     toast.success(`Variant: ${nextVariant}`)
   }, [selectedModel, currentModel, agentSdk, sessionId, onChange])
 
-  // Listen for centralized Alt+T shortcut via custom event
+  // Listen for centralized Alt+T shortcut via custom event (session selectors only).
+  // Controlled-mode selectors (e.g. Settings > Models) must not react to the global
+  // shortcut — otherwise every selector on the page cycles its variant at once.
   useEffect(() => {
+    if (onChange) return
     const handleCycleVariant = (): void => cycleVariant()
     window.addEventListener('hive:cycle-variant', handleCycleVariant)
     return () => window.removeEventListener('hive:cycle-variant', handleCycleVariant)
-  }, [cycleVariant])
+  }, [cycleVariant, onChange])
 
   // Determine display name for the pill
   const displayName = currentModel
