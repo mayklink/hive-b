@@ -67,9 +67,9 @@ export function ModelSelector({ sessionId, value, onChange }: ModelSelectorProps
           variant: session.model_variant ?? undefined
         }
       : null
-  // Use controlled value if provided (for settings), otherwise use session/global.
-  // value={null} means "no model configured" (distinct from value={undefined} which means uncontrolled).
-  const selectedModel = value !== undefined ? value : (sessionModel ?? globalModel)
+  // Use controlled value if provided (non-null), otherwise fall through to session/global.
+  // value={null} means "use global fallback" — the selector displays the effective model.
+  const selectedModel = (value !== undefined && value !== null) ? value : (sessionModel ?? globalModel)
   const showModelProvider = useSettingsStore((s) => s.showModelProvider)
   const favoriteModels = useSettingsStore((s) => s.favoriteModels)
   const toggleFavoriteModel = useSettingsStore((s) => s.toggleFavoriteModel)
@@ -185,14 +185,8 @@ export function ModelSelector({ sessionId, value, onChange }: ModelSelectorProps
     }
   }
 
-  // In controlled mode (value prop provided), null means "none configured"
-  const isControlled = value !== undefined
-
   function isActiveModel(model: ModelInfo): boolean {
     if (!selectedModel) {
-      // In controlled mode, null means nothing is selected
-      if (isControlled) return false
-      // In uncontrolled mode, fall back to system default
       return model.providerID === 'anthropic' && model.id === 'claude-opus-4-5-20251101'
     }
     return selectedModel.providerID === model.providerID && selectedModel.modelID === model.id
@@ -200,7 +194,6 @@ export function ModelSelector({ sessionId, value, onChange }: ModelSelectorProps
 
   // Find the currently selected model info
   const currentModel = useMemo((): ModelInfo | null => {
-    if (!selectedModel && isControlled) return null
     const modelID = selectedModel?.modelID || 'claude-opus-4-5-20251101'
     const providerID = selectedModel?.providerID || 'anthropic'
     for (const provider of providers) {
@@ -210,7 +203,7 @@ export function ModelSelector({ sessionId, value, onChange }: ModelSelectorProps
       }
     }
     return null
-  }, [selectedModel, isControlled, providers])
+  }, [selectedModel, providers])
 
   const providerPrefix = useMemo(() => {
     if (!showModelProvider) return null
@@ -267,12 +260,10 @@ export function ModelSelector({ sessionId, value, onChange }: ModelSelectorProps
   // Determine display name for the pill
   const displayName = currentModel
     ? getDisplayName(currentModel)
-    : isControlled && !selectedModel
-      ? 'Use global'
-      : getDisplayName({
-          id: selectedModel?.modelID || 'claude-opus-4-5-20251101',
-          providerID: 'anthropic'
-        })
+    : getDisplayName({
+        id: selectedModel?.modelID || 'claude-opus-4-5-20251101',
+        providerID: 'anthropic'
+      })
 
   const filteredProviders = useMemo(() => {
     if (!filter.trim()) return providers
