@@ -258,6 +258,14 @@ function extractSessionErrorMessage(data: unknown): string {
   )
 }
 
+function extractSessionErrorStderr(data: unknown): string | null {
+  const record = asRecord(data)
+  if (!record) return null
+
+  const nestedData = asRecord(record.data)
+  return asString(nestedData?.stderr) || asString(record.stderr) || null
+}
+
 function createLocalMessage(role: OpenCodeMessage['role'], content: string): OpenCodeMessage {
   return {
     id: `local-${crypto.randomUUID()}`,
@@ -418,6 +426,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
   const [isStreaming, setIsStreaming] = useState(false)
   const [sessionRetry, setSessionRetry] = useState<SessionRetryState | null>(null)
   const [sessionErrorMessage, setSessionErrorMessage] = useState<string | null>(null)
+  const [sessionErrorStderr, setSessionErrorStderr] = useState<string | null>(null)
   const [retryTickMs, setRetryTickMs] = useState<number>(Date.now())
   const [elapsedTickMs, setElapsedTickMs] = useState(Date.now())
 
@@ -1632,6 +1641,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           if (event.type === 'session.error') {
             if (event.childSessionId) return
             setSessionErrorMessage(extractSessionErrorMessage(event.data))
+            setSessionErrorStderr(extractSessionErrorStderr(event.data))
             return
           }
 
@@ -2116,6 +2126,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
               // can finalize the new response.
               setSessionRetry(null)
               setSessionErrorMessage(null)
+              setSessionErrorStderr(null)
               setIsStreaming(true)
               hasFinalizedCurrentResponseRef.current = false
               newPromptPendingRef.current = false
@@ -2170,6 +2181,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
               // Session is done — flush and finalize immediately
               setSessionRetry(null)
               setSessionErrorMessage(null)
+              setSessionErrorStderr(null)
               immediateFlush()
               setIsSending(false)
               setQueuedMessages([])
@@ -2206,6 +2218,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
       setViewState({ status: 'connecting' })
       setSessionRetry(null)
       setSessionErrorMessage(null)
+      setSessionErrorStderr(null)
 
       // Part A: Instantly restore streaming indicators from the global status store.
       // useWorktreeStatusStore persists across SessionView remounts (key= causes remount),
@@ -2588,6 +2601,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
               if (!hasPendingPlanOnReconnect) {
                 setSessionRetry(null)
                 setSessionErrorMessage(null)
+                setSessionErrorStderr(null)
                 setIsStreaming(true)
                 setIsSending(true)
                 const currentMode = useSessionStore.getState().getSessionMode(sessionId)
@@ -2601,6 +2615,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                 setIsSending(false)
                 setSessionRetry(null)
                 setSessionErrorMessage(null)
+                setSessionErrorStderr(null)
                 // If the session was previously busy, the agent finished while we
                 // were away — show a completion badge instead of clearing to "Ready".
                 if (storedStatus?.status === 'working' || storedStatus?.status === 'planning') {
@@ -2711,6 +2726,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
     setRevertMessageID(null)
     setSessionRetry(null)
     setSessionErrorMessage(null)
+    setSessionErrorStderr(null)
     setWorktreePath(null)
     transcriptSourceRef.current = {
       worktreePath: null,
@@ -3225,6 +3241,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
       try {
         setSessionRetry(null)
         setSessionErrorMessage(null)
+        setSessionErrorStderr(null)
 
         // When sending after an undo, trim the messages array to remove the
         // undone tail.  Simply clearing revertMessageID would make visibleMessages
@@ -4344,6 +4361,11 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                     <div>
                       <p className="text-sm font-medium">Session error</p>
                       <p className="mt-0.5 text-sm text-destructive/90">{sessionErrorMessage}</p>
+                      {sessionErrorStderr && (
+                        <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded bg-destructive/10 px-2 py-1.5 font-mono text-xs text-destructive/80">
+                          {sessionErrorStderr}
+                        </pre>
+                      )}
                     </div>
                   </div>
                 </div>

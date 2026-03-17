@@ -117,6 +117,8 @@ export interface ClaudeSessionState {
   /** Title generation was skipped for the first prompt (e.g. /using-superpowers);
    *  fire on the next real user message instead. */
   titleDeferred: boolean
+  /** Accumulated stderr output from the Claude Code process for the current prompt */
+  stderrBuffer: string[]
 }
 
 export class ClaudeCodeImplementer implements AgentSdkImplementer {
@@ -203,7 +205,8 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       revertDiff: null,
       pendingFork: false,
       pendingResumeSessionAt: null,
-      titleDeferred: false
+      titleDeferred: false,
+      stderrBuffer: []
     }
     this.sessions.set(key, state)
 
@@ -254,7 +257,8 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       revertDiff: null,
       pendingFork: false,
       pendingResumeSessionAt: null,
-      titleDeferred: false
+      titleDeferred: false,
+      stderrBuffer: []
     }
     this.sessions.set(key, state)
 
@@ -363,6 +367,9 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     session.revertMessageID = null
     session.revertCheckpointUuid = null
     session.revertDiff = null
+
+    // Reset stderr buffer so it only captures output from this prompt
+    session.stderrBuffer = []
 
     this.emitStatus(session.hiveSessionId, 'busy')
     log.info('Prompt: starting', {
@@ -516,6 +523,14 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         env: {
           ...process.env,
           CLAUDE_CODE_ENABLE_SDK_FILE_CHECKPOINTING: '1'
+        },
+        stderr: (data: string) => {
+          session.stderrBuffer.push(data)
+          log.debug('Claude Code stderr', {
+            worktreePath,
+            agentSessionId,
+            stderr: data.trim()
+          })
         },
         canUseTool: this.createCanUseToolCallback(session),
         ...(this.claudeBinaryPath ? { pathToClaudeCodeExecutable: this.claudeBinaryPath } : {})
@@ -924,20 +939,22 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       this.emitStatus(session.hiveSessionId, 'idle')
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
+      const stderrOutput = session.stderrBuffer.join('').trim() || undefined
       log.error(
         'Prompt streaming error',
         error instanceof Error ? error : new Error(errorMessage),
         {
           worktreePath,
           agentSessionId,
-          error: errorMessage
+          error: errorMessage,
+          stderr: stderrOutput
         }
       )
 
       this.sendToRenderer('opencode:stream', {
         type: 'session.error',
         sessionId: session.hiveSessionId,
-        data: { error: errorMessage }
+        data: { error: errorMessage, stderr: stderrOutput }
       })
       this.emitStatus(session.hiveSessionId, 'idle')
     } finally {
