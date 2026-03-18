@@ -349,6 +349,7 @@ declare global {
       readFromClipboard: () => Promise<string>
       detectLanguage: (projectPath: string) => Promise<string | null>
       findXcworkspace: (projectPath: string) => Promise<string | null>
+      isAndroidProject: (projectPath: string) => Promise<boolean>
       loadLanguageIcons: () => Promise<Record<string, string>>
       initRepository: (path: string) => Promise<{ success: boolean; error?: string }>
       pickProjectIcon: (projectId: string) => Promise<{

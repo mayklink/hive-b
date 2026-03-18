@@ -1,5 +1,5 @@
 import { ipcMain, dialog, shell, clipboard, BrowserWindow, app } from 'electron'
-import { existsSync, readdirSync, copyFileSync, unlinkSync, mkdirSync } from 'fs'
+import { existsSync, readdirSync, readFileSync, copyFileSync, unlinkSync, mkdirSync } from 'fs'
 import { join, extname } from 'path'
 import { createLogger } from '../services/logger'
 import {
@@ -194,6 +194,44 @@ export function registerProjectHandlers(): void {
         return null
       } catch {
         return null
+      }
+    }
+  )
+
+  // Detect whether a project is an Android project (checks for AndroidManifest.xml or Android Gradle plugins)
+  ipcMain.handle(
+    'project:isAndroidProject',
+    (_event, projectPath: string): boolean => {
+      try {
+        // Check for AndroidManifest.xml in standard locations
+        if (existsSync(join(projectPath, 'app', 'src', 'main', 'AndroidManifest.xml'))) return true
+        if (existsSync(join(projectPath, 'AndroidManifest.xml'))) return true
+
+        // Check build.gradle or build.gradle.kts for Android plugins
+        for (const buildFile of ['build.gradle', 'build.gradle.kts']) {
+          const buildPath = join(projectPath, buildFile)
+          if (existsSync(buildPath)) {
+            const content = readFileSync(buildPath, 'utf-8')
+            if (content.includes('com.android.application') || content.includes('com.android.library')) {
+              return true
+            }
+          }
+        }
+
+        // Check app/build.gradle or app/build.gradle.kts for Android plugins
+        for (const buildFile of ['build.gradle', 'build.gradle.kts']) {
+          const buildPath = join(projectPath, 'app', buildFile)
+          if (existsSync(buildPath)) {
+            const content = readFileSync(buildPath, 'utf-8')
+            if (content.includes('com.android.application') || content.includes('com.android.library')) {
+              return true
+            }
+          }
+        }
+
+        return false
+      } catch {
+        return false
       }
     }
   )

@@ -272,6 +272,9 @@ function registerSystemHandlers(): void {
         case 'ghostty':
           spawn('open', ['-a', 'Ghostty', path], { detached: true, stdio: 'ignore' })
           break
+        case 'android-studio':
+          spawn('open', ['-a', 'Android Studio', path], { detached: true, stdio: 'ignore' })
+          break
         case 'copy-path':
           clipboard.writeText(path)
           break

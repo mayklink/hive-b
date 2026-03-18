@@ -199,6 +199,10 @@ const projectOps = {
   findXcworkspace: (projectPath: string): Promise<string | null> =>
     ipcRenderer.invoke('project:findXcworkspace', projectPath),
 
+  // Detect whether a project is an Android project
+  isAndroidProject: (projectPath: string): Promise<boolean> =>
+    ipcRenderer.invoke('project:isAndroidProject', projectPath),
+
   // Load custom language icons as data URLs
   loadLanguageIcons: (): Promise<Record<string, string>> =>
     ipcRenderer.invoke('project:loadLanguageIcons'),
