@@ -97,6 +97,7 @@ function SessionTab({
   const vimModeEnabled = useSettingsStore((s) => s.vimModeEnabled)
   const hintMode = useHintStore((s) => s.mode)
   const hintPendingChar = useHintStore((s) => s.pendingChar)
+  const hintActionMode = useHintStore((s) => s.actionMode)
 
   const sessionStatus = useWorktreeStatusStore(
     (state) => state.sessionStatuses[sessionId]?.status ?? null
@@ -214,7 +215,7 @@ function SessionTab({
             <span className="truncate flex-1">{name || 'Untitled'}</span>
           )}
           {hintCode && vimModeEnabled && vimMode === 'normal' && (
-            <HintBadge code={hintCode} mode={hintMode} pendingChar={hintPendingChar} />
+            <HintBadge code={hintCode} mode={hintMode} pendingChar={hintPendingChar} actionMode={hintActionMode} />
           )}
           <button
             onClick={onClose}

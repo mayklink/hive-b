@@ -42,6 +42,20 @@ export function ProjectFilter({ value, onChange }: ProjectFilterProps): React.JS
       e.preventDefault()
       enterPending(e.key)
     } else if (mode === 'pending') {
+      const { actionMode, setActionMode } = useHintStore.getState()
+
+      // Toggle pin/archive action mode (mirrors vim navigation P/D interception)
+      if (e.key === 'P') {
+        setActionMode(actionMode === 'pin' ? 'select' : 'pin')
+        e.preventDefault()
+        return
+      }
+      if (e.key === 'D') {
+        setActionMode(actionMode === 'archive' ? 'select' : 'archive')
+        e.preventDefault()
+        return
+      }
+
       // Find entry where code[0] === pendingChar and code[1] === e.key.toLowerCase()
       const lowerKey = e.key.toLowerCase()
       let matchedKey: string | null = null
@@ -54,7 +68,7 @@ export function ProjectFilter({ value, onChange }: ProjectFilterProps): React.JS
 
       if (matchedKey !== null) {
         e.preventDefault()
-        dispatchHintAction(matchedKey)
+        dispatchHintAction(matchedKey, actionMode)
         exitPending()
       } else if (isUppercase) {
         e.preventDefault()

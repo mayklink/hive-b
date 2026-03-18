@@ -125,6 +125,7 @@ export function WorktreeItem({
   const hint = useHintStore((s) => s.hintMap.get(worktree.id))
   const hintMode = useHintStore((s) => s.mode)
   const hintPendingChar = useHintStore((s) => s.pendingChar)
+  const hintActionMode = useHintStore((s) => s.actionMode)
   const inputFocused = useHintStore((s) => s.inputFocused)
   const vimMode = useVimModeStore((s) => s.mode)
   const vimModeEnabled = useSettingsStore((s) => s.vimModeEnabled)
@@ -637,7 +638,7 @@ export function WorktreeItem({
           </div>
 
           {/* Hint Badge (visible when filter is active and search field is focused) */}
-          {hint && (inputFocused || (vimModeEnabled && vimMode === 'normal')) && <HintBadge code={hint} mode={hintMode} pendingChar={hintPendingChar} />}
+          {hint && (inputFocused || (vimModeEnabled && vimMode === 'normal')) && <HintBadge code={hint} mode={hintMode} pendingChar={hintPendingChar} actionMode={hintActionMode} />}
 
           {/* Unread dot badge */}
           {worktreeStatus === 'unread' && (

@@ -1,12 +1,28 @@
-import { HintMode } from '@/stores/useHintStore'
+import { type HintMode, type HintActionMode } from '@/stores/useHintStore'
 
 interface HintBadgeProps {
   code: string
   mode: HintMode
   pendingChar: string | null
+  actionMode?: HintActionMode
 }
 
-export function HintBadge({ code, mode, pendingChar }: HintBadgeProps) {
+const matchColorsByAction = {
+  select: {
+    bg: 'bg-primary/20 border-primary/60',
+    text: 'text-primary'
+  },
+  pin: {
+    bg: 'bg-green-500/20 border-green-500/60',
+    text: 'text-green-500'
+  },
+  archive: {
+    bg: 'bg-red-500/20 border-red-500/60',
+    text: 'text-red-500'
+  }
+} as const
+
+export function HintBadge({ code, mode, pendingChar, actionMode = 'select' }: HintBadgeProps) {
   const isMatch = mode === 'pending' && pendingChar && code[0] === pendingChar
 
   const baseClasses =
@@ -22,11 +38,10 @@ export function HintBadge({ code, mode, pendingChar }: HintBadgeProps) {
   }
 
   if (isMatch) {
+    const colors = matchColorsByAction[actionMode]
     return (
-      <span
-        className={`${baseClasses} bg-primary/20 border-primary/60`}
-      >
-        <span className="text-primary font-bold">{code[0]}</span>
+      <span className={`${baseClasses} ${colors.bg}`}>
+        <span className={`${colors.text} font-bold`}>{code[0]}</span>
         <span className="text-foreground font-medium">{code[1]}</span>
       </span>
     )
