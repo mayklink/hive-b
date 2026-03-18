@@ -1,14 +1,18 @@
-import { useHintStore } from '@/stores/useHintStore'
+import { useHintStore, type HintActionMode } from '@/stores/useHintStore'
 import { useWorktreeStore } from '@/stores/useWorktreeStore'
 import { useProjectStore } from '@/stores/useProjectStore'
+import { usePinnedStore } from '@/stores/usePinnedStore'
+import { useConnectionStore } from '@/stores/useConnectionStore'
+import { gitToast } from '@/lib/toast'
 
 export const FIRST_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-export const SECOND_CHARS = 'abcdefghijklmnopqrstuvwxyz23456789'
+export const SECOND_CHARS = 'abcefghijklmnoqrstuvwxyz23456789'
 
 export interface HintTarget {
-  kind: 'worktree' | 'plus' | 'project'
+  kind: 'worktree' | 'plus' | 'project' | 'pinned-worktree' | 'pinned-connection' | 'connection'
   worktreeId?: string
-  projectId: string
+  connectionId?: string
+  projectId?: string
 }
 
 /**
@@ -51,6 +55,12 @@ export function assignHints(
       key = `plus:${target.projectId}`
     } else if (target.kind === 'project') {
       key = `project:${target.projectId}`
+    } else if (target.kind === 'pinned-worktree') {
+      key = `pinned-wt:${target.worktreeId}`
+    } else if (target.kind === 'pinned-connection') {
+      key = `pinned-conn:${target.connectionId}`
+    } else if (target.kind === 'connection') {
+      key = `conn:${target.connectionId}`
     } else {
       key = target.worktreeId!
     }
@@ -107,6 +117,36 @@ export function buildNormalModeTargets(
 }
 
 /**
+ * Build hint targets for pinned items and connections.
+ * Order: pinned worktrees → pinned connections → connections.
+ */
+export function buildPinnedAndConnectionTargets(
+  pinnedWorktreeIds: Set<string>,
+  pinnedConnectionIds: Set<string>,
+  connectionIds: string[],
+  worktreeProjectMap: Map<string, string>
+): HintTarget[] {
+  const targets: HintTarget[] = []
+
+  for (const worktreeId of pinnedWorktreeIds) {
+    const projectId = worktreeProjectMap.get(worktreeId)
+    targets.push({ kind: 'pinned-worktree', worktreeId, projectId })
+  }
+
+  for (const connectionId of pinnedConnectionIds) {
+    targets.push({ kind: 'pinned-connection', connectionId })
+  }
+
+  for (const connectionId of connectionIds) {
+    if (!pinnedConnectionIds.has(connectionId)) {
+      targets.push({ kind: 'connection', connectionId })
+    }
+  }
+
+  return targets
+}
+
+/**
  * Determine whether a hint badge should be visible.
  * Shows when: hint exists AND (filter input is focused OR vim mode is 'normal').
  */
@@ -118,8 +158,105 @@ export function shouldShowHintBadge(
   return !!hint && (inputFocused || vimMode === 'normal')
 }
 
-export function dispatchHintAction(key: string): void {
-  if (key.startsWith('plus:')) {
+export function dispatchHintAction(key: string, actionMode: HintActionMode = 'select'): void {
+  // Pin/archive — ignore project/plus/session targets
+  if (actionMode === 'pin' || actionMode === 'archive') {
+    if (key.startsWith('plus:') || key.startsWith('project:')) return
+
+    if (actionMode === 'pin') {
+      if (key.startsWith('pinned-wt:')) {
+        const id = key.slice('pinned-wt:'.length)
+        usePinnedStore.getState().unpinWorktree(id)
+        return
+      }
+
+      if (key.startsWith('pinned-conn:') || key.startsWith('conn:')) {
+        const id = key.startsWith('pinned-conn:')
+          ? key.slice('pinned-conn:'.length)
+          : key.slice('conn:'.length)
+        const { pinnedConnectionIds, pinConnection, unpinConnection } = usePinnedStore.getState()
+        if (pinnedConnectionIds.has(id)) {
+          unpinConnection(id)
+        } else {
+          pinConnection(id)
+        }
+        return
+      }
+
+      // Regular worktree
+      const target = useHintStore.getState().hintTargetMap.get(key)
+      if (!target || target.kind !== 'worktree' || !target.worktreeId) return
+      const { pinnedWorktreeIds, pinWorktree, unpinWorktree } = usePinnedStore.getState()
+      if (pinnedWorktreeIds.has(target.worktreeId)) {
+        unpinWorktree(target.worktreeId)
+      } else {
+        pinWorktree(target.worktreeId)
+      }
+      return
+    }
+
+    // actionMode === 'archive'
+    // Connections: no-op (too destructive for keyboard shortcut)
+    if (key.startsWith('pinned-conn:') || key.startsWith('conn:')) return
+
+    // Resolve worktreeId for both pinned-wt and regular worktree keys
+    let worktreeId: string | undefined
+    let projectId: string | undefined
+    if (key.startsWith('pinned-wt:')) {
+      worktreeId = key.slice('pinned-wt:'.length)
+      const target = useHintStore.getState().hintTargetMap.get(key)
+      projectId = target?.projectId
+    } else {
+      const target = useHintStore.getState().hintTargetMap.get(key)
+      if (!target || target.kind !== 'worktree' || !target.worktreeId) return
+      worktreeId = target.worktreeId
+      projectId = target.projectId
+    }
+
+    if (!worktreeId) return
+
+    const worktrees = Array.from(useWorktreeStore.getState().worktreesByProject.values()).flat()
+    const worktree = worktrees.find((w) => w.id === worktreeId)
+    if (!worktree || worktree.is_default) return
+
+    const project = useProjectStore.getState().projects.find((p) => p.id === projectId)
+    if (!project) return
+
+    useWorktreeStore
+      .getState()
+      .archiveWorktree(worktree.id, worktree.path, worktree.branch_name, project.path)
+      .then((result) => {
+        if (result.success) {
+          gitToast.worktreeArchived(worktree.name)
+        } else {
+          gitToast.operationFailed('archive', result.error)
+        }
+      })
+      .catch(() => {
+        gitToast.operationFailed('archive worktree')
+      })
+    return
+  }
+
+  // Default: select mode
+  if (key.startsWith('pinned-wt:')) {
+    const worktreeId = key.slice('pinned-wt:'.length)
+    const target = useHintStore.getState().hintTargetMap.get(key)
+    useWorktreeStore.getState().selectWorktree(worktreeId)
+    if (target?.projectId) {
+      const { expandedProjectIds, toggleProjectExpanded, selectProject } =
+        useProjectStore.getState()
+      selectProject(target.projectId)
+      if (!expandedProjectIds.has(target.projectId)) {
+        toggleProjectExpanded(target.projectId)
+      }
+    }
+  } else if (key.startsWith('pinned-conn:') || key.startsWith('conn:')) {
+    const connectionId = key.startsWith('pinned-conn:')
+      ? key.slice('pinned-conn:'.length)
+      : key.slice('conn:'.length)
+    useConnectionStore.getState().selectConnection(connectionId)
+  } else if (key.startsWith('plus:')) {
     const projectId = key.slice('plus:'.length)
     const { expandedProjectIds, toggleProjectExpanded } = useProjectStore.getState()
     if (!expandedProjectIds.has(projectId)) {
@@ -138,6 +275,8 @@ export function dispatchHintAction(key: string): void {
       toggleProjectExpanded(target.projectId)
     }
     useWorktreeStore.getState().selectWorktree(key)
-    useProjectStore.getState().selectProject(target.projectId)
+    if (target.projectId) {
+      useProjectStore.getState().selectProject(target.projectId)
+    }
   }
 }

@@ -35,13 +35,32 @@ export function ProjectFilter({ value, onChange }: ProjectFilterProps): React.JS
 
     if (!value) return
 
-    const { mode, pendingChar, hintMap, enterPending, exitPending } = useHintStore.getState()
+    const { mode, pendingChar, hintMap, enterPending, exitPending, actionMode, setActionMode } =
+      useHintStore.getState()
     const isUppercase = /^[A-Z]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey
 
     if (mode === 'idle' && isUppercase) {
       e.preventDefault()
       enterPending(e.key)
     } else if (mode === 'pending') {
+      // Ignore bare modifier keys so the user can press Shift+P / Shift+D
+      if (e.key === 'Shift' || e.key === 'Control' || e.key === 'Alt'
+        || e.key === 'Meta') {
+        return
+      }
+
+      // Toggle pin/archive action mode (mirrors vim navigation P/D interception)
+      if (e.key === 'P') {
+        setActionMode(actionMode === 'pin' ? 'select' : 'pin')
+        e.preventDefault()
+        return
+      }
+      if (e.key === 'D') {
+        setActionMode(actionMode === 'archive' ? 'select' : 'archive')
+        e.preventDefault()
+        return
+      }
+
       // Find entry where code[0] === pendingChar and code[1] === e.key.toLowerCase()
       const lowerKey = e.key.toLowerCase()
       let matchedKey: string | null = null
@@ -54,7 +73,7 @@ export function ProjectFilter({ value, onChange }: ProjectFilterProps): React.JS
 
       if (matchedKey !== null) {
         e.preventDefault()
-        dispatchHintAction(matchedKey)
+        dispatchHintAction(matchedKey, actionMode)
         exitPending()
       } else if (isUppercase) {
         e.preventDefault()

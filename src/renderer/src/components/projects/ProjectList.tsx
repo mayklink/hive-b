@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { Loader2, FolderPlus } from 'lucide-react'
-import { useProjectStore, useSpaceStore, useWorktreeStore, useHintStore, useVimModeStore, useSettingsStore } from '@/stores'
+import { useProjectStore, useSpaceStore, useWorktreeStore, useHintStore, useVimModeStore, useSettingsStore, usePinnedStore, useConnectionStore } from '@/stores'
 import { ProjectItem } from './ProjectItem'
 import { subsequenceMatch } from '@/lib/subsequence-match'
-import { assignHints, buildNormalModeTargets, type HintTarget } from '@/lib/hint-utils'
+import { assignHints, buildNormalModeTargets, buildPinnedAndConnectionTargets, type HintTarget } from '@/lib/hint-utils'
 
 interface ProjectListProps {
   onAddProject: () => void
@@ -16,6 +16,9 @@ export function ProjectList({ onAddProject, filterQuery }: ProjectListProps): Re
   const { setHints, clearHints, setFilterActive } = useHintStore()
   const vimMode = useVimModeStore((s) => s.mode)
   const vimModeEnabled = useSettingsStore((s) => s.vimModeEnabled)
+  const pinnedWorktreeIds = usePinnedStore((s) => s.pinnedWorktreeIds)
+  const pinnedConnectionIds = usePinnedStore((s) => s.pinnedConnectionIds)
+  const connections = useConnectionStore((s) => s.connections)
 
   // Drag state for project reordering
   const [draggedProjectId, setDraggedProjectId] = useState<string | null>(null)
@@ -125,17 +128,29 @@ export function ProjectList({ onAddProject, filterQuery }: ProjectListProps): Re
     }
 
     if (vimModeEnabled && vimMode === 'normal') {
-      // Normal mode (no filter): all project targets first, then all worktree targets
-      // (independent of expanded state so hints stay stable on expand/collapse)
-      const targets = buildNormalModeTargets(
+      // Normal mode (no filter): pinned/connection targets + project/worktree targets
+      const worktreeProjectMap = new Map<string, string>()
+      for (const [projectId, wts] of worktreesByProject) {
+        for (const wt of wts) {
+          worktreeProjectMap.set(wt.id, projectId)
+        }
+      }
+      const pinnedAndConnectionTargets = buildPinnedAndConnectionTargets(
+        pinnedWorktreeIds,
+        pinnedConnectionIds,
+        connections.map((c) => c.id),
+        worktreeProjectMap
+      )
+      const projectTargets = buildNormalModeTargets(
         filteredProjects.map((fp) => fp.project),
         worktreesByProject
       )
-      return assignHints(targets, undefined, 'S')
+      const allTargets = [...pinnedAndConnectionTargets, ...projectTargets]
+      return assignHints(allTargets, undefined, 'S')
     }
 
     return { hintMap: new Map<string, string>(), hintTargetMap: new Map<string, HintTarget>() }
-  }, [filteredProjects, worktreesByProject, filterQuery, vimModeEnabled, vimMode])
+  }, [filteredProjects, worktreesByProject, filterQuery, vimModeEnabled, vimMode, pinnedWorktreeIds, pinnedConnectionIds, connections])
 
   // Immediately set filterActive when filter text changes — this drives project expansion
   // independently of worktree loading (breaking the circular dependency)

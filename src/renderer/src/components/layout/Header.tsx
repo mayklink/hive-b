@@ -73,6 +73,7 @@ export function Header(): React.JSX.Element {
   const setActiveSession = useSessionStore((s) => s.setActiveSession)
   const vimMode = useVimModeStore((s) => s.mode)
   const vimModeEnabled = useSettingsStore((s) => s.vimModeEnabled)
+  const showVimHints = vimModeEnabled && vimMode === 'normal'
   const [conflictFixFlow, setConflictFixFlow] = useState<ConflictFixFlow | null>(null)
 
   // Monitor PR session stream events for PR URL detection
@@ -480,7 +481,13 @@ export function Header(): React.JSX.Element {
             ) : (
               <Archive className="h-3.5 w-3.5 mr-1" />
             )}
-            {isArchivingWorktree ? 'Archiving...' : 'Archive'}
+            {isArchivingWorktree ? (
+              'Archiving...'
+            ) : showVimHints ? (
+              <span><span className="text-primary font-bold">A</span>rchive</span>
+            ) : (
+              'Archive'
+            )}
           </Button>
         )}
         {!isConnectionMode && isGitHub && prState === 'created' && isCleanTree && (
@@ -498,7 +505,13 @@ export function Header(): React.JSX.Element {
             ) : (
               <GitMerge className="h-3.5 w-3.5 mr-1" />
             )}
-            {isMergingPR ? 'Merging...' : 'Merge PR'}
+            {isMergingPR ? (
+              'Merging...'
+            ) : showVimHints ? (
+              <span><span className="text-primary font-bold">M</span>erge PR</span>
+            ) : (
+              'Merge PR'
+            )}
           </Button>
         )}
         {!isConnectionMode && selectedWorktree && (
@@ -513,7 +526,11 @@ export function Header(): React.JSX.Element {
               data-testid="review-button"
             >
               <FileSearch className="h-3.5 w-3.5 mr-1" />
-              Review
+              {showVimHints ? (
+                <span><span className="text-primary font-bold">R</span>eview</span>
+              ) : (
+                'Review'
+              )}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -567,7 +584,11 @@ export function Header(): React.JSX.Element {
                 ) : (
                   <GitPullRequest className="h-3.5 w-3.5 mr-1" />
                 )}
-                PR
+                {showVimHints && prState !== 'creating' ? (
+                  <span><span className="text-primary font-bold">P</span>R</span>
+                ) : (
+                  'PR'
+                )}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

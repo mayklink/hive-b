@@ -48,8 +48,12 @@ import {
   useWorktreeStore,
   useConnectionStore,
   useWorktreeStatusStore,
-  usePinnedStore
+  usePinnedStore,
+  useHintStore,
+  useVimModeStore,
+  useSettingsStore
 } from '@/stores'
+import { HintBadge } from '@/components/ui/HintBadge'
 import { useScriptStore } from '@/stores/useScriptStore'
 import { useGitStore } from '@/stores/useGitStore'
 import { toast, gitToast, clipboardToast } from '@/lib/toast'
@@ -120,6 +124,13 @@ function PinnedWorktreeItem({ worktreeId }: { worktreeId: string }): React.JSX.E
   )
   const isSelected = selectedWorktreeId === worktreeId
   const isRunProcessAlive = useScriptStore((s) => s.scriptStates[worktreeId]?.runRunning ?? false)
+
+  const hint = useHintStore((s) => s.hintMap.get(`pinned-wt:${worktreeId}`))
+  const hintMode = useHintStore((s) => s.mode)
+  const hintPendingChar = useHintStore((s) => s.pendingChar)
+  const hintActionMode = useHintStore((s) => s.actionMode)
+  const vimMode = useVimModeStore((s) => s.mode)
+  const vimModeEnabled = useSettingsStore((s) => s.vimModeEnabled)
 
   const worktree = useWorktreeStore((s) => {
     for (const worktrees of s.worktreesByProject.values()) {
@@ -649,6 +660,15 @@ function PinnedWorktreeItem({ worktreeId }: { worktreeId: string }): React.JSX.E
             </div>
           </div>
 
+          {hint && vimModeEnabled && vimMode === 'normal' && (
+            <HintBadge
+              code={hint}
+              mode={hintMode}
+              pendingChar={hintPendingChar}
+              actionMode={hintActionMode}
+            />
+          )}
+
           {worktreeStatus === 'unread' && (
             <span className="h-2 w-2 rounded-full bg-primary shrink-0" />
           )}
@@ -727,6 +747,13 @@ function PinnedConnectionItem({
   const isSelected = selectedConnectionId === connectionId
 
   const connection = useConnectionStore((s) => s.connections.find((c) => c.id === connectionId))
+
+  const hint = useHintStore((s) => s.hintMap.get(`pinned-conn:${connectionId}`))
+  const hintMode = useHintStore((s) => s.mode)
+  const hintPendingChar = useHintStore((s) => s.pendingChar)
+  const hintActionMode = useHintStore((s) => s.actionMode)
+  const vimMode = useVimModeStore((s) => s.mode)
+  const vimModeEnabled = useSettingsStore((s) => s.vimModeEnabled)
 
   // Inline rename state
   const [isRenaming, setIsRenaming] = useState(false)
@@ -1010,6 +1037,15 @@ function PinnedConnectionItem({
               </>
             )}
           </div>
+
+          {hint && vimModeEnabled && vimMode === 'normal' && (
+            <HintBadge
+              code={hint}
+              mode={hintMode}
+              pendingChar={hintPendingChar}
+              actionMode={hintActionMode}
+            />
+          )}
 
           {connectionStatus === 'unread' && (
             <span className="h-2 w-2 rounded-full bg-primary shrink-0" />

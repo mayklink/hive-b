@@ -94,6 +94,11 @@ export function useVimNavigation(): void {
       if (commandPaletteOpen) return
 
       if (event.key === 'Escape') {
+        if (hint.mode === 'pending') {
+          hint.exitPending()
+          event.preventDefault()
+          return
+        }
         if (vim.mode === 'insert') {
           vim.enterNormalMode()
           event.preventDefault()
@@ -110,6 +115,24 @@ export function useVimNavigation(): void {
       // --- Hint dispatch: pending mode (second char) ---
       // Must come before I/? handlers so pending state is resolved first
       if (hint.mode === 'pending' && hint.pendingChar) {
+        // Ignore bare modifier keys (Shift, Control, etc.) so the user can
+        // release the first-char key and then press Shift+P / Shift+D.
+        if (event.key === 'Shift' || event.key === 'Control' || event.key === 'Alt'
+          || event.key === 'Meta') {
+          return
+        }
+
+        if (event.key === 'P' || event.key === 'p') {
+          hint.setActionMode(hint.actionMode === 'pin' ? 'select' : 'pin')
+          event.preventDefault()
+          return
+        }
+        if (event.key === 'D' || event.key === 'd') {
+          hint.setActionMode(hint.actionMode === 'archive' ? 'select' : 'archive')
+          event.preventDefault()
+          return
+        }
+
         const isUppercase = /^[A-Z]$/.test(event.key)
 
         // Another uppercase → restart pending with the new char
@@ -124,7 +147,7 @@ export function useVimNavigation(): void {
         // Check worktree/project hintMap (value→key reverse lookup)
         for (const [key, value] of hint.hintMap.entries()) {
           if (value === code) {
-            dispatchHintAction(key)
+            dispatchHintAction(key, hint.actionMode)
             hint.exitPending()
             event.preventDefault()
             return
@@ -134,6 +157,11 @@ export function useVimNavigation(): void {
         // Check session hints (code→sessionId direct lookup)
         const sessionId = hint.sessionHintTargetMap.get(code)
         if (sessionId) {
+          if (hint.actionMode !== 'select') {
+            hint.exitPending()
+            event.preventDefault()
+            return
+          }
           useSessionStore.getState().setActiveSession(sessionId)
           useFileViewerStore.getState().setActiveFile(null)
           hint.exitPending()
@@ -216,14 +244,14 @@ export function useVimNavigation(): void {
       }
 
       // --- Panel shortcuts: bottom panel tabs ---
-      if (event.key === 's' || event.key === 'r' || event.key === 't') {
+      if (event.key === 's' || event.key === 'u' || event.key === 't') {
         const layout = useLayoutStore.getState()
         if (layout.rightSidebarCollapsed) {
           layout.setRightSidebarCollapsed(false)
         }
         const tabMap: Record<string, 'setup' | 'run' | 'terminal'> = {
           s: 'setup',
-          r: 'run',
+          u: 'run',
           t: 'terminal'
         }
         layout.setBottomPanelTab(tabMap[event.key])
@@ -242,6 +270,24 @@ export function useVimNavigation(): void {
         navigateFileTab(1)
         event.preventDefault()
         return
+      }
+
+      // --- Header action shortcuts ---
+      if (event.key === 'r') {
+        const btn = document.querySelector<HTMLElement>('[data-testid="review-button"]')
+        if (btn) { btn.click(); event.preventDefault(); return }
+      }
+      if (event.key === 'p') {
+        const btn = document.querySelector<HTMLElement>('[data-testid="pr-button"]')
+        if (btn) { btn.click(); event.preventDefault(); return }
+      }
+      if (event.key === 'm') {
+        const btn = document.querySelector<HTMLElement>('[data-testid="pr-merge-button"]')
+        if (btn) { btn.click(); event.preventDefault(); return }
+      }
+      if (event.key === 'a') {
+        const btn = document.querySelector<HTMLElement>('[data-testid="pr-archive-button"]')
+        if (btn) { btn.click(); event.preventDefault(); return }
       }
 
       // --- Hint dispatch: idle mode → uppercase starts pending ---

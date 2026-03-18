@@ -31,8 +31,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { useConnectionStore, usePinnedStore } from '@/stores'
+import { useConnectionStore, usePinnedStore, useHintStore, useVimModeStore, useSettingsStore } from '@/stores'
 import { useWorktreeStatusStore } from '@/stores/useWorktreeStatusStore'
+import { HintBadge } from '@/components/ui/HintBadge'
 import { toast, clipboardToast } from '@/lib/toast'
 
 interface ConnectionMemberEnriched {
@@ -90,6 +91,14 @@ export function ConnectionItem({
   const connectionStatus = useWorktreeStatusStore((state) =>
     state.getConnectionStatus(connection.id)
   )
+
+  // Hint overlay state
+  const hint = useHintStore((s) => s.hintMap.get(`conn:${connection.id}`))
+  const hintMode = useHintStore((s) => s.mode)
+  const hintPendingChar = useHintStore((s) => s.pendingChar)
+  const hintActionMode = useHintStore((s) => s.actionMode)
+  const vimMode = useVimModeStore((s) => s.mode)
+  const vimModeEnabled = useSettingsStore((s) => s.vimModeEnabled)
 
   const isSelected = selectedConnectionId === connection.id
 
@@ -407,6 +416,16 @@ export function ConnectionItem({
               </>
             )}
           </div>
+
+          {/* Hint badge */}
+          {hint && vimModeEnabled && vimMode === 'normal' && (
+            <HintBadge
+              code={hint}
+              mode={hintMode}
+              pendingChar={hintPendingChar}
+              actionMode={hintActionMode}
+            />
+          )}
 
           {/* Unread dot badge */}
           {connectionStatus === 'unread' && (

@@ -110,6 +110,7 @@ export function ProjectItem({
   const plusHint = useHintStore((s) => s.hintMap.get('plus:' + project.id))
   const hintMode = useHintStore((s) => s.mode)
   const hintPendingChar = useHintStore((s) => s.pendingChar)
+  const hintActionMode = useHintStore((s) => s.actionMode)
   const isSearchMode = useHintStore((s) => s.filterActive)
   const inputFocused = useHintStore((s) => s.inputFocused)
 
@@ -280,7 +281,7 @@ export function ProjectItem({
           >
             {/* Project Hint Badge (visible in vim normal mode, left of chevron) */}
             {!isEditing && projectHint && vimModeEnabled && vimMode === 'normal' && (
-              <HintBadge code={projectHint} mode={hintMode} pendingChar={hintPendingChar} />
+              <HintBadge code={projectHint} mode={hintMode} pendingChar={hintPendingChar} actionMode={hintActionMode} />
             )}
 
             {/* Expand/Collapse Chevron */}
@@ -338,7 +339,7 @@ export function ProjectItem({
 
             {/* Plus Hint Badge (visible when filter is active and search field is focused) */}
             {!isEditing && plusHint && (inputFocused || (vimModeEnabled && vimMode === 'normal')) && (
-              <HintBadge code={plusHint} mode={hintMode} pendingChar={hintPendingChar} />
+              <HintBadge code={plusHint} mode={hintMode} pendingChar={hintPendingChar} actionMode={hintActionMode} />
             )}
 
             {/* Create Worktree Button (hidden in connection mode) */}
