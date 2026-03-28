@@ -484,10 +484,10 @@ export type KanbanTicket = {
 };
 
 export type KanbanTicketColumn =
-  | 'backlog'
   | 'done'
   | 'in_progress'
-  | 'in_review';
+  | 'review'
+  | 'todo';
 
 export type KanbanUpdateTicketInput = {
   column?: InputMaybe<KanbanTicketColumn>;

@@ -1,7 +1,7 @@
 enum KanbanTicketColumn {
-  backlog
+  todo
   in_progress
-  in_review
+  review
   done
 }
 
