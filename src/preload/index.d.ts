@@ -1332,6 +1332,57 @@ declare global {
         getByTicket: (ticketId: string) => Promise<TicketFollowupMessage[]>
       }
     }
+    ticketImport: {
+      listProviders: () => Promise<Array<{ id: string; name: string; icon: string }>>
+      getSettingsSchema: (
+        providerId: string
+      ) => Promise<Array<{ key: string; label: string; type: string; required: boolean; placeholder?: string }>>
+      authenticate: (
+        providerId: string,
+        settings: Record<string, string>
+      ) => Promise<{ success: boolean; error: string | null }>
+      detectRepo: (
+        providerId: string,
+        projectPath: string
+      ) => Promise<{ repo: string | null }>
+      listIssues: (
+        providerId: string,
+        repo: string,
+        options: { page: number; perPage: number; state: 'open' | 'closed' | 'all'; search?: string },
+        settings: Record<string, string>
+      ) => Promise<{
+        issues: Array<{
+          externalId: string
+          title: string
+          body: string | null
+          state: 'open' | 'closed'
+          url: string
+          createdAt: string
+          updatedAt: string
+        }>
+        hasNextPage: boolean
+        totalCount: number
+      }>
+      importIssues: (
+        providerId: string,
+        projectId: string,
+        repo: string,
+        issues: Array<{ externalId: string; title: string; body: string | null; state: string; url: string }>
+      ) => Promise<{ imported: string[]; skipped: string[] }>
+      getAvailableStatuses: (
+        providerId: string,
+        repo: string,
+        externalId: string,
+        settings: Record<string, string>
+      ) => Promise<Array<{ id: string; label: string }>>
+      updateRemoteStatus: (
+        providerId: string,
+        repo: string,
+        externalId: string,
+        statusId: string,
+        settings: Record<string, string>
+      ) => Promise<{ success: boolean; error?: string }>
+    }
   }
 
   interface GitDiffStatFile {
