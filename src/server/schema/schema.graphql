@@ -104,6 +104,13 @@ type Query {
   kanbanTicketsBySession(sessionId: ID!): [KanbanTicket!]!
   kanbanFollowupsByTicket(ticketId: ID!): [TicketFollowupMessage!]!
 
+  # --- Ticket Import ---
+  ticketImportProviders: [TicketProviderInfo!]!
+  ticketImportSettingsSchema(providerId: String!): [SettingsFieldInfo!]!
+  ticketImportDetectRepo(providerId: String!, projectPath: String!): DetectRepoResult!
+  ticketImportListIssues(input: ListIssuesInput!, settings: String!): RemoteIssueListResult!
+  ticketImportAvailableStatuses(providerId: String!, repo: String!, externalId: String!, settings: String!): [RemoteStatus!]!
+
   # --- Usage ---
   usageFetch(providers: [String!]): UsageResult!
   usageFetchOpenai: UsageResult!
@@ -227,6 +234,11 @@ type Mutation {
   projectInitRepository(path: String!): SuccessResult!
   projectUploadIcon(projectId: ID!, data: String!, filename: String!): SuccessResult!
   projectRemoveIcon(projectId: ID!): SuccessResult!
+
+  # --- Ticket Import ---
+  ticketImportAuthenticate(providerId: String!, settings: String!): AuthResult!
+  ticketImportIssues(input: ImportIssuesInput!): ImportResult!
+  ticketImportUpdateRemoteStatus(input: UpdateRemoteStatusInput!, settings: String!): SuccessResult!
 
   # --- Kanban ---
   kanbanCreateTicket(input: KanbanCreateTicketInput!): KanbanTicket!
