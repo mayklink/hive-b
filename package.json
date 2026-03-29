@@ -62,7 +62,8 @@
     "codegen": "graphql-codegen --config src/shared/codegen.ts",
     "dev:web": "vite --config vite.config.web.ts",
     "build:web": "vite build --config vite.config.web.ts",
-    "build:headless": "pnpm build:web && cp -r dist/web out/web"
+    "build:headless": "pnpm build && pnpm build:web && cp -r dist/web out/web",
+    "start:server": "electron out/main/index.js --headless"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "^0.2.83",

@@ -30,15 +30,15 @@ import { SettingsPrivacy } from './SettingsPrivacy'
 import { cn } from '@/lib/utils'
 
 const SECTIONS = [
-  { id: 'appearance', label: 'Appearance', icon: Palette },
-  { id: 'general', label: 'General', icon: Monitor },
-  { id: 'models', label: 'Models', icon: Sparkles },
-  { id: 'editor', label: 'Editor', icon: Code },
-  { id: 'terminal', label: 'Terminal', icon: Terminal },
-  { id: 'security', label: 'Security', icon: Shield },
-  { id: 'privacy', label: 'Privacy', icon: Eye },
-  { id: 'shortcuts', label: 'Shortcuts', icon: Keyboard },
-  { id: 'updates', label: 'Updates', icon: Download }
+  { id: 'appearance', label: 'Appearance', icon: Palette, electronOnly: false },
+  { id: 'general', label: 'General', icon: Monitor, electronOnly: false },
+  { id: 'models', label: 'Models', icon: Sparkles, electronOnly: false },
+  { id: 'editor', label: 'Editor', icon: Code, electronOnly: false },
+  { id: 'terminal', label: 'Terminal', icon: Terminal, electronOnly: true },
+  { id: 'security', label: 'Security', icon: Shield, electronOnly: false },
+  { id: 'privacy', label: 'Privacy', icon: Eye, electronOnly: false },
+  { id: 'shortcuts', label: 'Shortcuts', icon: Keyboard, electronOnly: false },
+  { id: 'updates', label: 'Updates', icon: Download, electronOnly: true }
 ] as const
 
 export function SettingsModal(): React.JSX.Element {
@@ -74,7 +74,7 @@ export function SettingsModal(): React.JSX.Element {
               <Settings className="h-4 w-4 text-muted-foreground" />
               <DialogTitle className="text-sm font-semibold">Settings</DialogTitle>
             </div>
-            {SECTIONS.map((section) => {
+            {SECTIONS.filter((s) => !s.electronOnly || !isWebMode).map((section) => {
               const Icon = section.icon
               return (
                 <button

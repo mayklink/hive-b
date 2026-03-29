@@ -40,10 +40,9 @@ export default function WebAuthScreen({ onAuthenticated }: WebAuthScreenProps) {
         const res = await fetch(`${url}/api/auth/validate`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`
+            'Content-Type': 'application/json'
           },
-          body: JSON.stringify({})
+          body: JSON.stringify({ apiKey })
         })
 
         if (res.ok) {
