@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react'
-import { Send, ListPlus, Loader2, AlertCircle, RefreshCw, Square, X, Github } from 'lucide-react'
+import { Send, ListPlus, Loader2, AlertCircle, RefreshCw, Square, Archive, X, Github } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
@@ -567,8 +567,14 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
       const found = sessions.find((session) => session.id === sessionId)
       if (found) return found
     }
+    // Check orphaned sessions
+    const orphaned = state.orphanedSessions.get(sessionId)
+    if (orphaned) return orphaned
     return null
   })
+
+  // Check if this is an orphaned (read-only) session
+  const isOrphanedSession = useSessionStore((state) => state.orphanedSessions.has(sessionId))
   const sessionAgentSdk = sessionRecord?.agent_sdk ?? 'opencode'
   const globalModel = useSettingsStore((state) => resolveModelForSdk(sessionAgentSdk, state))
   const effectiveModel: SelectedModel | null =
@@ -4644,6 +4650,27 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           onPointerCancel={handleScrollPointerCancel}
           data-testid="message-list"
         >
+          {/* Read-only banner for orphaned sessions */}
+          {isOrphanedSession && (
+            <div
+              className="mx-6 mt-4 mb-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-3"
+              data-testid="readonly-banner"
+            >
+              <div className="flex items-start gap-2 text-amber-600 dark:text-amber-400">
+                <Archive className="mt-0.5 h-4 w-4 shrink-0" />
+                <div>
+                  <p className="text-sm font-medium">Read-Only Mode</p>
+                  <p className="mt-0.5 text-sm opacity-90">
+                    {sessionRecord?.connection_id
+                      ? 'This session is from a deleted connection. You can view the conversation history but cannot send new messages.'
+                      : sessionRecord?.worktree_id
+                        ? 'This session is from an archived worktree. You can view the conversation history but cannot send new messages.'
+                        : 'This session is no longer accessible. You can view the conversation history but cannot send new messages.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
           {visibleMessages.length === 0 && !hasStreamingContent ? (
             <div className="flex-1 flex items-center justify-center h-full text-muted-foreground">
               <div className="text-center">
@@ -4916,13 +4943,15 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                 isImeComposingRef.current = false
               }}
               onPaste={handlePaste}
-              disabled={!!activePermission}
+              disabled={!!activePermission || isOrphanedSession}
               placeholder={
-                activePermission
-                  ? 'Waiting for permission response...'
-                  : pendingPlan
-                    ? 'Send feedback to revise the plan...'
-                    : 'Type your message...'
+                isOrphanedSession
+                  ? 'Read-only mode - cannot send messages'
+                  : activePermission
+                    ? 'Waiting for permission response...'
+                    : pendingPlan
+                      ? 'Send feedback to revise the plan...'
+                      : 'Type your message...'
               }
               aria-label="Message input"
               aria-haspopup="listbox"
@@ -4954,6 +4983,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                   onAttach={handleAttach}
                   projectId={sessionRecord?.project_id ?? null}
                   onPickTicket={() => setTicketPickerOpen(true)}
+                  disabled={isOrphanedSession}
                 />
                 <ContextIndicator
                   sessionId={sessionId}
@@ -5008,7 +5038,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                       }
                       void handleSend()
                     }}
-                    disabled={!inputValue.trim() || !!activePermission}
+                    disabled={!inputValue.trim() || !!activePermission || isOrphanedSession}
                     size="sm"
                     className="h-7 w-7 p-0"
                     aria-label={
