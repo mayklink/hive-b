@@ -312,16 +312,18 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
                   </span>
                 )}
                 {ticket.external_provider && (
-                  <a
-                    href={ticket.external_url ?? '#'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (ticket.external_url) {
+                        window.systemOps.openInChrome(ticket.external_url)
+                      }
+                    }}
                     className="transition-opacity hover:opacity-80"
                     title={`${getProviderLabel(ticket.external_provider)} #${ticket.external_id}`}
                   >
                     <ProviderIcon provider={ticket.external_provider} />
-                  </a>
+                  </button>
                 )}
               </div>
             </div>

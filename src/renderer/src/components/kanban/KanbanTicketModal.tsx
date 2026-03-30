@@ -52,6 +52,7 @@ import { useScriptStore, fireRunScript, killRunScript } from '@/stores/useScript
 import { useQuestionStore, type QuestionRequest } from '@/stores/useQuestionStore'
 import { QuestionPrompt } from '@/components/sessions/QuestionPrompt'
 import { SessionStreamPanel } from './SessionStreamPanel'
+import { ProviderIcon, getProviderLabel } from '@/components/ui/provider-icon'
 import type { KanbanTicket, KanbanTicketUpdate } from '../../../../main/db/types'
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -551,7 +552,18 @@ function EditModeContent({
     <>
       <DialogHeader>
         <div className="flex items-center justify-between">
-          <DialogTitle>Edit Ticket</DialogTitle>
+          <div className="flex items-center gap-2">
+            <DialogTitle>Edit Ticket</DialogTitle>
+            {ticket.external_provider && ticket.external_url && (
+              <button
+                onClick={() => window.systemOps.openInChrome(ticket.external_url!)}
+                className="transition-opacity hover:opacity-80"
+                title={`Open ${getProviderLabel(ticket.external_provider)} #${ticket.external_id}`}
+              >
+                <ProviderIcon provider={ticket.external_provider} />
+              </button>
+            )}
+          </div>
           <JumpToSessionButton ticket={ticket} onClose={onClose} />
         </div>
         <DialogDescription>Update ticket details.</DialogDescription>
