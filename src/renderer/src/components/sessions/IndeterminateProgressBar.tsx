@@ -74,15 +74,22 @@ export function IndeterminateProgressBar({
           : 'bg-violet-500'
 
   return (
-    <div
-      role="progressbar"
-      aria-label={isCompacting ? 'Compacting conversation' : isAsking ? 'Waiting for answer' : 'Agent is working'}
-      className={cn('relative w-36 h-4 rounded-full overflow-hidden', bgTrack, className)}
-    >
+    <div className={cn('flex flex-col items-center', className)}>
+      {isCompacting && (
+        <span className="text-[10px] font-semibold text-red-500 leading-none mb-0.5">
+          Compacting
+        </span>
+      )}
       <div
-        ref={barRef}
-        className={cn('progress-bounce-bar absolute top-0 bottom-0 rounded-full', bgBar)}
-      />
+        role="progressbar"
+        aria-label={isCompacting ? 'Compacting conversation' : isAsking ? 'Waiting for answer' : 'Agent is working'}
+        className={cn('relative w-36 h-4 rounded-full overflow-hidden', bgTrack)}
+      >
+        <div
+          ref={barRef}
+          className={cn('progress-bounce-bar absolute top-0 bottom-0 rounded-full', bgBar)}
+        />
+      </div>
     </div>
   )
 }
