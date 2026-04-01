@@ -270,9 +270,29 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                 const resolvedBaseBranch = worktree.base_branch ?? defaultWt?.branch_name
 
                 if (resolvedBaseBranch && worktree.branch_name !== resolvedBaseBranch) {
-                  const sortOrder = store.computeSortOrder(tickets, targetIndex)
-                  store.setPendingDoneMove({ ticketId, projectId: ticketProjectId, sortOrder })
-                  return
+                  // Verify an active base worktree exists
+                  const baseWorktree = defaultWorktrees.find(
+                    (w) => w.branch_name === resolvedBaseBranch && w.status === 'active'
+                  )
+
+                  if (baseWorktree) {
+                    // Pre-check: does the feature branch actually have work to merge?
+                    const [hasUncommitted, branchStatResult] = await Promise.all([
+                      window.gitOps.hasUncommittedChanges(worktree.path),
+                      window.gitOps.branchDiffShortStat(worktree.path, resolvedBaseBranch)
+                    ])
+
+                    const commitsAhead = branchStatResult.success
+                      ? branchStatResult.commitsAhead
+                      : 0
+
+                    if (hasUncommitted || commitsAhead > 0) {
+                      const sortOrder = store.computeSortOrder(tickets, targetIndex)
+                      store.setPendingDoneMove({ ticketId, projectId: ticketProjectId, sortOrder })
+                      return
+                    }
+                  }
+                  // No base worktree OR nothing to commit/merge — fall through to normal move
                 }
               }
             } catch {
