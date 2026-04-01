@@ -5,6 +5,7 @@ import { useWorktreeStore } from './useWorktreeStore'
 interface PinnedState {
   pinnedWorktreeIds: Set<string>
   pinnedConnectionIds: Set<string>
+  pinnedProjectIds: Set<string>
   loaded: boolean
 
   loadPinned: () => Promise<void>
@@ -18,11 +19,30 @@ interface PinnedState {
   removeConnection: (id: string) => void
   isWorktreePinned: (id: string) => boolean
   isConnectionPinned: (id: string) => boolean
+  getPinnedProjectIds: () => string[]
+}
+
+/**
+ * Derive the set of project IDs that have at least one pinned worktree,
+ * by looking up each pinned worktree ID in the worktree store.
+ */
+function _derivePinnedProjectIds(pinnedWorktreeIds: Set<string>): Set<string> {
+  const projectIds = new Set<string>()
+  const worktreesByProject = useWorktreeStore.getState().worktreesByProject
+  for (const worktrees of worktreesByProject.values()) {
+    for (const wt of worktrees) {
+      if (pinnedWorktreeIds.has(wt.id)) {
+        projectIds.add(wt.project_id)
+      }
+    }
+  }
+  return projectIds
 }
 
 export const usePinnedStore = create<PinnedState>()((set, get) => ({
   pinnedWorktreeIds: new Set<string>(),
   pinnedConnectionIds: new Set<string>(),
+  pinnedProjectIds: new Set<string>(),
   loaded: false,
 
   loadPinned: async () => {
@@ -47,7 +67,15 @@ export const usePinnedStore = create<PinnedState>()((set, get) => ({
         [...projectsToLoad].map((pid) => useWorktreeStore.getState().loadWorktrees(pid))
       )
 
-      set({ pinnedWorktreeIds: worktreeIds, pinnedConnectionIds: connectionIds, loaded: true })
+      // Derive project IDs directly from the fetched pinned worktrees (which have project_id)
+      const projectIds = new Set(pinnedWorktrees.map((wt) => wt.project_id))
+
+      set({
+        pinnedWorktreeIds: worktreeIds,
+        pinnedConnectionIds: connectionIds,
+        pinnedProjectIds: projectIds,
+        loaded: true
+      })
     } catch {
       // Fallback silently if DB query fails
       set({ loaded: true })
@@ -60,7 +88,7 @@ export const usePinnedStore = create<PinnedState>()((set, get) => ({
       set((state) => {
         const next = new Set(state.pinnedWorktreeIds)
         next.add(id)
-        return { pinnedWorktreeIds: next }
+        return { pinnedWorktreeIds: next, pinnedProjectIds: _derivePinnedProjectIds(next) }
       })
     } else {
       toast.error(result.error || 'Failed to pin worktree')
@@ -73,7 +101,7 @@ export const usePinnedStore = create<PinnedState>()((set, get) => ({
       set((state) => {
         const next = new Set(state.pinnedWorktreeIds)
         next.delete(id)
-        return { pinnedWorktreeIds: next }
+        return { pinnedWorktreeIds: next, pinnedProjectIds: _derivePinnedProjectIds(next) }
       })
     } else {
       toast.error(result.error || 'Failed to unpin worktree')
@@ -111,7 +139,7 @@ export const usePinnedStore = create<PinnedState>()((set, get) => ({
       if (!state.pinnedWorktreeIds.has(id)) return state
       const next = new Set(state.pinnedWorktreeIds)
       next.delete(id)
-      return { pinnedWorktreeIds: next }
+      return { pinnedWorktreeIds: next, pinnedProjectIds: _derivePinnedProjectIds(next) }
     })
   },
 
@@ -130,5 +158,9 @@ export const usePinnedStore = create<PinnedState>()((set, get) => ({
 
   isConnectionPinned: (id: string) => {
     return get().pinnedConnectionIds.has(id)
+  },
+
+  getPinnedProjectIds: () => {
+    return [...get().pinnedProjectIds]
   }
 }))
