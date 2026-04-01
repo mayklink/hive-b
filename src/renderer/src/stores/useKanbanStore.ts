@@ -561,7 +561,7 @@ export const useKanbanStore = create<KanbanState>()(
 
         set({ isLoading: true })
         try {
-          const includeArchived = (pid: string) => get().showArchivedByProject[pid] ?? false
+          const includeArchived = (pid: string) => get().showArchivedByProject[pid] ?? get().showArchivedByProject[''] ?? false
           const results = await Promise.all(
             projectIds.map((pid) => window.kanban.ticket.getByProject(pid, includeArchived(pid)))
           )
@@ -601,7 +601,7 @@ export const useKanbanStore = create<KanbanState>()(
 
         set({ isLoading: true })
         try {
-          const includeArchived = (pid: string) => get().showArchivedByProject[pid] ?? false
+          const includeArchived = (pid: string) => get().showArchivedByProject[pid] ?? get().showArchivedByProject[''] ?? false
           const results = await Promise.all(
             projectIds.map((pid) => window.kanban.ticket.getByProject(pid, includeArchived(pid)))
           )

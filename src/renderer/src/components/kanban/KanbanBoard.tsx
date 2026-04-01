@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { LayoutGroup, motion } from 'motion/react'
 import { Pin } from 'lucide-react'
 import { useKanbanStore } from '@/stores/useKanbanStore'
@@ -28,6 +28,11 @@ export function KanbanBoard({ projectId, projectPath: _projectPath, connectionId
   const getPinnedProjectIdsArray = useKanbanStore((state) => state.getPinnedProjectIdsArray)
   const pinnedProjectIds = usePinnedStore((state) => state.pinnedProjectIds)
 
+  // Subscribe to the multi-project archive toggle ('' key used by pinned/connection boards)
+  const showArchivedAll = useKanbanStore(
+    useCallback((s) => s.showArchivedByProject[''] ?? false, [])
+  )
+
   useKanbanStore((state) => state.tickets)
 
   const isConnectionMode = !!connectionId
@@ -40,7 +45,7 @@ export function KanbanBoard({ projectId, projectPath: _projectPath, connectionId
     } else if (projectId) {
       loadTickets(projectId)
     }
-  }, [projectId, connectionId, isConnectionMode, isPinnedMode, pinnedProjectIds, loadTickets, loadTicketsForConnection, loadTicketsForPinnedProjects])
+  }, [projectId, connectionId, isConnectionMode, isPinnedMode, pinnedProjectIds, showArchivedAll, loadTickets, loadTicketsForConnection, loadTicketsForPinnedProjects])
 
   // Aggregate archived tickets across all connection member projects for the done column
   const connectionArchivedDoneTickets = isConnectionMode
