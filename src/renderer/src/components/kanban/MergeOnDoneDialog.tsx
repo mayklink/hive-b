@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useKanbanStore } from '@/stores/useKanbanStore'
+import { useWorktreeStore } from '@/stores/useWorktreeStore'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -225,7 +226,12 @@ export function MergeOnDoneDialog() {
     setMerging(true)
     try {
       // Pull latest on base branch first
-      await window.gitOps.pull(resolved.baseWorktreePath)
+      const pullResult = await window.gitOps.pull(resolved.baseWorktreePath)
+      if (!pullResult.success) {
+        toast.warning(`Pull failed on ${resolved.baseBranch} — merge skipped`)
+        await completeDoneMove()
+        return
+      }
 
       // Merge feature into base
       const mergeResult = await window.gitOps.merge(
@@ -241,7 +247,6 @@ export function MergeOnDoneDialog() {
             `Merge conflicts in ${mergeResult.conflicts.length} file${mergeResult.conflicts.length !== 1 ? 's' : ''} — merge manually`
           )
         } else {
-          await window.gitOps.mergeAbort(resolved.baseWorktreePath)
           toast.error(`Merge failed: ${mergeResult.error}`)
         }
         await completeDoneMove()
@@ -262,13 +267,12 @@ export function MergeOnDoneDialog() {
     if (!resolved) return
     setArchiving(true)
     try {
-      const result = await window.worktreeOps.delete({
-        worktreeId: resolved.featureWorktreeId,
-        worktreePath: resolved.featureWorktreePath,
-        branchName: resolved.featureBranch,
-        projectPath: resolved.projectPath,
-        archive: true
-      })
+      const result = await useWorktreeStore.getState().archiveWorktree(
+        resolved.featureWorktreeId,
+        resolved.featureWorktreePath,
+        resolved.featureBranch,
+        resolved.projectPath
+      )
 
       if (result.success) {
         toast.success('Worktree archived')
