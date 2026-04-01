@@ -1643,6 +1643,30 @@ function ReviewModeContent({
 
   // ── Move to Done ──────────────────────────────────────────────────
   const handleMoveToDone = useCallback(async () => {
+    // Merge-on-done: intercept for feature-branch worktrees
+    if (ticket.worktree_id) {
+      try {
+        const worktree = await window.db.worktree.get(ticket.worktree_id)
+        if (worktree) {
+          const defaultWorktrees = await window.db.worktree.getActiveByProject(ticket.project_id)
+          const defaultWt = defaultWorktrees.find((w: any) => w.is_default)
+          const resolvedBaseBranch = worktree.base_branch ?? defaultWt?.branch_name
+
+          if (resolvedBaseBranch && worktree.branch_name !== resolvedBaseBranch) {
+            const kanbanStore = useKanbanStore.getState()
+            const doneTickets = kanbanStore.getTicketsByColumn(ticket.project_id, 'done')
+            const sortOrder = kanbanStore.computeSortOrder(doneTickets, doneTickets.length)
+            kanbanStore.setPendingDoneMove({ ticketId: ticket.id, projectId: ticket.project_id, sortOrder })
+            onClose()
+            return
+          }
+        }
+      } catch {
+        // Fall through to normal move on error
+      }
+    }
+
+    // Original logic
     try {
       const kanbanStore = useKanbanStore.getState()
       const doneTickets = kanbanStore.getTicketsByColumn(ticket.project_id, 'done')
