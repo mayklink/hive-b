@@ -36,6 +36,7 @@ export function MainPane({ children }: MainPaneProps): React.JSX.Element {
   const closedTerminalSessionIds = useSessionStore((state) => state.closedTerminalSessionIds)
   const ghosttyOverlaySuppressed = useLayoutStore((state) => state.ghosttyOverlaySuppressed)
   const isBoardViewActive = useKanbanStore((state) => state.isBoardViewActive)
+  const isPinnedBoardActive = useKanbanStore((state) => state.isPinnedBoardActive)
   const selectedProjectId = useProjectStore((state) => state.selectedProjectId)
   const selectedProjectPath = useProjectStore((state) =>
     state.projects.find((p) => p.id === state.selectedProjectId)?.path ?? ''
@@ -163,6 +164,11 @@ export function MainPane({ children }: MainPaneProps): React.JSX.Element {
   const renderContent = () => {
     if (children) {
       return children
+    }
+
+    // Pinned projects board view (independent of project/connection selection)
+    if (isPinnedBoardActive && !activeFilePath && !activeDiff && !contextEditorWorktreeId) {
+      return <KanbanBoard isPinnedMode={true} />
     }
 
     // No worktree or connection selected - show welcome message
