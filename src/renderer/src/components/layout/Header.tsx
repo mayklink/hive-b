@@ -917,29 +917,27 @@ export function Header(): React.JSX.Element {
             </DropdownMenu>
           </Popover>
         )}
-        {(selectedProjectId || selectedConnectionId) && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => {
-              if (!isBoardViewActive) {
-                // Clear any active file/diff/context views so the board can render
-                const fileStore = useFileViewerStore.getState()
-                fileStore.setActiveFile(null)
-                fileStore.clearActiveDiff()
-                fileStore.closeContextEditor()
-              }
-              toggleBoardView()
-            }}
-            title={isBoardViewActive ? 'Close Board' : 'Open Board'}
-            data-testid="kanban-board-toggle"
-            className={cn(
-              isBoardViewActive && 'bg-accent text-accent-foreground'
-            )}
-          >
-            <KanbanIcon className="h-4 w-4" />
-          </Button>
-        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => {
+            if (!isBoardViewActive) {
+              // Clear any active file/diff/context views so the board can render
+              const fileStore = useFileViewerStore.getState()
+              fileStore.setActiveFile(null)
+              fileStore.clearActiveDiff()
+              fileStore.closeContextEditor()
+            }
+            toggleBoardView()
+          }}
+          title={isBoardViewActive ? 'Close Board' : 'Open Board'}
+          data-testid="kanban-board-toggle"
+          className={cn(
+            isBoardViewActive && 'bg-accent text-accent-foreground'
+          )}
+        >
+          <KanbanIcon className="h-4 w-4" />
+        </Button>
         <Button
           variant="ghost"
           size="icon"

@@ -14,6 +14,7 @@ import { useKanbanStore } from '@/stores/useKanbanStore'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { usePinnedStore } from '@/stores/usePinnedStore'
 import { KanbanBoard } from '@/components/kanban/KanbanBoard'
+import { KanbanIcon } from '@/components/kanban/KanbanIcon'
 
 const MonacoDiffView = lazy(() => import('@/components/diff/MonacoDiffView'))
 const WorktreeContextEditor = lazy(() =>
@@ -174,6 +175,28 @@ export function MainPane({ children }: MainPaneProps): React.JSX.Element {
       return <KanbanBoard isPinnedMode={true} />
     }
 
+    // Board view — project-level (works with or without worktree selected)
+    if (isBoardViewActive && selectedProjectId && !activeFilePath && !activeDiff && !contextEditorWorktreeId) {
+      return <KanbanBoard projectId={selectedProjectId} projectPath={selectedProjectPath} />
+    }
+
+    // Board view — connection-level
+    if (isBoardViewActive && selectedConnectionId && !activeFilePath && !activeDiff && !contextEditorWorktreeId) {
+      return <KanbanBoard connectionId={selectedConnectionId} />
+    }
+
+    // Board view — no project selected yet (empty state)
+    if (isBoardViewActive && !activeFilePath && !activeDiff && !contextEditorWorktreeId) {
+      return (
+        <div className="flex-1 flex items-center justify-center text-muted-foreground">
+          <div className="text-center">
+            <KanbanIcon className="h-8 w-8 mx-auto mb-3 opacity-50" />
+            <p className="text-sm">Select a project to view its board</p>
+          </div>
+        </div>
+      )
+    }
+
     // No worktree or connection selected - show welcome message
     if (!selectedWorktreeId && !selectedConnectionId) {
       return (
@@ -184,17 +207,6 @@ export function MainPane({ children }: MainPaneProps): React.JSX.Element {
           </div>
         </div>
       )
-    }
-
-    // Connection board view
-    if (isBoardViewActive && selectedConnectionId && !activeFilePath && !activeDiff && !contextEditorWorktreeId) {
-      return <KanbanBoard connectionId={selectedConnectionId} />
-    }
-
-    // Kanban board view takes priority when active and a project is selected
-    // but yields to file/diff/context views when their tab is active
-    if (isBoardViewActive && selectedProjectId && !activeFilePath && !activeDiff && !contextEditorWorktreeId) {
-      return <KanbanBoard projectId={selectedProjectId} projectPath={selectedProjectPath} />
     }
 
     // Loading sessions (including auto-start)
