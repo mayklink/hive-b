@@ -141,6 +141,10 @@ interface KanbanState {
   getTicketsByColumnForPinned: (column: KanbanTicketColumn) => KanbanTicket[]
   getPinnedProjectIdsArray: () => string[]
 
+  // ── PR data sync ───────────────────────────────────────────────────
+  syncPRToTicket: (worktreeId: string, prNumber: number, prUrl: string) => void
+  clearPRFromTicket: (worktreeId: string) => void
+
   // ── Helpers ────────────────────────────────────────────────────────
   computeSortOrder: (tickets: KanbanTicket[], targetIndex: number) => number
 }
@@ -678,6 +682,48 @@ export const useKanbanStore = create<KanbanState>()(
       // ── getPinnedProjectIdsArray ─────────────────────────────────
       getPinnedProjectIdsArray: (): string[] => {
         return [...usePinnedStore.getState().pinnedProjectIds].sort()
+      },
+
+      // ── syncPRToTicket ───────────────────────────────────────────
+      syncPRToTicket: (worktreeId: string, prNumber: number, prUrl: string) => {
+        set((state) => {
+          const newTickets = new Map(state.tickets)
+          let changed = false
+          for (const [projectId, projectTickets] of newTickets) {
+            const updated = projectTickets.map((t) => {
+              if (t.worktree_id === worktreeId) {
+                changed = true
+                return { ...t, github_pr_number: prNumber, github_pr_url: prUrl }
+              }
+              return t
+            })
+            if (changed) {
+              newTickets.set(projectId, updated)
+            }
+          }
+          return changed ? { tickets: newTickets } : {}
+        })
+      },
+
+      // ── clearPRFromTicket ──────────────────────────────────────────
+      clearPRFromTicket: (worktreeId: string) => {
+        set((state) => {
+          const newTickets = new Map(state.tickets)
+          let changed = false
+          for (const [projectId, projectTickets] of newTickets) {
+            const updated = projectTickets.map((t) => {
+              if (t.worktree_id === worktreeId) {
+                changed = true
+                return { ...t, github_pr_number: null, github_pr_url: null }
+              }
+              return t
+            })
+            if (changed) {
+              newTickets.set(projectId, updated)
+            }
+          }
+          return changed ? { tickets: newTickets } : {}
+        })
       },
 
       // ── computeSortOrder ─────────────────────────────────────────
