@@ -11,6 +11,7 @@ import {
   useKanbanStore
 } from '@/stores'
 import { THEME_PRESETS } from '@/lib/themes'
+import { useFileViewerStore } from '@/stores/useFileViewerStore'
 import { useGitStore } from '@/stores/useGitStore'
 import { useShortcutStore } from '@/stores/useShortcutStore'
 import { useCommandPaletteStore, type Command } from '@/stores/useCommandPaletteStore'
@@ -212,7 +213,16 @@ export function useCommands() {
         icon: 'KanbanIcon',
         keywords: ['kanban', 'board', 'tickets', 'todo'],
         action: () => {
-          toggleBoardView()
+          const { isBoardViewActive } = useKanbanStore.getState()
+          const fileStore = useFileViewerStore.getState()
+          if (!isBoardViewActive) {
+            fileStore.clearActiveViews()
+            toggleBoardView()
+          } else if (fileStore.hasActiveOverlay()) {
+            fileStore.clearActiveViews()
+          } else {
+            toggleBoardView()
+          }
           closeCommandPalette()
         },
         isVisible: () => true

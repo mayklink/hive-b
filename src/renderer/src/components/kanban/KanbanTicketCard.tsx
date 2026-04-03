@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
-import { Paperclip, AlertCircle, Trash2, Archive, ArchiveRestore, GitBranch, ExternalLink, X, FileText, Pin, PinOff, RefreshCw, Link as LinkIcon } from 'lucide-react'
+import { Paperclip, AlertCircle, Trash2, Archive, ArchiveRestore, GitBranch, ExternalLink, X, FileText, Pin, PinOff, RefreshCw, Link as LinkIcon, Github } from 'lucide-react'
 import { UpdateStatusModal } from './UpdateStatusModal'
 import { cn } from '@/lib/utils'
 import { ProviderIcon, getProviderLabel } from '@/components/ui/provider-icon'
@@ -451,7 +451,7 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
             </div>
 
             {/* Badges + progress row */}
-            {(hasAttachments || worktreeName || projectTag || connectionName || ticket.plan_ready || isError || isBusy || isAsking || isArchived || isRunProcessAlive) && (
+            {(hasAttachments || worktreeName || projectTag || connectionName || ticket.plan_ready || isError || isBusy || isAsking || isArchived || isRunProcessAlive || ticket.github_pr_number) && (
               <div className="mt-1.5 flex flex-wrap items-center gap-1">
                 {/* Archived badge */}
                 {isArchived && (
@@ -489,6 +489,21 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
                     <LinkIcon className="h-3 w-3" />
                     {connectionName}
                   </span>
+                )}
+
+                {/* PR badge */}
+                {ticket.github_pr_number && ticket.github_pr_url && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      window.systemOps.openInChrome(ticket.github_pr_url!)
+                    }}
+                    title={`Open PR #${ticket.github_pr_number} in browser`}
+                    className="inline-flex items-center gap-1 rounded-full bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted/60 transition-colors"
+                  >
+                    <Github className="h-3 w-3" />
+                    #{ticket.github_pr_number}
+                  </button>
                 )}
 
                 {/* Run process alive indicator */}

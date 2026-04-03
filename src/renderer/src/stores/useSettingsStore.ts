@@ -38,6 +38,7 @@ export interface CommandFilterSettings {
   blocklist: string[]
   defaultBehavior: 'ask' | 'allow' | 'block'
   enabled: boolean
+  enterToApprove: boolean
 }
 
 export interface AppSettings {
@@ -152,7 +153,8 @@ const DEFAULT_SETTINGS: AppSettings = {
       'write: **/credentials*'
     ],
     defaultBehavior: 'ask',
-    enabled: false
+    enabled: false,
+    enterToApprove: false
   },
   telemetryEnabled: true,
   tipsEnabled: true
