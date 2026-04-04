@@ -92,7 +92,8 @@ interface SessionState {
     worktreeId: string,
     projectId: string,
     agentSdkOverride?: 'opencode' | 'claude-code' | 'codex' | 'terminal',
-    initialMode?: SessionMode
+    initialMode?: SessionMode,
+    options?: { autoFocus?: boolean }
   ) => Promise<{ success: boolean; session?: Session; error?: string }>
   closeSession: (sessionId: string) => Promise<{ success: boolean; error?: string }>
   reopenSession: (
@@ -344,9 +345,11 @@ export const useSessionStore = create<SessionState>()(
         worktreeId: string,
         projectId: string,
         agentSdkOverride?: 'opencode' | 'claude-code' | 'codex' | 'terminal',
-        initialMode?: SessionMode
+        initialMode?: SessionMode,
+        options?: { autoFocus?: boolean }
       ) => {
         try {
+          const autoFocus = options?.autoFocus !== false
           // Resolve default agent SDK from settings
           const { useSettingsStore } = await import('./useSettingsStore')
           const defaultAgentSdk =
@@ -423,11 +426,14 @@ export const useSessionStore = create<SessionState>()(
           })
 
           // Clear file viewer so the new session takes focus in MainPane
-          const { useFileViewerStore } = await import('./useFileViewerStore')
-          useFileViewerStore.getState().setActiveFile(null)
-          useFileViewerStore.getState().clearActiveDiff()
+          if (autoFocus) {
+            const { useFileViewerStore } = await import('./useFileViewerStore')
+            useFileViewerStore.getState().setActiveFile(null)
+            useFileViewerStore.getState().clearActiveDiff()
+          }
 
           set((state) => {
+            // Session data — always updated
             const newSessionsMap = new Map(state.sessionsByWorktree)
             const existingSessions = newSessionsMap.get(worktreeId) || []
             newSessionsMap.set(worktreeId, [session, ...existingSessions])
@@ -441,16 +447,25 @@ export const useSessionStore = create<SessionState>()(
             const newModeMap = new Map(state.modeBySession)
             newModeMap.set(session.id, session.mode || 'build')
 
-            return {
+            const base = {
               sessionsByWorktree: newSessionsMap,
               tabOrderByWorktree: newTabOrderMap,
-              modeBySession: newModeMap,
-              activeSessionId: session.id,
-              activeSessionByWorktree: {
-                ...state.activeSessionByWorktree,
-                [worktreeId]: session.id
+              modeBySession: newModeMap
+            }
+
+            // Focus state — only when autoFocus is true
+            if (autoFocus) {
+              return {
+                ...base,
+                activeSessionId: session.id,
+                activeSessionByWorktree: {
+                  ...state.activeSessionByWorktree,
+                  [worktreeId]: session.id
+                }
               }
             }
+
+            return base
           })
 
           return { success: true, session }

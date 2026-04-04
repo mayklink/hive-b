@@ -661,7 +661,17 @@ export function SessionTabs(): React.JSX.Element | null {
       if (sessions.length > 0) return
 
       autoStartedRef.current = selectedWorktreeId
-      await createSession(selectedWorktreeId, project.id)
+      await createSession(selectedWorktreeId, project.id, undefined, undefined, { autoFocus: false })
+
+      // In toggle mode with no prior session, the auto-created session is the only
+      // thing to show — focus it. In sticky-tab mode, the board tab is already active.
+      const currentActive = useSessionStore.getState().activeSessionId
+      if (!currentActive) {
+        const sessions = useSessionStore.getState().sessionsByWorktree.get(selectedWorktreeId) || []
+        if (sessions.length > 0) {
+          useSessionStore.getState().setActiveSession(sessions[0].id)
+        }
+      }
     })()
 
     return () => {
