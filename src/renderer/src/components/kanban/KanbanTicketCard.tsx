@@ -312,6 +312,22 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
     useKanbanStore.getState().setSelectedTicketId(ticket.id)
   }, [ticket.id])
 
+  // ── Middle-click — select attached worktree (same as sidebar) ─
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 1) return            // only middle-click
+      if (!ticket.worktree_id) return        // no-op for unassigned tickets
+      if (isArchived) return                 // no-op for archived tickets
+      e.preventDefault()                     // suppress browser auto-scroll
+
+      // Select worktree — same as sidebar's WorktreeItem.handleClick
+      useWorktreeStore.getState().selectWorktree(ticket.worktree_id)
+      useProjectStore.getState().selectProject(ticket.project_id)
+      useWorktreeStatusStore.getState().clearWorktreeUnread(ticket.worktree_id)
+    },
+    [ticket.worktree_id, ticket.project_id, isArchived]
+  )
+
   const isDone = ticket.column === 'done'
 
   // ── Context menu handlers ─────────────────────────────────────
@@ -414,6 +430,7 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onClick={handleClick}
+            onMouseDown={handleMouseDown}
             className={cn(
               'group cursor-pointer rounded-md border bg-card shadow-sm p-2 transition-all duration-200',
               'hover:bg-muted/40',
