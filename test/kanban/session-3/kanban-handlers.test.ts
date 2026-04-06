@@ -127,6 +127,33 @@ describe('Session 3: Kanban IPC Handlers', () => {
     expect(missing).toBeNull()
   })
 
+  test('kanban:ticket:detachWorktree detaches all tickets for the worktree', () => {
+    const handler = handlers.get('kanban:ticket:detachWorktree')
+    expect(handler).toBeDefined()
+
+    const worktree = testDb.createWorktree({
+      project_id: projectId,
+      name: 'city-one',
+      branch_name: 'feat/auth',
+      path: '/ipc-test/city-one'
+    })
+    const ticket = testDb.createKanbanTicket({
+      project_id: projectId,
+      title: 'Attached ticket',
+      worktree_id: worktree.id,
+      github_pr_number: 123,
+      github_pr_url: 'https://github.com/acme/repo/pull/123'
+    })
+
+    const result = handler!(null, worktree.id)
+    expect(result).toBe(1)
+
+    const updated = testDb.getKanbanTicket(ticket.id)
+    expect(updated?.worktree_id).toBeNull()
+    expect(updated?.github_pr_number).toBeNull()
+    expect(updated?.github_pr_url).toBeNull()
+  })
+
   test('kanban:ticket:delete calls deleteKanbanTicket', () => {
     const handler = handlers.get('kanban:ticket:delete')
     expect(handler).toBeDefined()

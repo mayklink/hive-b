@@ -352,6 +352,49 @@ describe('Session 2: Kanban CRUD', () => {
     expect(tickets).toEqual([])
   })
 
+  test('detachWorktreeFromTickets clears worktree and PR metadata for matching tickets only', () => {
+    const worktreeA = db.createWorktree({
+      project_id: projectId,
+      name: 'detach-a',
+      branch_name: 'detach-a',
+      path: '/kanban-crud-test/detach-a'
+    })
+    const worktreeB = db.createWorktree({
+      project_id: projectId,
+      name: 'detach-b',
+      branch_name: 'detach-b',
+      path: '/kanban-crud-test/detach-b'
+    })
+
+    const target = db.createKanbanTicket({
+      project_id: projectId,
+      title: 'Attached to A',
+      worktree_id: worktreeA.id,
+      github_pr_number: 101,
+      github_pr_url: 'https://github.com/acme/repo/pull/101'
+    })
+    const untouched = db.createKanbanTicket({
+      project_id: projectId,
+      title: 'Attached to B',
+      worktree_id: worktreeB.id,
+      github_pr_number: 202,
+      github_pr_url: 'https://github.com/acme/repo/pull/202'
+    })
+
+    const changes = db.detachWorktreeFromTickets(worktreeA.id)
+    expect(changes).toBe(1)
+
+    const detached = db.getKanbanTicket(target.id)
+    expect(detached!.worktree_id).toBeNull()
+    expect(detached!.github_pr_number).toBeNull()
+    expect(detached!.github_pr_url).toBeNull()
+
+    const stillAttached = db.getKanbanTicket(untouched.id)
+    expect(stillAttached!.worktree_id).toBe(worktreeB.id)
+    expect(stillAttached!.github_pr_number).toBe(202)
+    expect(stillAttached!.github_pr_url).toBe('https://github.com/acme/repo/pull/202')
+  })
+
   // --- updateProjectSimpleMode ---
 
   test('updateProjectSimpleMode toggles the kanban_simple_mode column', () => {

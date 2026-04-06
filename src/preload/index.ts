@@ -1829,6 +1829,8 @@ const kanban = {
       ipcRenderer.invoke('kanban:ticket:syncPR', worktreeId, prNumber, prUrl),
     clearPR: (worktreeId: string) =>
       ipcRenderer.invoke('kanban:ticket:clearPR', worktreeId),
+    detachWorktree: (worktreeId: string) =>
+      ipcRenderer.invoke('kanban:ticket:detachWorktree', worktreeId),
   },
   simpleMode: {
     toggle: (projectId: string, enabled: boolean) =>

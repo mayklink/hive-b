@@ -116,6 +116,7 @@ interface KanbanState {
   archiveTicket: (ticketId: string, projectId: string) => Promise<void>
   archiveAllDone: (projectId: string) => Promise<number>
   unarchiveTicket: (ticketId: string, projectId: string) => Promise<void>
+  detachWorktreeTickets: (worktreeId: string) => Promise<void>
   setShowArchived: (projectId: string, show: boolean) => void
   setPendingDoneMove: (data: { ticketId: string; projectId: string; sortOrder: number }) => void
   clearPendingDoneMove: () => void
@@ -340,6 +341,55 @@ export const useKanbanStore = create<KanbanState>()(
             next.set(projectId, snapshot)
             return { tickets: next }
           })
+          throw err
+        }
+      },
+
+      // ── detachWorktreeTickets (optimistic) ────────────────────────
+      detachWorktreeTickets: async (worktreeId: string) => {
+        const snapshot = new Map<string, KanbanTicket[]>()
+        const now = new Date().toISOString()
+
+        set((state) => {
+          const next = new Map(state.tickets)
+          let anyChanged = false
+
+          for (const [projectId, projectTickets] of next) {
+            let projectChanged = false
+            const updated = projectTickets.map((ticket) => {
+              if (ticket.worktree_id !== worktreeId) return ticket
+              projectChanged = true
+              return {
+                ...ticket,
+                worktree_id: null,
+                github_pr_number: null,
+                github_pr_url: null,
+                updated_at: now
+              }
+            })
+
+            if (projectChanged) {
+              anyChanged = true
+              snapshot.set(projectId, projectTickets.map((t) => ({ ...t })))
+              next.set(projectId, updated)
+            }
+          }
+
+          return anyChanged ? { tickets: next } : {}
+        })
+
+        try {
+          await window.kanban.ticket.detachWorktree(worktreeId)
+        } catch (err) {
+          if (snapshot.size > 0) {
+            set((state) => {
+              const next = new Map(state.tickets)
+              for (const [projectId, projectTickets] of snapshot) {
+                next.set(projectId, projectTickets)
+              }
+              return { tickets: next }
+            })
+          }
           throw err
         }
       },

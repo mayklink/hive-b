@@ -69,6 +69,10 @@ export function registerKanbanHandlers(): void {
     return getDatabase().clearPRFromTickets(worktreeId)
   })
 
+  ipcMain.handle('kanban:ticket:detachWorktree', (_event, worktreeId: string) => {
+    return getDatabase().detachWorktreeFromTickets(worktreeId)
+  })
+
   ipcMain.handle('kanban:simpleMode:toggle', (_event, projectId: string, enabled: boolean) => {
     return getDatabase().updateProjectSimpleMode(projectId, enabled)
   })

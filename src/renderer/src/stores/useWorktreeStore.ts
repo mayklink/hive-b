@@ -327,7 +327,10 @@ export const useWorktreeStore = create<WorktreeState>((set, get) => ({
     }))
 
     try {
-      // 1. Kill running script process (dev server, build, etc.)
+      // 1. Immediately detach tickets from this worktree before slow archive work starts.
+      await useKanbanStore.getState().detachWorktreeTickets(worktreeId)
+
+      // 2. Kill running script process (dev server, build, etc.)
       const scriptState = useScriptStore.getState().scriptStates[worktreeId]
       if (scriptState?.runRunning) {
         try {
@@ -337,7 +340,7 @@ export const useWorktreeStore = create<WorktreeState>((set, get) => ({
         }
       }
 
-      // 2. Abort any active streaming sessions
+      // 3. Abort any active streaming sessions
       const sessionIds = useSessionStore.getState().sessionsByWorktree.get(worktreeId) || []
       const statusStore = useWorktreeStatusStore.getState()
       for (const session of sessionIds) {
@@ -353,7 +356,7 @@ export const useWorktreeStore = create<WorktreeState>((set, get) => ({
         }
       }
 
-      // 3. Proceed with archive
+      // 4. Proceed with archive
       const result = await window.worktreeOps.delete({
         worktreeId,
         worktreePath,
@@ -366,7 +369,7 @@ export const useWorktreeStore = create<WorktreeState>((set, get) => ({
         return { success: false, error: result.error || 'Failed to archive worktree' }
       }
 
-      // 4. Clean up any connections referencing this worktree
+      // 5. Clean up any connections referencing this worktree
       try {
         await window.connectionOps.removeWorktreeFromAll(worktreeId)
         // Reload connections to reflect the change

@@ -12,7 +12,8 @@ const mockKanban = {
     delete: vi.fn(),
     move: vi.fn(),
     reorder: vi.fn(),
-    getBySession: vi.fn()
+    getBySession: vi.fn(),
+    detachWorktree: vi.fn()
   },
   simpleMode: {
     toggle: vi.fn()
@@ -42,6 +43,13 @@ function makeTicket(overrides: Partial<KanbanTicket> = {}): KanbanTicket {
     worktree_id: overrides.worktree_id ?? null,
     mode: overrides.mode ?? null,
     plan_ready: overrides.plan_ready ?? false,
+    archived_at: overrides.archived_at ?? null,
+    external_provider: overrides.external_provider ?? null,
+    external_id: overrides.external_id ?? null,
+    external_url: overrides.external_url ?? null,
+    github_pr_number: overrides.github_pr_number ?? null,
+    github_pr_url: overrides.github_pr_url ?? null,
+    total_tokens: overrides.total_tokens ?? 0,
     created_at: overrides.created_at ?? '2026-01-01T00:00:00Z',
     updated_at: overrides.updated_at ?? '2026-01-01T00:00:00Z'
   }
@@ -78,7 +86,7 @@ describe('Session 4: Kanban Store', () => {
 
     const state = useKanbanStore.getState()
     expect(state.tickets.get('proj-1')).toEqual(tickets)
-    expect(mockKanban.ticket.getByProject).toHaveBeenCalledWith('proj-1')
+    expect(mockKanban.ticket.getByProject).toHaveBeenCalledWith('proj-1', false)
     expect(state.isLoading).toBe(false)
   })
 
@@ -194,6 +202,79 @@ describe('Session 4: Kanban Store', () => {
     const tickets = useKanbanStore.getState().tickets.get('proj-1')
     expect(tickets![0].sort_order).toBe(2.5)
     expect(mockKanban.ticket.reorder).toHaveBeenCalledWith('t1', 2.5)
+  })
+
+  test('detachWorktreeTickets clears worktree and PR fields across loaded projects', async () => {
+    mockKanban.ticket.detachWorktree.mockResolvedValue(2)
+
+    act(() => {
+      useKanbanStore.setState({
+        tickets: new Map([
+          ['proj-1', [
+            makeTicket({
+              id: 't1',
+              project_id: 'proj-1',
+              worktree_id: 'wt-1',
+              github_pr_number: 10,
+              github_pr_url: 'https://github.com/acme/repo/pull/10'
+            }),
+            makeTicket({ id: 't2', project_id: 'proj-1', worktree_id: 'wt-2' })
+          ]],
+          ['proj-2', [
+            makeTicket({
+              id: 't3',
+              project_id: 'proj-2',
+              worktree_id: 'wt-1',
+              github_pr_number: 20,
+              github_pr_url: 'https://github.com/acme/repo/pull/20'
+            })
+          ]]
+        ])
+      })
+    })
+
+    await act(async () => {
+      await useKanbanStore.getState().detachWorktreeTickets('wt-1')
+    })
+
+    const proj1 = useKanbanStore.getState().tickets.get('proj-1') ?? []
+    const proj2 = useKanbanStore.getState().tickets.get('proj-2') ?? []
+    expect(proj1.find((t) => t.id === 't1')?.worktree_id).toBeNull()
+    expect(proj1.find((t) => t.id === 't1')?.github_pr_number).toBeNull()
+    expect(proj1.find((t) => t.id === 't1')?.github_pr_url).toBeNull()
+    expect(proj1.find((t) => t.id === 't2')?.worktree_id).toBe('wt-2')
+    expect(proj2.find((t) => t.id === 't3')?.worktree_id).toBeNull()
+    expect(mockKanban.ticket.detachWorktree).toHaveBeenCalledWith('wt-1')
+  })
+
+  test('detachWorktreeTickets reverts optimistic changes on failure', async () => {
+    mockKanban.ticket.detachWorktree.mockRejectedValueOnce(new Error('detach failed'))
+
+    act(() => {
+      useKanbanStore.setState({
+        tickets: new Map([
+          ['proj-1', [
+            makeTicket({
+              id: 't1',
+              worktree_id: 'wt-1',
+              github_pr_number: 10,
+              github_pr_url: 'https://github.com/acme/repo/pull/10'
+            })
+          ]]
+        ])
+      })
+    })
+
+    await expect(
+      act(async () => {
+        await useKanbanStore.getState().detachWorktreeTickets('wt-1')
+      })
+    ).rejects.toThrow('detach failed')
+
+    const ticket = useKanbanStore.getState().tickets.get('proj-1')?.[0]
+    expect(ticket?.worktree_id).toBe('wt-1')
+    expect(ticket?.github_pr_number).toBe(10)
+    expect(ticket?.github_pr_url).toBe('https://github.com/acme/repo/pull/10')
   })
 
   // ── computeSortOrder: beginning ────────────────────────────────────

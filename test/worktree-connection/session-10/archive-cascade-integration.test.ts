@@ -22,6 +22,12 @@ const mockWorktreeOps = {
   delete: vi.fn()
 }
 
+const mockKanban = {
+  ticket: {
+    detachWorktree: vi.fn()
+  }
+}
+
 // ---------- Mock window.db ----------
 const mockDb = {
   worktree: {
@@ -72,6 +78,12 @@ Object.defineProperty(window, 'opencodeOps', {
   writable: true,
   configurable: true,
   value: mockOpencodeOps
+})
+
+Object.defineProperty(window, 'kanban', {
+  writable: true,
+  configurable: true,
+  value: mockKanban
 })
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -254,6 +266,7 @@ describe('Session 10: Archive Cascade & Integration', () => {
 
     // Default mock: successful archive
     mockWorktreeOps.delete.mockResolvedValue({ success: true })
+    mockKanban.ticket.detachWorktree.mockResolvedValue(1)
     // Default mock: successful removeWorktreeFromAll
     mockConnectionOps.removeWorktreeFromAll.mockResolvedValue({ success: true })
     // Default mock: getAll returns empty after cleanup
@@ -261,6 +274,26 @@ describe('Session 10: Archive Cascade & Integration', () => {
   })
 
   describe('archiveWorktree calls removeWorktreeFromAll', () => {
+    test('archiving a worktree detaches tickets before the delete op starts', async () => {
+      const callOrder: string[] = []
+      mockKanban.ticket.detachWorktree.mockImplementation(async () => {
+        callOrder.push('detachWorktree')
+        return 1
+      })
+      mockWorktreeOps.delete.mockImplementation(async () => {
+        callOrder.push('delete')
+        return { success: true }
+      })
+
+      await act(async () => {
+        await useWorktreeStore
+          .getState()
+          .archiveWorktree('wt-1', '/repos/frontend/city-one', 'feat/auth', '/repos/frontend')
+      })
+
+      expect(callOrder.slice(0, 2)).toEqual(['detachWorktree', 'delete'])
+    })
+
     test('archiving a worktree calls removeWorktreeFromAll with the worktreeId', async () => {
       await act(async () => {
         await useWorktreeStore
@@ -270,6 +303,21 @@ describe('Session 10: Archive Cascade & Integration', () => {
 
       expect(mockConnectionOps.removeWorktreeFromAll).toHaveBeenCalledWith('wt-1')
       expect(mockConnectionOps.removeWorktreeFromAll).toHaveBeenCalledTimes(1)
+    })
+
+    test('archive aborts before delete when ticket detach fails', async () => {
+      mockKanban.ticket.detachWorktree.mockRejectedValueOnce(new Error('Detach failed'))
+
+      const result = await act(async () => {
+        return useWorktreeStore
+          .getState()
+          .archiveWorktree('wt-1', '/repos/frontend/city-one', 'feat/auth', '/repos/frontend')
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.error).toBe('Detach failed')
+      expect(mockWorktreeOps.delete).not.toHaveBeenCalled()
+      expect(mockConnectionOps.removeWorktreeFromAll).not.toHaveBeenCalled()
     })
 
     test('archiving a worktree reloads connections after cleanup', async () => {
@@ -311,6 +359,23 @@ describe('Session 10: Archive Cascade & Integration', () => {
       // Worktree should be removed from state
       const worktrees = useWorktreeStore.getState().worktreesByProject.get('proj-1')
       expect(worktrees?.find((w) => w.id === 'wt-1')).toBeUndefined()
+    })
+
+    test('archive failure after detach leaves detached tickets in place', async () => {
+      mockWorktreeOps.delete.mockResolvedValueOnce({
+        success: false,
+        error: 'Permission denied'
+      })
+
+      let result: { success: boolean; error?: string } | undefined
+      await act(async () => {
+        result = await useWorktreeStore
+          .getState()
+          .archiveWorktree('wt-1', '/repos/frontend/city-one', 'feat/auth', '/repos/frontend')
+      })
+
+      expect(result?.success).toBe(false)
+      expect(mockKanban.ticket.detachWorktree).toHaveBeenCalledWith('wt-1')
     })
 
     test('archive does not call removeWorktreeFromAll when archive itself fails', async () => {
