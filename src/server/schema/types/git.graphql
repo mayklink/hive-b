@@ -130,3 +130,10 @@ type RangeDiff {
   diffPatch: String!
   commitCount: Int!
 }
+
+type GeneratePRContentResult {
+  success: Boolean!
+  title: String
+  body: String
+  error: String
+}

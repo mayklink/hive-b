@@ -279,6 +279,14 @@ export type ForkSessionInput = {
   worktreePath: Scalars['String']['input'];
 };
 
+export type GeneratePrContentResult = {
+  __typename?: 'GeneratePRContentResult';
+  body?: Maybe<Scalars['String']['output']>;
+  error?: Maybe<Scalars['String']['output']>;
+  success: Scalars['Boolean']['output'];
+  title?: Maybe<Scalars['String']['output']>;
+};
+
 export type GitBranchChangedEvent = {
   __typename?: 'GitBranchChangedEvent';
   worktreePath: Scalars['String']['output'];
@@ -607,6 +615,7 @@ export type Mutation = {
   gitCreatePR: CreatePrResult;
   gitDeleteBranch: SuccessResult;
   gitDiscardChanges: SuccessResult;
+  gitGeneratePRContent: GeneratePrContentResult;
   gitMerge: GitMergeResult;
   gitPrMerge: SuccessResult;
   gitPull: SuccessResult;
@@ -833,6 +842,13 @@ export type MutationGitDeleteBranchArgs = {
 
 export type MutationGitDiscardChangesArgs = {
   filePath: Scalars['String']['input'];
+  worktreePath: Scalars['String']['input'];
+};
+
+
+export type MutationGitGeneratePrContentArgs = {
+  baseBranch: Scalars['String']['input'];
+  provider: Scalars['String']['input'];
   worktreePath: Scalars['String']['input'];
 };
 
@@ -2435,6 +2451,7 @@ export type ResolversTypes = ResolversObject<{
   FlatFile: ResolverTypeWrapper<FlatFile>;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   ForkSessionInput: ForkSessionInput;
+  GeneratePRContentResult: ResolverTypeWrapper<GeneratePrContentResult>;
   GitBranchChangedEvent: ResolverTypeWrapper<GitBranchChangedEvent>;
   GitBranchDiffFile: ResolverTypeWrapper<GitBranchDiffFile>;
   GitBranchDiffFilesResult: ResolverTypeWrapper<GitBranchDiffFilesResult>;
@@ -2586,6 +2603,7 @@ export type ResolversParentTypes = ResolversObject<{
   FlatFile: FlatFile;
   Float: Scalars['Float']['output'];
   ForkSessionInput: ForkSessionInput;
+  GeneratePRContentResult: GeneratePrContentResult;
   GitBranchChangedEvent: GitBranchChangedEvent;
   GitBranchDiffFile: GitBranchDiffFile;
   GitBranchDiffFilesResult: GitBranchDiffFilesResult;
@@ -2855,6 +2873,13 @@ export type FlatFileResolvers<ContextType = GraphQLContext, ParentType extends R
   relativePath?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
 
+export type GeneratePrContentResultResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GeneratePRContentResult'] = ResolversParentTypes['GeneratePRContentResult']> = ResolversObject<{
+  body?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  error?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  success?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+}>;
+
 export type GitBranchChangedEventResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GitBranchChangedEvent'] = ResolversParentTypes['GitBranchChangedEvent']> = ResolversObject<{
   worktreePath?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
@@ -3070,6 +3095,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   gitCreatePR?: Resolver<ResolversTypes['CreatePRResult'], ParentType, ContextType, RequireFields<MutationGitCreatePrArgs, 'baseBranch' | 'body' | 'title' | 'worktreePath'>>;
   gitDeleteBranch?: Resolver<ResolversTypes['SuccessResult'], ParentType, ContextType, RequireFields<MutationGitDeleteBranchArgs, 'branchName' | 'worktreePath'>>;
   gitDiscardChanges?: Resolver<ResolversTypes['SuccessResult'], ParentType, ContextType, RequireFields<MutationGitDiscardChangesArgs, 'filePath' | 'worktreePath'>>;
+  gitGeneratePRContent?: Resolver<ResolversTypes['GeneratePRContentResult'], ParentType, ContextType, RequireFields<MutationGitGeneratePrContentArgs, 'baseBranch' | 'provider' | 'worktreePath'>>;
   gitMerge?: Resolver<ResolversTypes['GitMergeResult'], ParentType, ContextType, RequireFields<MutationGitMergeArgs, 'sourceBranch' | 'worktreePath'>>;
   gitPrMerge?: Resolver<ResolversTypes['SuccessResult'], ParentType, ContextType, RequireFields<MutationGitPrMergeArgs, 'prNumber' | 'worktreePath'>>;
   gitPull?: Resolver<ResolversTypes['SuccessResult'], ParentType, ContextType, RequireFields<MutationGitPullArgs, 'input'>>;
@@ -3629,6 +3655,7 @@ export type Resolvers<ContextType = GraphQLContext> = ResolversObject<{
   FileTreeScanFlatResult?: FileTreeScanFlatResultResolvers<ContextType>;
   FileTreeScanResult?: FileTreeScanResultResolvers<ContextType>;
   FlatFile?: FlatFileResolvers<ContextType>;
+  GeneratePRContentResult?: GeneratePrContentResultResolvers<ContextType>;
   GitBranchChangedEvent?: GitBranchChangedEventResolvers<ContextType>;
   GitBranchDiffFile?: GitBranchDiffFileResolvers<ContextType>;
   GitBranchDiffFilesResult?: GitBranchDiffFilesResultResolvers<ContextType>;

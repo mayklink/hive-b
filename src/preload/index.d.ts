@@ -1233,6 +1233,17 @@ declare global {
         number?: number
         error?: string
       }>
+      // Generate PR content (title + body) using AI
+      generatePRContent: (
+        worktreePath: string,
+        baseBranch: string,
+        provider: string
+      ) => Promise<{
+        success: boolean
+        title?: string
+        body?: string
+        error?: string
+      }>
       // Get range diff between base branch and HEAD
       getRangeDiff: (
         worktreePath: string,

@@ -74,6 +74,9 @@ interface GitStoreState {
   // Diff branch comparison - keyed by worktree path
   selectedDiffBranch: Map<string, string>
 
+  // Create PR modal
+  createPRModalOpen: boolean
+
   // Actions
   loadFileStatuses: (worktreePath: string) => Promise<void>
   loadBranchInfo: (worktreePath: string) => Promise<void>
@@ -110,6 +113,9 @@ interface GitStoreState {
 
   // Diff branch comparison actions
   setSelectedDiffBranch: (worktreePath: string, branch: string) => void
+
+  // Create PR modal actions
+  setCreatePRModalOpen: (open: boolean) => void
 
   // Commit, Push, Pull actions
   commit: (
@@ -161,6 +167,9 @@ export const useGitStore = create<GitStoreState>()((set, get) => ({
 
   // Diff branch comparison
   selectedDiffBranch: new Map(),
+
+  // Create PR modal
+  createPRModalOpen: false,
 
   // Load file statuses for a worktree
   loadFileStatuses: async (worktreePath: string) => {
@@ -535,6 +544,11 @@ export const useGitStore = create<GitStoreState>()((set, get) => ({
       newMap.set(worktreePath, branch)
       return { selectedDiffBranch: newMap }
     })
+  },
+
+  // Open/close create PR modal
+  setCreatePRModalOpen: (open: boolean) => {
+    set({ createPRModalOpen: open })
   },
 
   // Commit staged changes

@@ -538,6 +538,24 @@ export function createGitOpsAdapter(): GitOpsApi {
       return data.gitCreatePR
     },
 
+    async generatePRContent(
+      worktreePath: string,
+      baseBranch: string,
+      provider: string
+    ): Promise<{ success: boolean; title?: string; body?: string; error?: string }> {
+      const data = await graphqlQuery<{
+        gitGeneratePRContent: { success: boolean; title?: string; body?: string; error?: string }
+      }>(
+        `mutation ($worktreePath: String!, $baseBranch: String!, $provider: String!) {
+          gitGeneratePRContent(worktreePath: $worktreePath, baseBranch: $baseBranch, provider: $provider) {
+            success title body error
+          }
+        }`,
+        { worktreePath, baseBranch, provider }
+      )
+      return data.gitGeneratePRContent
+    },
+
     async getRangeDiff(
       worktreePath: string,
       baseBranch: string
