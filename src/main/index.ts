@@ -46,6 +46,16 @@ import { initTicketProviderManager, GitHubProvider, JiraProvider } from './servi
 
 const log = createLogger({ component: 'Main' })
 
+// Global error handlers — prevent uncaught errors from crashing the Electron process
+process.on('uncaughtException', (error) => {
+  log.error('Uncaught exception', error, { fatal: false })
+})
+
+process.on('unhandledRejection', (reason) => {
+  const error = reason instanceof Error ? reason : new Error(String(reason))
+  log.error('Unhandled promise rejection', error, { fatal: false })
+})
+
 const appStartTime = Date.now()
 
 // Parse CLI flags

@@ -282,21 +282,29 @@ export function CreatePRModal({
         }
       }
 
-      // Step 2: Generate content if needed
+      // Step 2: Generate content if needed (best-effort — failure should not block PR creation)
       const needsGenerate = !finalTitle || !finalBody
+      let usedFallbackContent = false
       if (needsGenerate) {
         update(notifId, { message: 'Generating PR content...' })
-        const genResult = await window.gitOps.generatePRContent(
-          worktreePath,
-          targetBase,
-          provider
-        )
-        if (!genResult.success) {
-          throw new Error(genResult.error ?? 'Content generation failed')
+        try {
+          const genResult = await window.gitOps.generatePRContent(
+            worktreePath,
+            targetBase,
+            provider
+          )
+          if (genResult.success) {
+            if (!finalTitle && genResult.title) finalTitle = genResult.title
+            if (!finalBody && genResult.body) finalBody = genResult.body
+          } else {
+            console.warn('PR content generation failed, using fallback:', genResult.error)
+            usedFallbackContent = true
+          }
+        } catch (err) {
+          console.warn('PR content generation threw, using fallback:', err)
+          usedFallbackContent = true
         }
-        if (!finalTitle && genResult.title) finalTitle = genResult.title
-        if (!finalBody && genResult.body) finalBody = genResult.body
-        // Fallback if generation returned empty
+        // Fallback if generation failed or returned empty
         if (!finalTitle) finalTitle = branchName
         if (!finalBody) finalBody = ''
       }
@@ -346,8 +354,13 @@ export function CreatePRModal({
       await attachPR(worktreeId, prNumber, prUrl)
 
       update(notifId, {
-        status: 'success',
-        message: `Pull request #${prNumber} created`,
+        status: usedFallbackContent ? 'warning' : 'success',
+        message: usedFallbackContent
+          ? `PR #${prNumber} created with default content`
+          : `Pull request #${prNumber} created`,
+        description: usedFallbackContent
+          ? 'AI content generation failed — you may want to edit the title and description'
+          : undefined,
         prUrl,
         prNumber
       })

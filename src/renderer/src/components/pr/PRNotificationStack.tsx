@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { Loader2, Check, AlertCircle, Info, X, ExternalLink } from 'lucide-react'
+import { Loader2, Check, AlertCircle, AlertTriangle, Info, X, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePRNotificationStore } from '@/stores/usePRNotificationStore'
 
@@ -15,6 +15,8 @@ function StatusIcon({ status }: { status: string }): React.JSX.Element {
       return <Check className="h-4 w-4 text-emerald-400" />
     case 'error':
       return <AlertCircle className="h-4 w-4 text-red-400" />
+    case 'warning':
+      return <AlertTriangle className="h-4 w-4 text-amber-400" />
     case 'info':
       return <Info className="h-4 w-4 text-blue-400" />
     default:
@@ -40,7 +42,7 @@ function PRNotificationCard({
   prUrl?: string
 }): React.JSX.Element {
   const dismiss = usePRNotificationStore((s) => s.dismiss)
-  const isDone = status === 'success' || status === 'error' || status === 'info'
+  const isDone = status === 'success' || status === 'error' || status === 'info' || status === 'warning'
 
   const handleClose = useCallback(() => {
     dismiss(id)
@@ -59,6 +61,7 @@ function PRNotificationCard({
         // Accent strip
         status === 'success' && 'border-l-2 border-l-emerald-500/60',
         status === 'error' && 'border-l-2 border-l-red-500/60',
+        status === 'warning' && 'border-l-2 border-l-amber-500/60',
         status === 'info' && 'border-l-2 border-l-blue-500/60',
         status === 'loading' && 'border-l-2 border-l-blue-500/40'
       )}

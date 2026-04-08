@@ -185,6 +185,19 @@ async function generateWithClaude(prompt: string, systemPrompt: string, modelOve
     }
 
     return resultText || null
+  } catch (err) {
+    // If we collected streamed text before the error, use it as fallback
+    if (streamedText) {
+      log.info('Using streamed text after error', {
+        error: err instanceof Error ? err.message : String(err)
+      })
+      return streamedText
+    }
+    // Convert AbortError from timeout into a clearer message
+    if (err instanceof Error && (err.name === 'AbortError' || err.message.includes('aborted'))) {
+      throw new Error(`AI content generation timed out after ${TIMEOUT_MS / 1000}s`)
+    }
+    throw err
   } finally {
     clearTimeout(timeout)
   }
