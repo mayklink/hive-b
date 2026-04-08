@@ -42,8 +42,7 @@
 ### Przez Homebrew (zalecane)
 
 ```bash
-brew tap morapelker/hive
-brew install --cask hive
+brew install --cask hive-app
 ```
 
 ### Bezpośrednie pobranie

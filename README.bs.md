@@ -42,8 +42,7 @@
 ### Preko Homebrew (Preporučeno)
 
 ```bash
-brew tap morapelker/hive
-brew install --cask hive
+brew install --cask hive-app
 ```
 
 ### Direktno preuzimanje

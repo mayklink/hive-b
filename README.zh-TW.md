@@ -42,8 +42,7 @@
 ### 透過 Homebrew（推薦）
 
 ```bash
-brew tap morapelker/hive
-brew install --cask hive
+brew install --cask hive-app
 ```
 
 ### 直接下載
