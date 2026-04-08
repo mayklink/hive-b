@@ -670,6 +670,14 @@ function KanbanTicketModalContent({
               worktreePath={worktreePath!}
               opencodeSessionId={opcSessionId!}
               title={ticket.title}
+              headerAction={(
+                <JumpToSessionButton
+                  ticket={ticket}
+                  onClose={onClose}
+                  label="Go to session"
+                  testId="go-to-session-btn"
+                />
+              )}
               fullWidth
             />
           ) : (
@@ -2339,10 +2347,14 @@ function QuestionModeContent({
 
 function JumpToSessionButton({
   ticket,
-  onClose
+  onClose,
+  label = 'Jump to session',
+  testId = 'jump-to-session-btn'
 }: {
   ticket: KanbanTicket
   onClose: () => void
+  label?: string
+  testId?: string
 }) {
   const handleJump = useCallback(() => {
     if (!ticket.current_session_id) return
@@ -2372,12 +2384,12 @@ function JumpToSessionButton({
       type="button"
       variant="ghost"
       size="sm"
-      data-testid="jump-to-session-btn"
+      data-testid={testId}
       className="gap-1 text-xs text-muted-foreground hover:text-foreground"
       onClick={handleJump}
     >
       <ExternalLink className="h-3.5 w-3.5" />
-      Jump to session
+      {label}
     </Button>
   )
 }

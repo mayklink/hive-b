@@ -10,6 +10,8 @@ export interface SessionStreamPanelProps {
   opencodeSessionId: string
   /** Optional title override for the header (defaults to "Session") */
   title?: string
+  /** Optional header action rendered on the right side */
+  headerAction?: React.ReactNode
   /** When true, hides the left border (used in full-width layout) */
   fullWidth?: boolean
 }
@@ -19,6 +21,7 @@ export function SessionStreamPanel({
   worktreePath,
   opencodeSessionId,
   title,
+  headerAction,
   fullWidth = false
 }: SessionStreamPanelProps): React.JSX.Element {
   const { messages, streamingParts, streamingContent, isStreaming, isLoading } = useSessionStream({
@@ -156,11 +159,12 @@ export function SessionStreamPanel({
   return (
     <div className={`flex flex-col h-full bg-background flex-1 min-w-0${fullWidth ? '' : ' border-l border-border/60'}`}>
       {/* Header */}
-      <div className="shrink-0 px-4 py-3 border-b border-border/60 flex items-center gap-2">
+      <div className={`shrink-0 px-4 py-3 border-b border-border/60 flex items-center gap-2${headerAction ? ' pr-16' : ''}`}>
         <span className="text-sm font-medium text-foreground truncate">{title || 'Session'}</span>
         {isStreaming && (
           <span role="status" aria-label="Streaming active" className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
         )}
+        {headerAction && <div className="ml-auto shrink-0">{headerAction}</div>}
       </div>
 
       {/* Scrollable message list */}
