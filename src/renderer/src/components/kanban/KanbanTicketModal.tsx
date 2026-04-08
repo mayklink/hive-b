@@ -2008,7 +2008,15 @@ function ReviewModeContent({
             variant="outline"
             className="gap-1.5"
             disabled={lifecycleLoading}
-            onClick={() => useGitStore.getState().setCreatePRModalOpen(true)}
+            onClick={() => {
+              const worktreePath = findWorktreePathById(ticket.worktree_id!)
+              if (worktreePath) {
+                useGitStore.getState().setCreatePRModalOpen(true, {
+                  worktreeId: ticket.worktree_id!,
+                  worktreePath,
+                })
+              }
+            }}
           >
             <GitPullRequest className="h-3.5 w-3.5" />
             Create PR
