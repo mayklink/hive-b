@@ -1,4 +1,5 @@
 import type { SessionActivityCreate, SessionActivityKind, SessionActivityTone } from '../db'
+import { normalizeCodexToolName } from '@shared/codex-tool-normalizer'
 import type { CodexManagerEvent } from './codex-app-server-manager'
 import { asObject, asString } from './codex-utils'
 
@@ -67,12 +68,13 @@ export function mapCodexManagerEventToActivity(
     case 'item/completed': {
       const item = asObject(payload?.item)
       const itemType = asString(item?.type)?.toLowerCase()
-      const toolName =
+      const toolName = normalizeCodexToolName(
         asString(item?.toolName) ??
         asString(item?.name) ??
         asString(item?.type) ??
         asString(payload?.toolName) ??
         'unknown'
+      )
       const isTool = itemType === 'commandexecution' || itemType === 'filechange'
       if (!isTool) return null
 

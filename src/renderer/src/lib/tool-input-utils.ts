@@ -1,3 +1,5 @@
+import { stripShellPrefix } from '@shared/codex-tool-normalizer'
+
 function asTrimmedString(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const trimmed = value.trim()
@@ -19,16 +21,17 @@ function normalizeCommandValue(value: unknown): string | null {
 
 export function extractCommandText(input: unknown): string {
   const direct = normalizeCommandValue(input)
-  if (direct) return direct
+  if (direct) return stripShellPrefix(direct)
 
   if (!input || typeof input !== 'object' || Array.isArray(input)) return ''
 
   const record = input as Record<string, unknown>
 
-  return (
+  const result =
     normalizeCommandValue(record.command) ??
     normalizeCommandValue(record.cmd) ??
     normalizeCommandValue(record.argv) ??
     ''
-  )
+
+  return result ? stripShellPrefix(result) : result
 }

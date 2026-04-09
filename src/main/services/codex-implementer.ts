@@ -16,6 +16,7 @@ import { asNumber, asObject, asString, toJsonSnapshot } from './codex-utils'
 import { generateCodexSessionTitle } from './codex-session-title'
 import type { DatabaseService } from '../db/database'
 import { autoRenameWorktreeBranch } from './git-service'
+import { normalizeCodexToolName, stripShellPrefix } from '@shared/codex-tool-normalizer'
 
 const log = createLogger({ component: 'CodexImplementer' })
 
@@ -112,6 +113,46 @@ export function normalizeCodexMessageTimestamps<T extends { created_at: string }
       created_at: new Date(nextTimestampMs).toISOString()
     }
   })
+}
+
+// ── Snapshot tool-call helpers ────────────────────────────────────
+
+function extractSnapshotToolCommand(itemObj: Record<string, unknown>): string | undefined {
+  const inputObj =
+    typeof itemObj.input === 'object' && itemObj.input !== null
+      ? (itemObj.input as Record<string, unknown>)
+      : undefined
+
+  const candidates = [itemObj.command, inputObj?.command, itemObj.cmd, inputObj?.cmd]
+
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      return stripShellPrefix(candidate.trim())
+    }
+    if (Array.isArray(candidate)) {
+      const joined = candidate
+        .filter((entry): entry is string => typeof entry === 'string')
+        .join(' ')
+        .trim()
+      if (joined.length > 0) return stripShellPrefix(joined)
+    }
+  }
+  return undefined
+}
+
+function buildSnapshotToolInput(itemObj: Record<string, unknown>): Record<string, unknown> {
+  const inputObj =
+    typeof itemObj.input === 'object' && itemObj.input !== null && !Array.isArray(itemObj.input)
+      ? (itemObj.input as Record<string, unknown>)
+      : {}
+  const command = extractSnapshotToolCommand(itemObj)
+  const changes = Array.isArray(itemObj.changes) ? itemObj.changes : undefined
+
+  return {
+    ...inputObj,
+    ...(command ? { command } : {}),
+    ...(changes ? { changes } : {})
+  }
 }
 
 export class CodexImplementer implements AgentSdkImplementer {
@@ -2137,6 +2178,53 @@ export class CodexImplementer implements AgentSdkImplementer {
                 itemTimestamp
               )
             }
+            continue
+          }
+
+          if (itemType === 'commandExecution' || itemType === 'fileChange') {
+            const toolName = normalizeCodexToolName(
+              asString(itemObj.toolName) ?? asString(itemObj.name) ?? itemType
+            )
+            const input = buildSnapshotToolInput(itemObj)
+            const output = itemObj.output ?? itemObj.aggregatedOutput
+            const status = asString(itemObj.status)
+
+            const stringifiedOutput =
+              output !== undefined && output !== null
+                ? typeof output === 'string'
+                  ? output
+                  : JSON.stringify(output)
+                : undefined
+
+            const messageId = makeAssistantMessageId(itemId)
+            pushMessage(
+              {
+                ...(messageId ? { id: messageId } : {}),
+                role: 'assistant',
+                parts: [
+                  {
+                    type: 'tool_use',
+                    toolUse: {
+                      id: itemId ?? `tool-${order}`,
+                      name: toolName,
+                      input,
+                      // Snapshots only contain completed turns — never 'running'
+                      status: status === 'failed' ? 'error' : 'success',
+                      startTime: Date.parse(itemTimestamp) || Date.now(),
+                      endTime: Date.parse(itemTimestamp) || Date.now(),
+                      output: status !== 'failed' ? stringifiedOutput : undefined,
+                      error:
+                        status === 'failed'
+                          ? (stringifiedOutput ?? 'Tool execution failed')
+                          : undefined
+                    }
+                  }
+                ],
+                timestamp: itemTimestamp
+              },
+              itemTimestamp
+            )
+            continue
           }
         }
 
