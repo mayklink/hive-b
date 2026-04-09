@@ -156,6 +156,7 @@ async function generateWithClaude(prompt: string, systemPrompt: string, modelOve
 
   const abortController = new AbortController()
   const timeout = setTimeout(() => abortController.abort(), TIMEOUT_MS)
+  let streamedText = ''
 
   try {
     const query = sdk.query({
@@ -174,7 +175,6 @@ async function generateWithClaude(prompt: string, systemPrompt: string, modelOve
     })
 
     let resultText = ''
-    let streamedText = ''
     for await (const msg of query) {
       // Collect assistant text as it streams — fallback if the session ends early
       if (msg.type === 'assistant') {
@@ -213,13 +213,15 @@ async function generateWithClaude(prompt: string, systemPrompt: string, modelOve
   } catch (err) {
     // If we collected streamed text before the error, use it as fallback
     if (streamedText) {
-      log.info('Using streamed text after error', {
-        error: err instanceof Error ? err.message : String(err)
+      log.warn('Using streamed text after error', {
+        error: err instanceof Error ? err.message : String(err),
+        streamedTextLength: streamedText.length
       })
       return streamedText
     }
     // Convert AbortError from timeout into a clearer message
     if (err instanceof Error && (err.name === 'AbortError' || err.message.includes('aborted'))) {
+      log.warn('Claude generation timed out', { error: err.message })
       throw new Error(`AI content generation timed out after ${TIMEOUT_MS / 1000}s`)
     }
     throw err
