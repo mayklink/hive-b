@@ -322,7 +322,7 @@ async function loadCodexDurableState(
     window.db.sessionActivity.list(sessionId)
   ])
   return {
-    messages: deriveCodexTimelineMessages(messageRows, activityRows),
+    messages: deriveCodexTimelineMessages(messageRows, activityRows, true),
     activities: activityRows
   }
 }
@@ -672,6 +672,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
 
   // Streaming rAF ref (frame-synced flushing for text updates)
   const rafRef = useRef<number | null>(null)
+  const pendingTextCharsRef = useRef(0)
 
   // Response logging refs
   const isLogModeRef = useRef<boolean>(false)
@@ -1065,6 +1066,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
   const flushStreamingState = useCallback(() => {
     setStreamingParts([...streamingPartsRef.current])
     setStreamingContent(streamingContentRef.current)
+    pendingTextCharsRef.current = 0
   }, [])
 
   // Schedule a frame-synced flush (requestAnimationFrame for text updates)
@@ -1108,10 +1110,19 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
       })
       // Also update legacy streamingContent for backward compat
       streamingContentRef.current += delta
-      // Frame-synced: batch text updates per animation frame
-      scheduleFlush()
+      pendingTextCharsRef.current += delta.length
+
+      // Flush immediately when enough text has accumulated or at natural line breaks
+      // to avoid the "batched single long line" visual jump effect.
+      const TEXT_FLUSH_CHAR_THRESHOLD = 100
+      if (pendingTextCharsRef.current >= TEXT_FLUSH_CHAR_THRESHOLD || delta.includes('\n')) {
+        pendingTextCharsRef.current = 0
+        immediateFlush()
+      } else {
+        scheduleFlush()
+      }
     },
-    [updateStreamingPartsRef, scheduleFlush]
+    [updateStreamingPartsRef, scheduleFlush, immediateFlush]
   )
 
   // Helper: set full text on the last text part (frame-synced)
@@ -1195,6 +1206,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
       cancelAnimationFrame(rafRef.current)
       rafRef.current = null
     }
+    pendingTextCharsRef.current = 0
     streamingPartsRef.current = []
     setStreamingParts([])
     streamingContentRef.current = ''
@@ -1295,9 +1307,11 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
 
           const opencodeMessages = Array.isArray(result.messages) ? result.messages : []
           if (isCodexSession) {
+            const isIdle = currentStoredStatus?.type !== 'busy'
             loadedMessages = mergeCodexActivityMessages(
               mapOpencodeMessagesToSessionViewMessages(opencodeMessages),
-              codexActivities
+              codexActivities,
+              isIdle
             )
           } else if (loadedMessages.length === 0) {
             loadedMessages = mapOpencodeMessagesToSessionViewMessages(opencodeMessages)
@@ -3101,7 +3115,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
       let loadedMessages = mapOpencodeMessagesToSessionViewMessages(rawMessages)
       if (session.agent_sdk === 'codex') {
         const durableState = await loadCodexDurableState(sessionId)
-        loadedMessages = mergeCodexActivityMessages(loadedMessages, durableState.activities)
+        loadedMessages = mergeCodexActivityMessages(loadedMessages, durableState.activities, true)
       }
       setMessages(loadedMessages)
       setViewState({ status: 'connected' })
@@ -3195,11 +3209,13 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           opencodeSessionId
         )
         if (transcriptResult.success) {
+          const isIdle = !isStreaming
           const liveMessages = mergeCodexActivityMessages(
             mapOpencodeMessagesToSessionViewMessages(
               Array.isArray(transcriptResult.messages) ? transcriptResult.messages : []
             ),
-            durableState.activities
+            durableState.activities,
+            isIdle
           )
           setMessages(liveMessages)
           return liveMessages.length > 0

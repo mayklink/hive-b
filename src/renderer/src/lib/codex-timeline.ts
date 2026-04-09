@@ -3,6 +3,7 @@ import {
   type OpenCodeMessage,
   type StreamingPart
 } from '@/lib/opencode-transcript'
+import { normalizeCodexToolName } from '@shared/codex-tool-normalizer'
 
 function parseJson<T>(value: string | null): T | null {
   if (!value) return null
@@ -27,11 +28,12 @@ function parseToolPart(activity: SessionActivity): StreamingPart | null {
   const payload = parseJson<Record<string, unknown>>(activity.payload_json)
   const item =
     payload && typeof payload.item === 'object' ? (payload.item as Record<string, unknown>) : null
-  const toolName =
+  const toolName = normalizeCodexToolName(
     (typeof item?.toolName === 'string' && item.toolName) ||
     (typeof item?.name === 'string' && item.name) ||
     (typeof item?.type === 'string' && item.type) ||
     'unknown'
+  )
   const rawInput =
     item?.input && typeof item.input === 'object' && !Array.isArray(item.input)
       ? (item.input as Record<string, unknown>)
@@ -315,6 +317,14 @@ function upsertToolPart(
   )
 
   if (partIndex >= 0) {
+    const existing = existingParts[partIndex].toolUse
+    // Never downgrade a terminal status (success/error) back to running
+    if (
+      (existing?.status === 'success' || existing?.status === 'error') &&
+      nextPart.toolUse?.status === 'running'
+    ) {
+      return existingParts
+    }
     existingParts[partIndex] = nextPart
   } else {
     existingParts.push(nextPart)
@@ -325,7 +335,8 @@ function upsertToolPart(
 
 export function mergeCodexActivityMessages(
   baseMessages: OpenCodeMessage[],
-  activityRows: SessionActivity[]
+  activityRows: SessionActivity[],
+  sessionIsIdle?: boolean
 ): OpenCodeMessage[] {
   const normalizedBaseMessages = normalizeCodexOpenCodeMessages(baseMessages, activityRows)
   const mergedMessages = normalizedBaseMessages.map((message) => ({
@@ -438,16 +449,70 @@ export function mergeCodexActivityMessages(
     orderedMessages.push(...unanchoredSynthetic)
   }
 
+  // ── Resolve stale "running" tools ────────────────────────────────
+  // Build a set of item IDs that have terminal activities
+  const completedItemIds = new Set(
+    sortedActivities
+      .filter((a) => a.kind === 'tool.completed' || a.kind === 'tool.failed')
+      .map((a) => a.item_id)
+      .filter((id): id is string => typeof id === 'string')
+  )
+
+  // Build ordered turn IDs to detect settled turns
+  const turnIdOrder = getOrderedActivityTurnIds(activityRows)
+  const lastTurnId = turnIdOrder[turnIdOrder.length - 1]
+
+  for (const message of orderedMessages) {
+    if (!message.parts) continue
+    for (let i = 0; i < message.parts.length; i++) {
+      const part = message.parts[i]
+      if (part.type !== 'tool_use' || !part.toolUse) continue
+      if (part.toolUse.status !== 'running') continue
+
+      const toolId = part.toolUse.id
+      // If we already have a completion event, the upsert should have handled it,
+      // but double-check as a safety net
+      if (completedItemIds.has(toolId)) {
+        message.parts[i] = {
+          ...part,
+          toolUse: { ...part.toolUse, status: 'success' }
+        }
+        continue
+      }
+
+      // If this tool's turn is not the latest turn, the turn has settled
+      // so this tool must have completed (event was lost/not persisted)
+      const toolTurnId = message.id.match(/^([^:]+)/)?.[1]
+      if (toolTurnId && toolTurnId !== lastTurnId) {
+        message.parts[i] = {
+          ...part,
+          toolUse: { ...part.toolUse, status: 'success' }
+        }
+        continue
+      }
+
+      // If session is idle, even the latest turn's tools are done
+      if (sessionIsIdle) {
+        message.parts[i] = {
+          ...part,
+          toolUse: { ...part.toolUse, status: 'success' }
+        }
+      }
+    }
+  }
+
   return orderedMessages
 }
 
 export function deriveCodexTimelineMessages(
   messageRows: SessionMessage[],
-  activityRows: SessionActivity[]
+  activityRows: SessionActivity[],
+  sessionIsIdle?: boolean
 ): OpenCodeMessage[] {
   const normalizedMessages = normalizeCodexMessageRows(messageRows, activityRows)
   return mergeCodexActivityMessages(
     mapDbSessionMessagesToOpenCodeMessages(normalizedMessages),
-    activityRows
+    activityRows,
+    sessionIsIdle
   )
 }

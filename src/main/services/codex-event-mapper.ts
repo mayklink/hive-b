@@ -1,4 +1,5 @@
 import type { OpenCodeStreamEvent } from '@shared/types/opencode'
+import { normalizeCodexToolName, stripShellPrefix } from '@shared/codex-tool-normalizer'
 import type { CodexManagerEvent } from './codex-app-server-manager'
 import { asObject, asString, asNumber } from './codex-utils'
 
@@ -86,13 +87,14 @@ function normalizeToolInput(
     normalizeCommandValue(item?.command) ??
     normalizeCommandValue(inputRecord?.command) ??
     normalizeCommandValue(payload?.command)
+  const cleanCommand = command ? stripShellPrefix(command) : undefined
   const changes = Array.isArray(item?.changes) ? item.changes : undefined
 
-  if (!command && !changes) return rawInput
+  if (!cleanCommand && !changes) return rawInput
 
   return {
     ...(inputRecord ?? {}),
-    ...(command ? { command } : {}),
+    ...(cleanCommand ? { command: cleanCommand } : {}),
     ...(changes ? { changes } : {})
   }
 }
@@ -191,12 +193,13 @@ function extractItemInfo(event: CodexManagerEvent): ItemInfo {
   const item = asObject(payload?.item)
   const itemType = asString(item?.type) ?? asString(payload?.type)
 
-  const toolName =
+  const toolName = normalizeCodexToolName(
     asString(item?.toolName) ??
     asString(item?.name) ??
     asString(item?.type) ??
     asString(payload?.toolName) ??
     'unknown'
+  )
 
   const callId = asString(item?.id) ?? asString(event.itemId) ?? asString(payload?.itemId) ?? ''
 
