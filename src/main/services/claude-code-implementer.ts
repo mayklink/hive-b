@@ -503,7 +503,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           log.warn('Claude Code stderr', {
             worktreePath,
             agentSessionId,
-            stderr: data.trim()
+            stderr: data.trim().substring(0, 300)
           })
         },
         canUseTool: this.createCanUseToolCallback(session),
@@ -560,6 +560,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       log.info('Prompt: entering async iteration loop')
 
       let messageIndex = 0
+      let hasStreamedContent = false
 
       for await (const sdkMessage of queryData) {
         // Break if aborted
@@ -572,6 +573,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
         // stream_event messages fire per-token — log at debug to avoid spam
         if (msgType === 'stream_event') {
+          hasStreamedContent = true
           this.emitSdkMessage(session.hiveSessionId, sdkMessage, messageIndex, session.toolNames)
           continue // No materialization/accumulation needed for partials
         }
@@ -889,14 +891,42 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         }
 
         // Emit normalized event
-        this.emitSdkMessage(session.hiveSessionId, sdkMessage, messageIndex, session.toolNames)
+        this.emitSdkMessage(session.hiveSessionId, sdkMessage, messageIndex, session.toolNames, hasStreamedContent)
         messageIndex++
+
+        // Reset streaming flag after each result so the next message sequence
+        // (e.g. a tool result following a streamed LLM response) gets fresh tracking.
+        // Without this, a single stream_event early in the loop would suppress
+        // result-text emission for all subsequent non-streamed results.
+        if (msgType === 'result') {
+          hasStreamedContent = false
+        }
       }
 
       log.info('Prompt: async iteration loop finished', {
         totalMessages: messageIndex,
         aborted: session.abortController?.signal.aborted ?? false
       })
+
+      // Safety net: if the SDK exited without throwing but stderr was captured
+      // and no meaningful messages were produced, forward the stderr as an error.
+      // This handles cases where Claude exits with a bad code but the SDK
+      // ends iteration normally instead of throwing.
+      const stderrAfterLoop = session.stderrBuffer.join('').trim()
+
+      if (stderrAfterLoop && messageIndex === 0 && !session.abortController?.signal.aborted) {
+        log.warn('Prompt: SDK exited silently with stderr and no messages', {
+          worktreePath,
+          agentSessionId,
+          stderr: stderrAfterLoop
+        })
+        this.sendToRenderer('opencode:stream', {
+          type: 'session.error',
+          sessionId: session.hiveSessionId,
+          data: { error: 'Claude exited unexpectedly', stderr: stderrAfterLoop }
+        })
+      }
+
       this.emitStatus(session.hiveSessionId, 'idle')
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
@@ -2417,7 +2447,8 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     hiveSessionId: string,
     msg: Record<string, unknown>,
     messageIndex: number,
-    toolNames?: Map<string, string>
+    toolNames?: Map<string, string>,
+    hasStreamedContent?: boolean
   ): void {
     const msgType = msg.type as string
     const childSessionId = (msg.parent_tool_use_id as string) || undefined
@@ -2614,6 +2645,28 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           }
         })
 
+        // When no stream_event deltas were produced (e.g. fast/cached responses,
+        // SDK-internal handling), emit text blocks as message.part.updated so the
+        // renderer has content to display.
+        if (!hasStreamedContent && Array.isArray(innerContent)) {
+          for (const block of innerContent) {
+            const b = block as Record<string, unknown>
+            if (b.type === 'text' && typeof b.text === 'string' && (b.text as string).length > 0) {
+              this.sendToRenderer('opencode:stream', {
+                type: 'message.part.updated',
+                sessionId: hiveSessionId,
+                childSessionId,
+                data: {
+                  part: { type: 'text', text: b.text as string },
+                  delta: b.text as string,
+                  messageIndex,
+                  role: 'assistant'
+                }
+              })
+            }
+          }
+        }
+
         // Also emit tool result status updates.  When the complete assistant
         // message arrives, user-type messages with tool_result content follow.
         // But the tool_use blocks inside the assistant message carry the final
@@ -2654,9 +2707,39 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           contentLength: resultArray?.length ?? 0
         })
 
-        // NOTE: Previously this emitted the result text as message.part.updated,
-        // but that duplicated text already streamed via stream_event deltas.
-        // Removed to fix duplicate message display.
+        // When the SDK handles a command internally (e.g. unknown slash command),
+        // no stream_event deltas are produced, so the result text is the only
+        // source of content.  Emit it as message.part.updated so it appears in chat.
+        // For normal LLM conversations, content was already streamed via stream_event
+        // deltas, so we skip this to avoid duplicates.
+        if (!hasStreamedContent) {
+          // Extract text from result — can be an array of content blocks or a plain string
+          const textParts: string[] = []
+          if (resultArray) {
+            for (const block of resultArray) {
+              const b = block as Record<string, unknown>
+              if (b.type === 'text' && typeof b.text === 'string' && b.text.length > 0) {
+                textParts.push(b.text)
+              }
+            }
+          } else if (typeof resultContent === 'string' && resultContent.length > 0) {
+            textParts.push(resultContent)
+          }
+
+          for (const text of textParts) {
+            this.sendToRenderer('opencode:stream', {
+              type: 'message.part.updated',
+              sessionId: hiveSessionId,
+              childSessionId,
+              data: {
+                part: { type: 'text', text },
+                delta: text,
+                messageIndex,
+                role: 'assistant'
+              }
+            })
+          }
+        }
 
         this.sendToRenderer('opencode:stream', {
           type: 'message.updated',

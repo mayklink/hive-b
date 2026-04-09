@@ -144,10 +144,12 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
         {
           type: 'assistant',
           session_id: 'sdk-1',
-          content: [
-            { type: 'text', text: 'First block' },
-            { type: 'text', text: 'Second block' }
-          ]
+          message: {
+            content: [
+              { type: 'text', text: 'First block' },
+              { type: 'text', text: 'Second block' }
+            ]
+          }
         }
       ])
       mockQuery.mockReturnValue(iter)
@@ -157,11 +159,11 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
       const events = getStreamEvents(mockWindow)
       const partEvents = events.filter((e: any) => e.type === 'message.part.updated')
       expect(partEvents.length).toBeGreaterThanOrEqual(2)
-      expect(partEvents[0].data.content).toMatchObject({
+      expect(partEvents[0].data.part).toMatchObject({
         type: 'text',
         text: 'First block'
       })
-      expect(partEvents[1].data.content).toMatchObject({
+      expect(partEvents[1].data.part).toMatchObject({
         type: 'text',
         text: 'Second block'
       })
@@ -239,6 +241,43 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
       const errorEvent = events.find((e: any) => e.type === 'session.error')
       expect(errorEvent).toBeDefined()
       expect(errorEvent.sessionId).toBe('hive-1')
+
+      // Last event should be idle
+      expect(events[events.length - 1]).toMatchObject({
+        type: 'session.status',
+        statusPayload: { type: 'idle' }
+      })
+    })
+
+    it('emits session.error with stderr when SDK exits silently with no messages', async () => {
+      const { sessionId } = await impl.connect('/proj', 'hive-1')
+
+      // Simulate SDK returning an iterator that ends immediately (no messages)
+      // but stderr callback fires before iteration completes
+      const iter = createMockQueryIterator([])
+      mockQuery.mockImplementation((args: any) => {
+        // Trigger the stderr callback before returning the iterator
+        if (args.options?.stderr) {
+          args.options.stderr('Error: Claude exited with code 1\nSome details here')
+        }
+        return iter
+      })
+
+      await impl.prompt('/proj', sessionId, 'test')
+
+      const events = getStreamEvents(mockWindow)
+
+      // First event should be busy status
+      expect(events[0]).toMatchObject({
+        type: 'session.status',
+        statusPayload: { type: 'busy' }
+      })
+
+      // Should have busy, then error (from stderr), then idle
+      const errorEvent = events.find((e: any) => e.type === 'session.error')
+      expect(errorEvent).toBeDefined()
+      expect(errorEvent.data.stderr).toContain('Claude exited with code 1')
+      expect(errorEvent.data.error).toBe('Claude exited unexpectedly')
 
       // Last event should be idle
       expect(events[events.length - 1]).toMatchObject({

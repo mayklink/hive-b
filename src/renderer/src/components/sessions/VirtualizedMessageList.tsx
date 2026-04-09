@@ -113,7 +113,7 @@ export const VirtualizedMessageList = memo(
     }
 
     // Completion badge
-    if (completionEntry && !isSending) {
+    if (completionEntry && !isSending && !sessionErrorMessage) {
       result.push({ type: 'completion' as const })
     }
 
