@@ -1210,26 +1210,28 @@ export function SessionTabs(): React.JSX.Element | null {
               tabIndex={0}
               onClick={() => {
                 useFileViewerStore.getState().clearActiveViews()
+                clearInlineConnectionSession()
                 useSessionStore.getState().setActiveSession(BOARD_TAB_ID)
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault()
                   useFileViewerStore.getState().clearActiveViews()
+                  clearInlineConnectionSession()
                   useSessionStore.getState().setActiveSession(BOARD_TAB_ID)
                 }
               }}
               className={cn(
                 'group relative flex items-center gap-1.5 px-3 py-1.5 text-sm cursor-pointer select-none',
                 'border-r border-border transition-colors min-w-[100px] max-w-[200px]',
-                activeSessionId === BOARD_TAB_ID && !isFileTabActive
+                activeSessionId === BOARD_TAB_ID && !isFileTabActive && !inlineConnectionSessionId
                   ? 'bg-background text-foreground'
                   : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
               )}
             >
               <KanbanIcon className="h-3.5 w-3.5 flex-shrink-0 text-blue-400" />
               <span className="truncate flex-1">Board</span>
-              {activeSessionId === BOARD_TAB_ID && !isFileTabActive && (
+              {activeSessionId === BOARD_TAB_ID && !isFileTabActive && !inlineConnectionSessionId && (
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
               )}
             </div>
