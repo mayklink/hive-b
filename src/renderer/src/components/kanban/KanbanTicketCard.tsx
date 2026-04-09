@@ -45,7 +45,6 @@ import { useFileViewerStore } from '@/stores/useFileViewerStore'
 import { useSessionTimer } from '@/hooks/useSessionTimer'
 import { useSessionTokenDelta } from '@/hooks/useSessionTokenDelta'
 import { formatTokenCount } from '@/lib/format-utils'
-import dragonFrameSvg from '@/assets/dragon-frame.svg'
 import type { KanbanTicket, TicketMark } from '../../../../main/db/types'
 
 // ── Project tag color palette ──────────────────────────────────────
@@ -493,21 +492,102 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
               >
             {/* Dragon frame overlay for legendary tickets */}
             {ticket.mark === 'legendary' && (
-              <div
+              <svg
                 className={cn(
-                  'absolute inset-0 pointer-events-none rounded-md',
+                  'absolute inset-0 w-full h-full pointer-events-none',
                   ticket.mode === 'build' ? 'text-blue-500' :
                   (ticket.mode === 'plan' || ticket.mode === 'super-plan') ? 'text-violet-500' :
                   'text-gray-400'
                 )}
-                style={{
-                  maskImage: `url(${dragonFrameSvg})`,
-                  maskSize: '100% 100%',
-                  WebkitMaskImage: `url(${dragonFrameSvg})`,
-                  WebkitMaskSize: '100% 100%',
-                  backgroundColor: 'currentColor'
-                }}
-              />
+                viewBox="0 0 400 300"
+                fill="none"
+                preserveAspectRatio="none"
+              >
+                {/* Outer border */}
+                <rect x="4" y="4" width="392" height="292" rx="10" ry="10" stroke="currentColor" strokeWidth="2.5" fill="none" />
+                {/* Inner border */}
+                <rect x="12" y="12" width="376" height="276" rx="6" ry="6" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.3" />
+
+                {/* Top-left dragon head */}
+                <g transform="translate(2, 2)">
+                  <path d="M30 6 C26 2, 18 0, 12 4 C8 7, 6 12, 8 16 L12 14 C10 12, 11 9, 14 7 C17 5, 22 5, 26 8 Z" fill="currentColor" opacity="0.85" />
+                  <circle cx="18" cy="9" r="1.5" fill="currentColor" />
+                  <path d="M30 6 L40 4 L37 9 L30 10 Z" fill="currentColor" opacity="0.75" />
+                  <path d="M14 7 C12 2, 8 -2, 4 -2 C8 0, 10 3, 12 6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                  <path d="M26 8 C34 12, 42 12, 56 10 C70 8, 84 8, 100 8" stroke="currentColor" strokeWidth="2" fill="none" />
+                  <path d="M34 10 L32 4 M40 9 L39 5 M46 9 L46 5" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+                  <path d="M16 16 C12 20, 8 28, 8 36 C10 28, 14 22, 20 18 Z" fill="currentColor" opacity="0.25" />
+                </g>
+
+                {/* Top-right dragon head (mirrored) */}
+                <g transform="translate(398, 2) scale(-1, 1)">
+                  <path d="M30 6 C26 2, 18 0, 12 4 C8 7, 6 12, 8 16 L12 14 C10 12, 11 9, 14 7 C17 5, 22 5, 26 8 Z" fill="currentColor" opacity="0.85" />
+                  <circle cx="18" cy="9" r="1.5" fill="currentColor" />
+                  <path d="M30 6 L40 4 L37 9 L30 10 Z" fill="currentColor" opacity="0.75" />
+                  <path d="M14 7 C12 2, 8 -2, 4 -2 C8 0, 10 3, 12 6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                  <path d="M26 8 C34 12, 42 12, 56 10 C70 8, 84 8, 100 8" stroke="currentColor" strokeWidth="2" fill="none" />
+                  <path d="M34 10 L32 4 M40 9 L39 5 M46 9 L46 5" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+                  <path d="M16 16 C12 20, 8 28, 8 36 C10 28, 14 22, 20 18 Z" fill="currentColor" opacity="0.25" />
+                </g>
+
+                {/* Bottom-left dragon tail */}
+                <g transform="translate(2, 298) scale(1, -1)">
+                  <path d="M8 16 C8 12, 10 8, 16 6 C22 4, 30 6, 34 10" fill="currentColor" opacity="0.65" />
+                  <path d="M34 10 C38 14, 36 20, 30 22 C24 24, 18 20, 20 14" stroke="currentColor" strokeWidth="2" fill="none" />
+                  <path d="M20 14 L16 18 L20 22 L24 16 Z" fill="currentColor" opacity="0.5" />
+                  <path d="M34 10 C48 8, 64 8, 84 8 C96 8, 100 8, 100 8" stroke="currentColor" strokeWidth="2" fill="none" />
+                </g>
+
+                {/* Bottom-right dragon tail (mirrored) */}
+                <g transform="translate(398, 298) scale(-1, -1)">
+                  <path d="M8 16 C8 12, 10 8, 16 6 C22 4, 30 6, 34 10" fill="currentColor" opacity="0.65" />
+                  <path d="M34 10 C38 14, 36 20, 30 22 C24 24, 18 20, 20 14" stroke="currentColor" strokeWidth="2" fill="none" />
+                  <path d="M20 14 L16 18 L20 22 L24 16 Z" fill="currentColor" opacity="0.5" />
+                  <path d="M34 10 C48 8, 64 8, 84 8 C96 8, 100 8, 100 8" stroke="currentColor" strokeWidth="2" fill="none" />
+                </g>
+
+                {/* Top border knotwork */}
+                <g opacity="0.45">
+                  <path d="M100 6 C140 2, 160 12, 200 6 C240 0, 260 12, 300 6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                  <path d="M130 6 C134 0, 142 0, 146 6 C150 12, 158 12, 162 6" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                  <path d="M230 6 C234 0, 242 0, 246 6 C250 12, 258 12, 262 6" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                  <circle cx="200" cy="5" r="4" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                  <circle cx="200" cy="5" r="1.5" fill="currentColor" opacity="0.5" />
+                </g>
+
+                {/* Bottom border knotwork */}
+                <g opacity="0.45">
+                  <path d="M100 294 C140 298, 160 288, 200 294 C240 300, 260 288, 300 294" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                  <path d="M130 294 C134 300, 142 300, 146 294 C150 288, 158 288, 162 294" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                  <path d="M230 294 C234 300, 242 300, 246 294 C250 288, 258 288, 262 294" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                  <circle cx="200" cy="295" r="4" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                  <circle cx="200" cy="295" r="1.5" fill="currentColor" opacity="0.5" />
+                </g>
+
+                {/* Left border scales */}
+                <g opacity="0.4">
+                  <path d="M6 50 C2 70, 10 90, 6 110 C2 130, 10 150, 6 170 C2 190, 10 210, 6 230 C2 246, 6 250, 6 250" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                  <path d="M6 70 C0 74, 0 82, 6 86" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                  <path d="M6 120 C0 124, 0 132, 6 136" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                  <path d="M6 170 C0 174, 0 182, 6 186" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                  <path d="M6 220 C0 224, 0 232, 6 236" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                </g>
+
+                {/* Right border scales */}
+                <g opacity="0.4">
+                  <path d="M394 50 C398 70, 390 90, 394 110 C398 130, 390 150, 394 170 C398 190, 390 210, 394 230 C398 246, 394 250, 394 250" stroke="currentColor" strokeWidth="1.5" fill="none" />
+                  <path d="M394 70 C400 74, 400 82, 394 86" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                  <path d="M394 120 C400 124, 400 132, 394 136" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                  <path d="M394 170 C400 174, 400 182, 394 186" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                  <path d="M394 220 C400 224, 400 232, 394 236" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.6" />
+                </g>
+
+                {/* Corner flourishes */}
+                <path d="M20 20 C24 16, 30 14, 36 16 M20 20 C16 24, 14 30, 16 36" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.3" />
+                <path d="M380 20 C376 16, 370 14, 364 16 M380 20 C384 24, 386 30, 384 36" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.3" />
+                <path d="M20 280 C24 284, 30 286, 36 284 M20 280 C16 276, 14 270, 16 264" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.3" />
+                <path d="M380 280 C376 284, 370 286, 364 284 M380 280 C384 276, 386 270, 384 264" stroke="currentColor" strokeWidth="1" fill="none" opacity="0.3" />
+              </svg>
             )}
             {/* Title + top-right indicators */}
             <div className="flex items-start justify-between gap-2">
