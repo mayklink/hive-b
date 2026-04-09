@@ -104,15 +104,6 @@ git commit -m "Update Hive to v${VERSION}"
 git push origin main
 ok "Homebrew repo pushed"
 
-# Update official Homebrew cask
-info "Submitting PR to official Homebrew cask..."
-brew tap --force homebrew/cask 2>/dev/null || true
-if HOMEBREW_GITHUB_API_TOKEN="${GH_TOKEN:-}" brew bump-cask-pr --version="$VERSION" --no-browse hive-app; then
-  ok "Official Homebrew cask PR submitted"
-else
-  warn "Failed to submit official Homebrew cask PR (non-fatal)"
-fi
-
 # ── Summary ──────────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}══════════════════════════════════════════════════${NC}"

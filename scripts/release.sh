@@ -504,15 +504,6 @@ cd "$PROJECT_DIR"
 
 ok "Homebrew repo pushed"
 
-# ── Phase 5b: Update official Homebrew cask ──────────────────────
-info "Submitting PR to official Homebrew cask..."
-brew tap --force homebrew/cask 2>/dev/null || true
-if HOMEBREW_GITHUB_API_TOKEN="${GH_TOKEN:-}" brew bump-cask-pr --version="$NEW_VERSION" --no-browse hive-app; then
-  ok "Official Homebrew cask PR submitted"
-else
-  warn "Failed to submit official Homebrew cask PR (non-fatal)"
-fi
-
 # ── Phase 6: Summary ─────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}══════════════════════════════════════════════════${NC}"
