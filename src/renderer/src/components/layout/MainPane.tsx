@@ -174,7 +174,7 @@ export function MainPane({ children }: MainPaneProps): React.JSX.Element {
     }
 
     // Sticky-tab board mode: render board when BOARD_TAB_ID is the active session
-    if (boardMode === 'sticky-tab' && activeSessionId === BOARD_TAB_ID && !activeFilePath && !activeDiff && !contextEditorWorktreeId) {
+    if (boardMode === 'sticky-tab' && activeSessionId === BOARD_TAB_ID && !inlineConnectionSessionId && !activeFilePath && !activeDiff && !contextEditorWorktreeId) {
       // Pinned board takes priority when active
       if (isPinnedBoardActive && pinnedStoreLoaded) {
         return <KanbanBoard isPinnedMode={true} />
