@@ -1,7 +1,9 @@
 import { BrowserWindow, Menu, app, clipboard, shell } from 'electron'
-import { getLogDir } from './services/logger'
+import { createLogger, getLogDir } from './services/logger'
 import { ghosttyService } from './services/ghostty-service'
 import { updaterService } from './services/updater'
+
+const log = createLogger({ component: 'Menu' })
 
 export interface MenuState {
   hasActiveSession: boolean
@@ -117,6 +119,12 @@ export function buildMenu(mainWindow: BrowserWindow, isDev: boolean): Menu {
                 ghosttyService.pasteToFocusedSurface(text)
               }
             } else if (!_mainWindow.webContents.isFocused() && ghosttyService.hasSurfaces()) {
+              // Tier 2 fallback — native focus query missed but Ghostty surfaces
+              // exist. Log diagnostics so users can send us the log file if paste
+              // still misbehaves (Help → Open Log Directory).
+              log.warn('Paste fallback: focusedSurfaceId() returned 0 with active surfaces', {
+                diagnostics: ghosttyService.focusDiagnostics()
+              })
               const text = clipboard.readText()
               if (text) {
                 _mainWindow.webContents.send('edit:paste', text)
