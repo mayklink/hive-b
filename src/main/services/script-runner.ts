@@ -272,10 +272,9 @@ export class ScriptRunner {
       })
 
       proc.on('error', (err) => {
-        if (!settled) {
-          settled = true
-          clearTimeout(notificationTimer)
-        }
+        if (settled) return
+        settled = true
+        clearTimeout(notificationTimer)
         log.error('Process spawn error', err, { command })
         this.flushOutputBuffer(eventKey)
         this.clearCurrentProcess(eventKey, proc)
@@ -284,10 +283,9 @@ export class ScriptRunner {
       })
 
       proc.on('close', (code) => {
-        if (!settled) {
-          settled = true
-          clearTimeout(notificationTimer)
-        }
+        if (settled) return
+        settled = true
+        clearTimeout(notificationTimer)
         this.flushOutputBuffer(eventKey)
         this.clearCurrentProcess(eventKey, proc)
         this.totalClosed++
@@ -426,6 +424,7 @@ export class ScriptRunner {
         if (!settled) {
           settled = true
           clearTimeout(notificationTimer)
+          this.totalClosed++
           proc.kill('SIGTERM')
           setTimeout(() => {
             try {
