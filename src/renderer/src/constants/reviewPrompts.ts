@@ -301,8 +301,7 @@ If no defects survive validation, state: "This code survived adversarial review.
 - Use gh CLI to interact with GitHub. Do not use web fetch.
 - Every reported issue must have a concrete reproduction scenario. No hand-waving.`,
 
-  standard: `
-## Code Review Instructions
+  standard: `## Code Review Instructions
 
 1. Launch a haiku agent to return a list of file paths (not their contents) for all relevant CLAUDE.md files including:
 
@@ -374,7 +373,5 @@ Notes:
 -   All subagents should be explicitly instructed not to post comments themselves. Only you, the main agent, should post comments.
 -   Do not use the AskUserQuestion tool. Your goal should be to complete the entire review without user intervention.
 -   Use gh CLI to interact with GitHub (e.g., fetch pull requests, create comments). Do not use web fetch.
--   You must cite and link each issue in inline comments (e.g., if referring to a CLAUDE.md or AGENTS.md rule, include a link to it).
-
-`,
+-   You must cite and link each issue in inline comments (e.g., if referring to a CLAUDE.md or AGENTS.md rule, include a link to it).`,
 }
