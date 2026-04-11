@@ -261,6 +261,14 @@ export function mapCodexEventToStreamEvents(
   event: CodexManagerEvent,
   hiveSessionId: string
 ): OpenCodeStreamEvent[] {
+  // Attach Codex event ID for renderer-side dedup (seenCodexEventIds in
+  // SessionView). Placed on stream event `data`; does NOT flow into canonical
+  // message parts — extraction functions pick specific fields only.
+  const annotateData = <T extends Record<string, unknown>>(data: T): T & { _codexEventId: string } => ({
+    ...data,
+    _codexEventId: event.id
+  })
+
   const { method } = event
 
   // ── Content deltas — actual Codex notification methods ───────
@@ -273,10 +281,11 @@ export function mapCodexEventToStreamEvents(
       {
         type: 'message.part.updated',
         sessionId: hiveSessionId,
-        data:
+        data: annotateData(
           streamKind === 'reasoning' || streamKind === 'reasoning_summary'
             ? toReasoningPart(delta.text)
             : toTextPart(delta.text)
+        )
       }
     ]
   }
@@ -287,7 +296,7 @@ export function mapCodexEventToStreamEvents(
       {
         type: 'session.status',
         sessionId: hiveSessionId,
-        data: { status: { type: 'busy' } },
+        data: annotateData({ status: { type: 'busy' } }),
         statusPayload: { type: 'busy' }
       }
     ]
@@ -302,7 +311,7 @@ export function mapCodexEventToStreamEvents(
       events.push({
         type: 'session.error',
         sessionId: hiveSessionId,
-        data: { error: info.error ?? 'Turn failed' }
+        data: annotateData({ error: info.error ?? 'Turn failed' })
       })
     }
 
@@ -311,10 +320,10 @@ export function mapCodexEventToStreamEvents(
       events.push({
         type: 'message.updated',
         sessionId: hiveSessionId,
-        data: {
+        data: annotateData({
           ...(info.usage ? { usage: info.usage } : {}),
           ...(info.cost !== undefined ? { cost: info.cost } : {})
-        }
+        })
       })
     }
 
@@ -322,7 +331,7 @@ export function mapCodexEventToStreamEvents(
     events.push({
       type: 'session.status',
       sessionId: hiveSessionId,
-      data: { status: { type: 'idle' } },
+      data: annotateData({ status: { type: 'idle' } }),
       statusPayload: { type: 'idle' }
     })
 
@@ -338,7 +347,7 @@ export function mapCodexEventToStreamEvents(
       {
         type: 'message.part.updated',
         sessionId: hiveSessionId,
-        data: {
+        data: annotateData({
           part: {
             type: 'tool',
             callID: item.callId,
@@ -348,7 +357,7 @@ export function mapCodexEventToStreamEvents(
               ...(item.input !== undefined ? { input: item.input } : {})
             }
           }
-        }
+        })
       }
     ]
   }
@@ -362,7 +371,7 @@ export function mapCodexEventToStreamEvents(
       {
         type: 'message.part.updated',
         sessionId: hiveSessionId,
-        data: {
+        data: annotateData({
           part: {
             type: 'tool',
             callID: item.callId,
@@ -372,7 +381,7 @@ export function mapCodexEventToStreamEvents(
               ...(item.input !== undefined ? { input: item.input } : {})
             }
           }
-        }
+        })
       }
     ]
   }
@@ -386,7 +395,7 @@ export function mapCodexEventToStreamEvents(
       {
         type: 'message.part.updated',
         sessionId: hiveSessionId,
-        data: {
+        data: annotateData({
           part: {
             type: 'tool',
             callID: item.callId,
@@ -401,7 +410,7 @@ export function mapCodexEventToStreamEvents(
                 : {})
             }
           }
-        }
+        })
       }
     ]
   }

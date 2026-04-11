@@ -469,7 +469,7 @@ describe('Session 10: Tool Message Rendering', () => {
       render(<AssistantCanvas content="" timestamp={new Date().toISOString()} parts={parts} />)
 
       const assistantCanvas = screen.getByTestId('message-assistant')
-      expect(assistantCanvas.className.split(/\s+/)).toContain('py-1')
+      expect(assistantCanvas.className.split(/\s+/)).toContain('py-3')
 
       // Read is a file tool → compact layout (no my-0 class assertion)
       expect(screen.getByTestId('compact-file-tool')).toBeInTheDocument()
@@ -494,7 +494,7 @@ describe('Session 10: Tool Message Rendering', () => {
       render(<AssistantCanvas content="" timestamp={new Date().toISOString()} parts={parts} />)
 
       const assistantCanvas = screen.getByTestId('message-assistant')
-      expect(assistantCanvas.className.split(/\s+/)).toContain('py-1')
+      expect(assistantCanvas.className.split(/\s+/)).toContain('py-3')
     })
 
     test('Assistant messages without tools keep standard vertical spacing', () => {

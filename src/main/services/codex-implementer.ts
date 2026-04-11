@@ -1,4 +1,5 @@
 import type { BrowserWindow } from 'electron'
+import { randomUUID } from 'node:crypto'
 
 import type { AgentSdkCapabilities, AgentSdkImplementer, PromptOptions } from './agent-sdk-types'
 import { CODEX_CAPABILITIES } from './agent-sdk-types'
@@ -19,6 +20,8 @@ import { autoRenameWorktreeBranch } from './git-service'
 import { normalizeCodexToolName, stripShellPrefix } from '@shared/codex-tool-normalizer'
 
 const log = createLogger({ component: 'CodexImplementer' })
+// Balances write coalescing during rapid streaming against data freshness for crash recovery.
+const PERSIST_DEBOUNCE_MS = 2000
 
 // ── Session state ─────────────────────────────────────────────────
 
@@ -29,10 +32,13 @@ export interface CodexSessionState {
   status: 'connecting' | 'ready' | 'running' | 'error' | 'closed'
   messages: unknown[]
   liveAssistantDraft?: CodexLiveAssistantDraft | null
+  currentTurnId: string | null
+  currentAssistantMessageId: string | null
   revertMessageID: string | null
   revertDiff: string | null
   titleGenerated: boolean
   titleGenerationStarted: boolean
+  persistDebounceTimer: ReturnType<typeof setTimeout> | null
 }
 
 interface CodexLiveToolPart {
@@ -153,6 +159,23 @@ function buildSnapshotToolInput(itemObj: Record<string, unknown>): Record<string
     ...(command ? { command } : {}),
     ...(changes ? { changes } : {})
   }
+}
+
+function extractMessageText(parts: unknown[]): string {
+  const segments: string[] = []
+
+  for (const part of parts) {
+    const partObj = asObject(part)
+    if (!partObj) continue
+
+    const type = asString(partObj.type)
+    if (type === 'text' || type === 'reasoning') {
+      const text = asString(partObj.text)
+      if (text) segments.push(text)
+    }
+  }
+
+  return segments.join('')
 }
 
 export class CodexImplementer implements AgentSdkImplementer {
@@ -388,10 +411,13 @@ export class CodexImplementer implements AgentSdkImplementer {
       status: this.mapProviderStatus(providerSession.status),
       messages: [],
       liveAssistantDraft: null,
+      currentTurnId: null,
+      currentAssistantMessageId: null,
       revertMessageID: null,
       revertDiff: null,
       titleGenerated: false,
-      titleGenerationStarted: false
+      titleGenerationStarted: false,
+      persistDebounceTimer: null
     }
     this.sessions.set(key, state)
 
@@ -457,10 +483,13 @@ export class CodexImplementer implements AgentSdkImplementer {
         status: this.mapProviderStatus(providerSession.status),
         messages: [],
         liveAssistantDraft: null,
+        currentTurnId: null,
+        currentAssistantMessageId: null,
         revertMessageID: null,
         revertDiff: null,
         titleGenerated: true,
-        titleGenerationStarted: true
+        titleGenerationStarted: true,
+        persistDebounceTimer: null
       }
       this.sessions.set(newKey, state)
 
@@ -496,6 +525,9 @@ export class CodexImplementer implements AgentSdkImplementer {
     // Stop the manager session
     this.manager.stopSession(agentSessionId)
 
+    // Flush any pending debounced persist before removing the session
+    this.flushPendingPersist(session)
+
     // Clean up local state
     this.sessions.delete(key)
     this.cleanupPendingForThread(agentSessionId)
@@ -508,6 +540,14 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     // Stop all manager sessions
     this.manager.stopAll()
+
+    // Clear pending debounce timers (don't flush — avoid DB writes during teardown)
+    for (const session of this.sessions.values()) {
+      if (session.persistDebounceTimer) {
+        clearTimeout(session.persistDebounceTimer)
+        session.persistDebounceTimer = null
+      }
+    }
 
     // Clear local state
     this.sessions.clear()
@@ -573,12 +613,15 @@ export class CodexImplementer implements AgentSdkImplementer {
     // Inject synthetic user message so getMessages() returns it
     const syntheticTimestamp = new Date().toISOString()
     session.messages.push({
+      id: `user-${randomUUID()}`,
       role: 'user',
       parts: [{ type: 'text', text, timestamp: syntheticTimestamp }],
       timestamp: syntheticTimestamp
     })
     this.persistCanonicalMessages(session)
     this.resetLiveAssistantDraft(session)
+    session.currentTurnId = null
+    session.currentAssistantMessageId = null
 
     // Emit busy status
     session.status = 'running'
@@ -593,6 +636,9 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     // Set up event listener for streaming
     let interactionMode: 'default' | 'plan' = 'default'
+    // Fallback accumulators: only populated when canonical path is not active.
+    // Used for: (1) fallback message if canonical path fails, (2) plan extraction
+    // last resort, (3) logging. Stay empty when canonical path is active.
     let assistantText = ''
     let reasoningText = ''
     let pendingPlanText: string | null = null
@@ -615,22 +661,27 @@ export class CodexImplementer implements AgentSdkImplementer {
         }
         this.sendToRenderer('opencode:stream', streamEvent)
         this.updateLiveAssistantDraftFromStreamEvent(session, streamEvent)
+        if (this.synchronizeCanonicalAssistantFromStreamEvent(session, event, streamEvent)) {
+          this.persistCanonicalMessagesDebounced(session)
+        }
       }
 
-      // Accumulate text for message history
-      const streamKind = contentStreamKindFromMethod(event.method)
-      if (streamKind) {
-        const payload = event.payload as Record<string, unknown> | undefined
-        const deltaText =
-          event.textDelta ??
-          asString(asObject(payload)?.delta) ??
-          asString(asObject(payload)?.text) ??
-          ''
+      // Accumulate text for message history (only when canonical path is not active)
+      if (!session.currentAssistantMessageId) {
+        const streamKind = contentStreamKindFromMethod(event.method)
+        if (streamKind) {
+          const payload = event.payload as Record<string, unknown> | undefined
+          const deltaText =
+            event.textDelta ??
+            asString(asObject(payload)?.delta) ??
+            asString(asObject(payload)?.text) ??
+            ''
 
-        if (streamKind === 'reasoning' || streamKind === 'reasoning_summary') {
-          reasoningText += deltaText
-        } else {
-          assistantText += deltaText
+          if (streamKind === 'reasoning' || streamKind === 'reasoning_summary') {
+            reasoningText += deltaText
+          } else {
+            assistantText += deltaText
+          }
         }
       }
 
@@ -703,20 +754,13 @@ export class CodexImplementer implements AgentSdkImplementer {
       // events stream asynchronously via the manager's event emitter)
       await this.waitForTurnCompletion(session, () => turnCompleted)
 
-      // Read canonical thread for properly separated messages
-      try {
-        const threadSnapshot = await this.manager.readThread(session.threadId)
-        const parsed = this.parseThreadSnapshot(threadSnapshot)
-        if (parsed.length > 0) {
-          session.messages = parsed
-        }
+      // Persist the canonical streamed transcript first. This keeps reload
+      // aligned with the exact structure that was rendered during streaming.
+      this.flushPendingPersist(session)
+      if (session.currentAssistantMessageId) {
         this.persistCanonicalMessages(session)
         session.liveAssistantDraft = null
-      } catch (readError) {
-        log.warn('prompt: readThread after turn failed, falling back to accumulated text', {
-          agentSessionId,
-          error: readError instanceof Error ? readError.message : String(readError)
-        })
+      } else {
         // Fallback: use accumulated text as single message
         const assistantParts: unknown[] = []
         if (assistantText) {
@@ -735,6 +779,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         }
         if (assistantParts.length > 0) {
           session.messages.push({
+            id: `assistant-${completedTurnId ?? randomUUID()}`,
             role: 'assistant',
             parts: assistantParts,
             timestamp: new Date().toISOString()
@@ -822,6 +867,9 @@ export class CodexImplementer implements AgentSdkImplementer {
       })
       this.emitStatus(session.hiveSessionId, 'idle')
     } finally {
+      this.flushPendingPersist(session)
+      session.currentTurnId = null
+      session.currentAssistantMessageId = null
       this.manager.removeListener('event', handleEvent)
     }
   }
@@ -846,6 +894,10 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     session.status = 'ready'
     session.liveAssistantDraft = null
+    session.currentTurnId = null
+    session.currentAssistantMessageId = null
+    this.flushPendingPersist(session)
+    this.persistCanonicalMessages(session)
     this.emitStatus(session.hiveSessionId, 'idle')
     return true
   }
@@ -865,9 +917,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     // Return in-memory messages if available
     if (session.messages.length > 0) {
-      const liveDraftMessage =
-        session.status === 'running' ? this.cloneLiveAssistantDraftMessage(session) : null
-      return liveDraftMessage ? [...session.messages, liveDraftMessage] : [...session.messages]
+      return [...session.messages]
     }
 
     if (session.status === 'running') {
@@ -882,9 +932,10 @@ export class CodexImplementer implements AgentSdkImplementer {
         const persistedMessages = this.dbService.getSessionMessages(session.hiveSessionId)
         if (persistedMessages.length > 0) {
           const parsed = persistedMessages.flatMap((message) => {
-            if (!message.opencode_message_json) return []
+            const raw = message.opencode_message_json ?? message.opencode_timeline_json
+            if (!raw) return []
             try {
-              return [JSON.parse(message.opencode_message_json)]
+              return [JSON.parse(raw)]
             } catch {
               return []
             }
@@ -1508,6 +1559,22 @@ export class CodexImplementer implements AgentSdkImplementer {
     }
   }
 
+  private persistCanonicalMessagesDebounced(session: CodexSessionState): void {
+    if (session.persistDebounceTimer) clearTimeout(session.persistDebounceTimer)
+    session.persistDebounceTimer = setTimeout(() => {
+      session.persistDebounceTimer = null
+      this.persistCanonicalMessages(session)
+    }, PERSIST_DEBOUNCE_MS)
+  }
+
+  private flushPendingPersist(session: CodexSessionState): void {
+    if (session.persistDebounceTimer) {
+      clearTimeout(session.persistDebounceTimer)
+      session.persistDebounceTimer = null
+      this.persistCanonicalMessages(session)
+    }
+  }
+
   private persistCanonicalMessages(session: CodexSessionState): void {
     if (!this.dbService) return
 
@@ -1521,20 +1588,24 @@ export class CodexImplementer implements AgentSdkImplementer {
         if (role !== 'user' && role !== 'assistant' && role !== 'system') return []
 
         const parts = Array.isArray(record.parts) ? record.parts : []
-        const textContent = parts
-          .map((part) => asObject(part))
-          .filter((part) => part?.type === 'text' || part?.type === 'reasoning')
-          .map((part) => asString(part?.text) ?? '')
-          .join('')
+        const textContent = extractMessageText(parts)
+        const canonicalMessage = {
+          ...record,
+          id: asString(record.id) ?? `${role}-${randomUUID()}`,
+          role,
+          parts,
+          timestamp
+        }
 
         return [
           {
             session_id: session.hiveSessionId,
             role,
             content: textContent,
-            opencode_message_id: asString(record.id) ?? null,
-            opencode_message_json: JSON.stringify(message),
+            opencode_message_id: canonicalMessage.id,
+            opencode_message_json: JSON.stringify(canonicalMessage),
             opencode_parts_json: JSON.stringify(parts),
+            opencode_timeline_json: JSON.stringify(canonicalMessage),
             created_at: timestamp
           }
         ]
@@ -1591,6 +1662,228 @@ export class CodexImplementer implements AgentSdkImplementer {
       this.resetLiveAssistantDraft(session)
     }
     return session.liveAssistantDraft!
+  }
+
+  private getAssistantMessageId(session: CodexSessionState, turnId?: string): string {
+    if (turnId) return `${turnId}:assistant`
+    if (session.currentAssistantMessageId) return session.currentAssistantMessageId
+    return `codex-live-${session.threadId}`
+  }
+
+  private getOrCreateCanonicalAssistantMessage(
+    session: CodexSessionState,
+    turnId?: string
+  ): Record<string, unknown> {
+    const messageId = this.getAssistantMessageId(session, turnId)
+    session.currentAssistantMessageId = messageId
+    if (turnId) session.currentTurnId = turnId
+
+    const existingIndex = session.messages.findIndex((message) => {
+      const record = asObject(message)
+      return asString(record?.id) === messageId
+    })
+
+    if (existingIndex >= 0) {
+      const existing = asObject(session.messages[existingIndex])
+      if (existing) {
+        if (typeof existing.timestamp !== 'string') {
+          existing.timestamp = new Date().toISOString()
+        }
+        return existing
+      }
+    }
+
+    const timestamp = new Date().toISOString()
+    const message: Record<string, unknown> = {
+      id: messageId,
+      role: 'assistant',
+      parts: [],
+      timestamp
+    }
+    session.messages.push(message)
+    return message
+  }
+
+  private renameCanonicalAssistantMessage(
+    session: CodexSessionState,
+    nextMessageId: string
+  ): Record<string, unknown> {
+    const currentId = session.currentAssistantMessageId
+    if (!currentId || currentId === nextMessageId) {
+      session.currentAssistantMessageId = nextMessageId
+      return this.getOrCreateCanonicalAssistantMessage(session, session.currentTurnId ?? undefined)
+    }
+
+    const existingIndex = session.messages.findIndex((message) => {
+      const record = asObject(message)
+      return asString(record?.id) === currentId
+    })
+
+    if (existingIndex >= 0) {
+      const record = asObject(session.messages[existingIndex])
+      if (record) {
+        record.id = nextMessageId
+        session.currentAssistantMessageId = nextMessageId
+        return record
+      }
+    }
+
+    session.currentAssistantMessageId = nextMessageId
+    return this.getOrCreateCanonicalAssistantMessage(session, session.currentTurnId ?? undefined)
+  }
+
+  private appendCanonicalAssistantText(
+    session: CodexSessionState,
+    kind: 'text' | 'reasoning',
+    text: string,
+    turnId?: string
+  ): void {
+    if (!text) return
+
+    const message = this.getOrCreateCanonicalAssistantMessage(session, turnId)
+    const parts = Array.isArray(message.parts) ? (message.parts as Array<Record<string, unknown>>) : []
+    const lastPart = parts[parts.length - 1]
+    const timestamp = new Date().toISOString()
+
+    if (lastPart && asString(lastPart.type) === kind) {
+      lastPart.text = `${asString(lastPart.text) ?? ''}${text}`
+    } else {
+      parts.push({ type: kind, text, timestamp })
+    }
+
+    message.parts = parts
+    message.timestamp = asString(message.timestamp) ?? timestamp
+  }
+
+  private upsertCanonicalAssistantTool(
+    session: CodexSessionState,
+    tool: {
+      callID: string
+      tool: string
+      state: {
+        status: 'running' | 'completed' | 'error'
+        input?: unknown
+        output?: unknown
+        error?: unknown
+      }
+    },
+    turnId?: string
+  ): void {
+    if (!tool.callID) return
+
+    const message = this.getOrCreateCanonicalAssistantMessage(session, turnId)
+    const parts = Array.isArray(message.parts) ? (message.parts as Array<Record<string, unknown>>) : []
+    const existingIndex = parts.findIndex((part) => {
+      const partObj = asObject(part)
+      const toolUse = asObject(partObj?.toolUse)
+      return asString(partObj?.type) === 'tool_use' && asString(toolUse?.id) === tool.callID
+    })
+
+    const nextToolUse = {
+      id: tool.callID,
+      name: tool.tool || 'unknown',
+      input:
+        tool.state.input && typeof tool.state.input === 'object' && !Array.isArray(tool.state.input)
+          ? (tool.state.input as Record<string, unknown>)
+          : {},
+      status:
+        tool.state.status === 'completed'
+          ? 'success'
+          : tool.state.status === 'error'
+            ? 'error'
+            : 'running',
+      startTime: Date.now(),
+      ...(tool.state.output !== undefined ? { output: tool.state.output } : {}),
+      ...(tool.state.error !== undefined ? { error: tool.state.error } : {}),
+      ...(tool.state.status !== 'running' ? { endTime: Date.now() } : {})
+    }
+
+    if (existingIndex >= 0) {
+      const existingToolUse = asObject(asObject(parts[existingIndex])?.toolUse)
+      parts[existingIndex] = {
+        type: 'tool_use',
+        toolUse: {
+          ...(existingToolUse ?? {}),
+          ...nextToolUse,
+          startTime:
+            typeof existingToolUse?.startTime === 'number'
+              ? existingToolUse.startTime
+              : nextToolUse.startTime
+        }
+      }
+    } else {
+      parts.push({ type: 'tool_use', toolUse: nextToolUse })
+    }
+
+    message.parts = parts
+  }
+
+  private synchronizeCanonicalAssistantFromStreamEvent(
+    session: CodexSessionState,
+    event: CodexManagerEvent,
+    streamEvent: { type?: string; data?: unknown }
+  ): boolean {
+    if (event.method === 'turn/started' && event.turnId) {
+      const previousId = session.currentAssistantMessageId
+      session.currentTurnId = event.turnId
+      if (!previousId) {
+        session.currentAssistantMessageId = `${event.turnId}:assistant`
+        return false
+      }
+
+      const nextId = this.getAssistantMessageId(session, event.turnId)
+      this.renameCanonicalAssistantMessage(session, nextId)
+      return previousId !== nextId
+    }
+
+    if (streamEvent.type !== 'message.part.updated') return false
+
+    const data = asObject(streamEvent.data)
+    const part = asObject(data?.part)
+    if (!part) return false
+
+    const partType = asString(part.type)
+    if (partType === 'text') {
+      const delta = asString(data?.delta) ?? asString(part.text) ?? ''
+      this.appendCanonicalAssistantText(session, 'text', delta, event.turnId ?? session.currentTurnId ?? undefined)
+      return delta.length > 0
+    }
+
+    if (partType === 'reasoning') {
+      const delta = asString(data?.delta) ?? asString(part.text) ?? ''
+      this.appendCanonicalAssistantText(
+        session,
+        'reasoning',
+        delta,
+        event.turnId ?? session.currentTurnId ?? undefined
+      )
+      return delta.length > 0
+    }
+
+    if (partType === 'tool') {
+      const state = asObject(part.state)
+      const statusValue = asString(state?.status)
+      const status =
+        statusValue === 'completed' || statusValue === 'error' ? statusValue : 'running'
+
+      this.upsertCanonicalAssistantTool(
+        session,
+        {
+          callID: asString(part.callID) ?? asString(part.id) ?? '',
+          tool: asString(part.tool) ?? 'unknown',
+          state: {
+            status,
+            ...(state?.input !== undefined ? { input: state.input } : {}),
+            ...(state?.output !== undefined ? { output: state.output } : {}),
+            ...(state?.error !== undefined ? { error: state.error } : {})
+          }
+        },
+        event.turnId ?? session.currentTurnId ?? undefined
+      )
+      return true
+    }
+
+    return false
   }
 
   private appendLiveAssistantText(
@@ -1881,10 +2174,13 @@ export class CodexImplementer implements AgentSdkImplementer {
         status: this.mapProviderStatus(providerSession.status),
         messages: [],
         liveAssistantDraft: null,
+        currentTurnId: null,
+        currentAssistantMessageId: null,
         revertMessageID: null,
         revertDiff: null,
         titleGenerated: true,
-        titleGenerationStarted: true
+        titleGenerationStarted: true,
+        persistDebounceTimer: null
       }
 
       this.sessions.set(this.getSessionKey(worktreePath, threadId), recovered)
