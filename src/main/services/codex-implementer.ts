@@ -20,6 +20,7 @@ import { autoRenameWorktreeBranch } from './git-service'
 import { normalizeCodexToolName, stripShellPrefix } from '@shared/codex-tool-normalizer'
 
 const log = createLogger({ component: 'CodexImplementer' })
+// Balances write coalescing during rapid streaming against data freshness for crash recovery.
 const PERSIST_DEBOUNCE_MS = 2000
 
 // ── Session state ─────────────────────────────────────────────────
@@ -524,6 +525,9 @@ export class CodexImplementer implements AgentSdkImplementer {
     // Stop the manager session
     this.manager.stopSession(agentSessionId)
 
+    // Flush any pending debounced persist before removing the session
+    this.flushPendingPersist(session)
+
     // Clean up local state
     this.sessions.delete(key)
     this.cleanupPendingForThread(agentSessionId)
@@ -536,6 +540,14 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     // Stop all manager sessions
     this.manager.stopAll()
+
+    // Clear pending debounce timers (don't flush — avoid DB writes during teardown)
+    for (const session of this.sessions.values()) {
+      if (session.persistDebounceTimer) {
+        clearTimeout(session.persistDebounceTimer)
+        session.persistDebounceTimer = null
+      }
+    }
 
     // Clear local state
     this.sessions.clear()
@@ -855,6 +867,7 @@ export class CodexImplementer implements AgentSdkImplementer {
       })
       this.emitStatus(session.hiveSessionId, 'idle')
     } finally {
+      this.flushPendingPersist(session)
       session.currentTurnId = null
       session.currentAssistantMessageId = null
       this.manager.removeListener('event', handleEvent)
