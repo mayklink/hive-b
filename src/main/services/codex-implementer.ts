@@ -1797,14 +1797,24 @@ export class CodexImplementer implements AgentSdkImplementer {
       ...(tool.state.error !== undefined ? { error: tool.state.error } : {}),
       ...(tool.state.status !== 'running' ? { endTime: Date.now() } : {})
     }
+    // Remove outputDelta from nextToolUse — it's transient
+    delete (nextToolUse as any).outputDelta
 
     if (existingIndex >= 0) {
       const existingToolUse = asObject(asObject(parts[existingIndex])?.toolUse)
+      // Handle outputDelta accumulation
+      const prevOutput = existingToolUse?.output
+      const outputDelta = (tool.state as any).outputDelta
+      const accumulatedOutput = outputDelta
+        ? ((prevOutput as string) ?? '') + outputDelta
+        : undefined
+
       parts[existingIndex] = {
         type: 'tool_use',
         toolUse: {
           ...(existingToolUse ?? {}),
           ...nextToolUse,
+          ...(accumulatedOutput !== undefined ? { output: accumulatedOutput } : {}),
           startTime:
             typeof existingToolUse?.startTime === 'number'
               ? existingToolUse.startTime
@@ -1875,8 +1885,9 @@ export class CodexImplementer implements AgentSdkImplementer {
             status,
             ...(state?.input !== undefined ? { input: state.input } : {}),
             ...(state?.output !== undefined ? { output: state.output } : {}),
-            ...(state?.error !== undefined ? { error: state.error } : {})
-          }
+            ...(state?.error !== undefined ? { error: state.error } : {}),
+            ...(state?.outputDelta !== undefined ? { outputDelta: state.outputDelta } : {})
+          } as any
         },
         event.turnId ?? session.currentTurnId ?? undefined
       )
@@ -1927,13 +1938,20 @@ export class CodexImplementer implements AgentSdkImplementer {
       const existing = draft.parts[existingIndex]
       if (existing && existing.type === 'tool') {
         existing.tool = tool.tool || existing.tool
+        const appendedOutput = (tool.state as any).outputDelta
+          ? ((existing.state.output as string) ?? '') + (tool.state as any).outputDelta
+          : undefined
         existing.state = {
           ...existing.state,
           ...tool.state,
           ...(tool.state.input === undefined ? { input: existing.state.input } : {}),
-          ...(tool.state.output === undefined ? { output: existing.state.output } : {}),
+          ...(appendedOutput !== undefined
+            ? { output: appendedOutput }
+            : tool.state.output === undefined ? { output: existing.state.output } : {}),
           ...(tool.state.error === undefined ? { error: existing.state.error } : {})
         }
+        // Remove outputDelta from persisted state — it's transient
+        delete (existing.state as any).outputDelta
       }
       return
     }
@@ -1945,6 +1963,8 @@ export class CodexImplementer implements AgentSdkImplementer {
       tool: tool.tool,
       state: tool.state
     })
+    // Remove outputDelta from persisted state — it's transient (new-tool path)
+    delete (draft.parts[draft.parts.length - 1].state as any).outputDelta
   }
 
   private updateLiveAssistantDraftFromStreamEvent(
@@ -1983,8 +2003,9 @@ export class CodexImplementer implements AgentSdkImplementer {
           status,
           ...(state?.input !== undefined ? { input: state.input } : {}),
           ...(state?.output !== undefined ? { output: state.output } : {}),
-          ...(state?.error !== undefined ? { error: state.error } : {})
-        }
+          ...(state?.error !== undefined ? { error: state.error } : {}),
+          ...(state?.outputDelta !== undefined ? { outputDelta: state.outputDelta } : {})
+        } as any
       })
     }
   }

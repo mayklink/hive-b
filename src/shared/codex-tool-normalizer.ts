@@ -18,7 +18,15 @@ const CODEX_TOOL_NAME_MAP: Record<string, string> = {
   file_change: 'fileChange',
   apply_patch: 'fileChange',
   fileread: 'Read',
-  file_read: 'Read'
+  file_read: 'Read',
+  dynamictoolcall: 'Tool',
+  dynamic_tool_call: 'Tool',
+  collabagenttoolcall: 'Task',
+  collab_agent_tool_call: 'Task',
+  mcptoolcall: 'MCP',
+  mcp_tool_call: 'MCP',
+  websearch: 'WebSearch',
+  web_search: 'WebSearch'
 }
 
 /**
