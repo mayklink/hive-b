@@ -28,6 +28,7 @@ import type { ToolRequestUserInputAnswer } from '@shared/codex-schemas/v2/ToolRe
 import type { CommandExecutionRequestApprovalParams } from '@shared/codex-schemas/v2/CommandExecutionRequestApprovalParams'
 import type { ThreadItem } from '@shared/codex-schemas/v2/ThreadItem'
 import type { Thread } from '@shared/codex-schemas/v2/Thread'
+import type { OpenCodeStreamEvent } from '@shared/types/opencode'
 
 const log = createLogger({ component: 'CodexImplementer' })
 // Balances write coalescing during rapid streaming against data freshness for crash recovery.
@@ -66,6 +67,16 @@ interface CodexLiveToolPart {
 type CodexLiveDraftPart =
   | { type: 'text'; text: string; timestamp: string }
   | { type: 'reasoning'; text: string; timestamp: string }
+  | {
+      type: 'subtask'
+      id: string
+      sessionID: string
+      prompt: string
+      description: string
+      agent: string
+      parts: Array<{ type: 'text'; text: string; timestamp?: string } | CodexLiveToolPart>
+      status: 'running' | 'completed' | 'error'
+    }
   | CodexLiveToolPart
 
 interface CodexLiveAssistantDraft {
@@ -109,8 +120,7 @@ function isDefaultSessionTitle(title: string | null | undefined): boolean {
   if (!normalized) return true
 
   return (
-    /^Session \d+$/.test(normalized) ||
-    /^New session\s*-?\s*\d{4}-\d{2}-\d{2}/i.test(normalized)
+    /^Session \d+$/.test(normalized) || /^New session\s*-?\s*\d{4}-\d{2}-\d{2}/i.test(normalized)
   )
 }
 
@@ -318,9 +328,10 @@ export class CodexImplementer implements AgentSdkImplementer {
       })
 
       // Typed payload available for known methods
-      const _typedApproval = event.method === 'item/commandExecution/requestApproval'
-        ? event.payload as CommandExecutionRequestApprovalParams
-        : undefined
+      const _typedApproval =
+        event.method === 'item/commandExecution/requestApproval'
+          ? (event.payload as CommandExecutionRequestApprovalParams)
+          : undefined
       const payload = asObject(event.payload)
       this.sendToRenderer('opencode:stream', {
         type: 'permission.asked',
@@ -347,7 +358,8 @@ export class CodexImplementer implements AgentSdkImplementer {
       })
 
       const typed = event.payload as ToolRequestUserInputParams | undefined
-      const questions = typed?.questions ?? ((asObject(event.payload)?.questions ?? []) as unknown[])
+      const questions =
+        typed?.questions ?? ((asObject(event.payload)?.questions ?? []) as unknown[])
 
       this.sendToRenderer('opencode:stream', {
         type: 'question.asked',
@@ -1741,7 +1753,9 @@ export class CodexImplementer implements AgentSdkImplementer {
     if (!text) return
 
     const message = this.getOrCreateCanonicalAssistantMessage(session, turnId)
-    const parts = Array.isArray(message.parts) ? (message.parts as Array<Record<string, unknown>>) : []
+    const parts = Array.isArray(message.parts)
+      ? (message.parts as Array<Record<string, unknown>>)
+      : []
     const lastPart = parts[parts.length - 1]
     const timestamp = new Date().toISOString()
 
@@ -1772,7 +1786,9 @@ export class CodexImplementer implements AgentSdkImplementer {
     if (!tool.callID) return
 
     const message = this.getOrCreateCanonicalAssistantMessage(session, turnId)
-    const parts = Array.isArray(message.parts) ? (message.parts as Array<Record<string, unknown>>) : []
+    const parts = Array.isArray(message.parts)
+      ? (message.parts as Array<Record<string, unknown>>)
+      : []
     const existingIndex = parts.findIndex((part) => {
       const partObj = asObject(part)
       const toolUse = asObject(partObj?.toolUse)
@@ -1828,10 +1844,310 @@ export class CodexImplementer implements AgentSdkImplementer {
     message.parts = parts
   }
 
+  private mapSubtaskStatus(status: string | undefined): 'running' | 'completed' | 'error' {
+    if (status === 'completed') return 'completed'
+    if (status === 'failed' || status === 'error') return 'error'
+    return 'running'
+  }
+
+  private extractSubtaskDescriptor(
+    part: Record<string, unknown>,
+    childSessionId?: string
+  ): {
+    id: string
+    sessionID: string
+    prompt: string
+    description: string
+    agent: string
+    status: 'running' | 'completed' | 'error'
+  } {
+    const id =
+      asString(part.id) ?? asString(part.sessionID) ?? childSessionId ?? `subtask-${randomUUID()}`
+    const sessionID = asString(part.sessionID) ?? childSessionId ?? id
+    return {
+      id,
+      sessionID,
+      prompt: asString(part.prompt) ?? '',
+      description: asString(part.description) ?? '',
+      agent: asString(part.agent) ?? 'task',
+      status: this.mapSubtaskStatus(asString(part.status))
+    }
+  }
+
+  private getOrCreateLiveAssistantSubtask(
+    session: CodexSessionState,
+    descriptor: {
+      id: string
+      sessionID: string
+      prompt: string
+      description: string
+      agent: string
+      status: 'running' | 'completed' | 'error'
+    }
+  ): Extract<CodexLiveDraftPart, { type: 'subtask' }> {
+    const draft = this.ensureLiveAssistantDraft(session)
+    const existing = draft.parts.find(
+      (part) =>
+        part.type === 'subtask' &&
+        (part.id === descriptor.id || part.sessionID === descriptor.sessionID)
+    ) as Extract<CodexLiveDraftPart, { type: 'subtask' }> | undefined
+
+    if (existing) {
+      existing.prompt = descriptor.prompt || existing.prompt
+      existing.description = descriptor.description || existing.description
+      existing.agent = descriptor.agent || existing.agent
+      if (descriptor.status === 'completed' || descriptor.status === 'error') {
+        existing.status = descriptor.status
+      }
+      return existing
+    }
+
+    const subtask: Extract<CodexLiveDraftPart, { type: 'subtask' }> = {
+      type: 'subtask',
+      id: descriptor.id,
+      sessionID: descriptor.sessionID,
+      prompt: descriptor.prompt,
+      description: descriptor.description,
+      agent: descriptor.agent,
+      parts: [],
+      status: descriptor.status
+    }
+    draft.parts.push(subtask)
+    return subtask
+  }
+
+  private appendLiveAssistantSubtaskText(
+    session: CodexSessionState,
+    childSessionId: string,
+    text: string
+  ): void {
+    if (!text) return
+    const subtask = this.getOrCreateLiveAssistantSubtask(session, {
+      id: childSessionId,
+      sessionID: childSessionId,
+      prompt: '',
+      description: '',
+      agent: 'task',
+      status: 'running'
+    })
+    const lastPart = subtask.parts[subtask.parts.length - 1]
+    if (lastPart?.type === 'text') {
+      lastPart.text += text
+      return
+    }
+    subtask.parts.push({ type: 'text', text, timestamp: new Date().toISOString() })
+  }
+
+  private upsertLiveAssistantSubtaskTool(
+    session: CodexSessionState,
+    childSessionId: string,
+    tool: {
+      callID: string
+      tool: string
+      state: {
+        status: 'running' | 'completed' | 'error'
+        input?: unknown
+        output?: unknown
+        error?: unknown
+        outputDelta?: unknown
+      }
+    }
+  ): void {
+    if (!tool.callID) return
+    const subtask = this.getOrCreateLiveAssistantSubtask(session, {
+      id: childSessionId,
+      sessionID: childSessionId,
+      prompt: '',
+      description: '',
+      agent: 'task',
+      status: 'running'
+    })
+    const existingIndex = subtask.parts.findIndex(
+      (part) => part.type === 'tool' && part.callID === tool.callID
+    )
+
+    if (existingIndex >= 0) {
+      const existing = subtask.parts[existingIndex] as CodexLiveToolPart
+      const appendedOutput = tool.state.outputDelta
+        ? ((existing.state.output as string) ?? '') + String(tool.state.outputDelta)
+        : undefined
+      existing.tool = tool.tool || existing.tool
+      existing.state = {
+        ...existing.state,
+        ...tool.state,
+        ...(tool.state.input === undefined ? { input: existing.state.input } : {}),
+        ...(appendedOutput !== undefined
+          ? { output: appendedOutput }
+          : tool.state.output === undefined
+            ? { output: existing.state.output }
+            : {}),
+        ...(tool.state.error === undefined ? { error: existing.state.error } : {})
+      }
+      delete (existing.state as any).outputDelta
+      return
+    }
+
+    subtask.parts.push({
+      type: 'tool',
+      callID: tool.callID,
+      tool: tool.tool,
+      state: { ...tool.state }
+    })
+    delete ((subtask.parts[subtask.parts.length - 1] as CodexLiveToolPart).state as any).outputDelta
+  }
+
+  private getOrCreateCanonicalAssistantSubtask(
+    session: CodexSessionState,
+    descriptor: {
+      id: string
+      sessionID: string
+      prompt: string
+      description: string
+      agent: string
+      status: 'running' | 'completed' | 'error'
+    },
+    turnId?: string
+  ): Record<string, unknown> {
+    const message = this.getOrCreateCanonicalAssistantMessage(session, turnId)
+    const parts = Array.isArray(message.parts)
+      ? (message.parts as Array<Record<string, unknown>>)
+      : []
+    let existing = parts.find((part) => {
+      if (asString(part.type) !== 'subtask') return false
+      return (
+        asString(part.id) === descriptor.id || asString(part.sessionID) === descriptor.sessionID
+      )
+    })
+
+    if (!existing) {
+      existing = {
+        type: 'subtask',
+        id: descriptor.id,
+        sessionID: descriptor.sessionID,
+        prompt: descriptor.prompt,
+        description: descriptor.description,
+        agent: descriptor.agent,
+        parts: [],
+        status: descriptor.status
+      }
+      parts.push(existing)
+      message.parts = parts
+      return existing
+    }
+
+    existing.prompt = descriptor.prompt || asString(existing.prompt) || ''
+    existing.description = descriptor.description || asString(existing.description) || ''
+    existing.agent = descriptor.agent || asString(existing.agent) || 'task'
+    if (descriptor.status === 'completed' || descriptor.status === 'error') {
+      existing.status = descriptor.status
+    } else if (!asString(existing.status)) {
+      existing.status = descriptor.status
+    }
+    if (!Array.isArray(existing.parts)) {
+      existing.parts = []
+    }
+    message.parts = parts
+    return existing
+  }
+
+  private appendCanonicalAssistantSubtaskText(
+    session: CodexSessionState,
+    childSessionId: string,
+    text: string,
+    turnId?: string
+  ): void {
+    if (!text) return
+    const subtask = this.getOrCreateCanonicalAssistantSubtask(
+      session,
+      {
+        id: childSessionId,
+        sessionID: childSessionId,
+        prompt: '',
+        description: '',
+        agent: 'task',
+        status: 'running'
+      },
+      turnId
+    )
+    const parts = Array.isArray(subtask.parts)
+      ? (subtask.parts as Array<Record<string, unknown>>)
+      : []
+    const lastPart = parts[parts.length - 1]
+    if (lastPart && asString(lastPart.type) === 'text') {
+      lastPart.text = `${asString(lastPart.text) ?? ''}${text}`
+    } else {
+      parts.push({ type: 'text', text })
+    }
+    subtask.parts = parts
+  }
+
+  private upsertCanonicalAssistantSubtaskTool(
+    session: CodexSessionState,
+    childSessionId: string,
+    tool: {
+      callID: string
+      tool: string
+      state: {
+        status: 'running' | 'completed' | 'error'
+        input?: unknown
+        output?: unknown
+        error?: unknown
+        outputDelta?: unknown
+      }
+    },
+    turnId?: string
+  ): void {
+    if (!tool.callID) return
+    const subtask = this.getOrCreateCanonicalAssistantSubtask(
+      session,
+      {
+        id: childSessionId,
+        sessionID: childSessionId,
+        prompt: '',
+        description: '',
+        agent: 'task',
+        status: 'running'
+      },
+      turnId
+    )
+    const parts = Array.isArray(subtask.parts)
+      ? (subtask.parts as Array<Record<string, unknown>>)
+      : []
+    const existingIndex = parts.findIndex(
+      (part) => asString(part.type) === 'tool' && asString(part.callID) === tool.callID
+    )
+    const nextState = { ...tool.state }
+    delete (nextState as any).outputDelta
+
+    if (existingIndex >= 0) {
+      const existing = parts[existingIndex]
+      const existingState = asObject(existing.state) ?? {}
+      const appendedOutput = tool.state.outputDelta
+        ? `${asString(existingState.output) ?? ''}${String(tool.state.outputDelta)}`
+        : undefined
+      existing.tool = tool.tool || asString(existing.tool) || 'unknown'
+      existing.state = {
+        ...existingState,
+        ...nextState,
+        ...(tool.state.input === undefined ? { input: existingState.input } : {}),
+        ...(appendedOutput !== undefined
+          ? { output: appendedOutput }
+          : tool.state.output === undefined
+            ? { output: existingState.output }
+            : {}),
+        ...(tool.state.error === undefined ? { error: existingState.error } : {})
+      }
+    } else {
+      parts.push({ type: 'tool', callID: tool.callID, tool: tool.tool, state: nextState })
+    }
+
+    subtask.parts = parts
+  }
+
   private synchronizeCanonicalAssistantFromStreamEvent(
     session: CodexSessionState,
     event: CodexManagerEvent,
-    streamEvent: { type?: string; data?: unknown }
+    streamEvent: OpenCodeStreamEvent
   ): boolean {
     if (event.method === 'turn/started' && event.turnId) {
       const previousId = session.currentAssistantMessageId
@@ -1853,20 +2169,64 @@ export class CodexImplementer implements AgentSdkImplementer {
     if (!part) return false
 
     const partType = asString(part.type)
+    const targetTurnId = event.turnId ?? session.currentTurnId ?? undefined
+
+    if (streamEvent.childSessionId) {
+      if (partType === 'text' || partType === 'reasoning') {
+        const delta = asString(data?.delta) ?? asString(part.text) ?? ''
+        this.appendCanonicalAssistantSubtaskText(
+          session,
+          streamEvent.childSessionId,
+          delta,
+          targetTurnId
+        )
+        return delta.length > 0
+      }
+
+      if (partType === 'tool') {
+        const state = asObject(part.state)
+        const statusValue = asString(state?.status)
+        const status =
+          statusValue === 'completed' || statusValue === 'error' ? statusValue : 'running'
+
+        this.upsertCanonicalAssistantSubtaskTool(
+          session,
+          streamEvent.childSessionId,
+          {
+            callID: asString(part.callID) ?? asString(part.id) ?? '',
+            tool: asString(part.tool) ?? 'unknown',
+            state: {
+              status,
+              ...(state?.input !== undefined ? { input: state.input } : {}),
+              ...(state?.output !== undefined ? { output: state.output } : {}),
+              ...(state?.error !== undefined ? { error: state.error } : {}),
+              ...(state?.outputDelta !== undefined ? { outputDelta: state.outputDelta } : {})
+            } as any
+          },
+          targetTurnId
+        )
+        return true
+      }
+
+      if (partType === 'subtask') {
+        this.getOrCreateCanonicalAssistantSubtask(
+          session,
+          this.extractSubtaskDescriptor(part, streamEvent.childSessionId),
+          targetTurnId
+        )
+        return true
+      }
+    }
+
     if (partType === 'text') {
       const delta = asString(data?.delta) ?? asString(part.text) ?? ''
-      this.appendCanonicalAssistantText(session, 'text', delta, event.turnId ?? session.currentTurnId ?? undefined)
+      this.appendCanonicalAssistantText(session, 'text', delta, targetTurnId)
       return delta.length > 0
     }
 
     if (partType === 'reasoning') {
       const delta = asString(data?.delta) ?? asString(part.text) ?? ''
-      this.appendCanonicalAssistantText(
-        session,
-        'reasoning',
-        delta,
-        event.turnId ?? session.currentTurnId ?? undefined
-      )
+      this.appendCanonicalAssistantText(session, 'reasoning', delta, targetTurnId)
       return delta.length > 0
     }
 
@@ -1889,7 +2249,16 @@ export class CodexImplementer implements AgentSdkImplementer {
             ...(state?.outputDelta !== undefined ? { outputDelta: state.outputDelta } : {})
           } as any
         },
-        event.turnId ?? session.currentTurnId ?? undefined
+        targetTurnId
+      )
+      return true
+    }
+
+    if (partType === 'subtask') {
+      this.getOrCreateCanonicalAssistantSubtask(
+        session,
+        this.extractSubtaskDescriptor(part),
+        targetTurnId
       )
       return true
     }
@@ -1947,7 +2316,9 @@ export class CodexImplementer implements AgentSdkImplementer {
           ...(tool.state.input === undefined ? { input: existing.state.input } : {}),
           ...(appendedOutput !== undefined
             ? { output: appendedOutput }
-            : tool.state.output === undefined ? { output: existing.state.output } : {}),
+            : tool.state.output === undefined
+              ? { output: existing.state.output }
+              : {}),
           ...(tool.state.error === undefined ? { error: existing.state.error } : {})
         }
         // Remove outputDelta from persisted state — it's transient
@@ -1964,12 +2335,12 @@ export class CodexImplementer implements AgentSdkImplementer {
       state: tool.state
     })
     // Remove outputDelta from persisted state — it's transient (new-tool path)
-    delete (draft.parts[draft.parts.length - 1].state as any).outputDelta
+    delete ((draft.parts[draft.parts.length - 1] as CodexLiveToolPart).state as any).outputDelta
   }
 
   private updateLiveAssistantDraftFromStreamEvent(
     session: CodexSessionState,
-    streamEvent: { type?: string; data?: unknown }
+    streamEvent: OpenCodeStreamEvent
   ): void {
     if (streamEvent.type !== 'message.part.updated') return
 
@@ -1978,6 +2349,42 @@ export class CodexImplementer implements AgentSdkImplementer {
     if (!part) return
 
     const partType = asString(part.type)
+    if (streamEvent.childSessionId) {
+      if (partType === 'text' || partType === 'reasoning') {
+        const delta = asString(data?.delta) ?? asString(part.text) ?? ''
+        this.appendLiveAssistantSubtaskText(session, streamEvent.childSessionId, delta)
+        return
+      }
+
+      if (partType === 'tool') {
+        const state = asObject(part.state)
+        const statusValue = asString(state?.status)
+        const status =
+          statusValue === 'completed' || statusValue === 'error' ? statusValue : 'running'
+
+        this.upsertLiveAssistantSubtaskTool(session, streamEvent.childSessionId, {
+          callID: asString(part.callID) ?? asString(part.id) ?? '',
+          tool: asString(part.tool) ?? 'unknown',
+          state: {
+            status,
+            ...(state?.input !== undefined ? { input: state.input } : {}),
+            ...(state?.output !== undefined ? { output: state.output } : {}),
+            ...(state?.error !== undefined ? { error: state.error } : {}),
+            ...(state?.outputDelta !== undefined ? { outputDelta: state.outputDelta } : {})
+          } as any
+        })
+        return
+      }
+
+      if (partType === 'subtask') {
+        this.getOrCreateLiveAssistantSubtask(
+          session,
+          this.extractSubtaskDescriptor(part, streamEvent.childSessionId)
+        )
+        return
+      }
+    }
+
     if (partType === 'text') {
       const delta = asString(data?.delta) ?? asString(part.text) ?? ''
       this.appendLiveAssistantText(session, 'text', delta)
@@ -2007,6 +2414,11 @@ export class CodexImplementer implements AgentSdkImplementer {
           ...(state?.outputDelta !== undefined ? { outputDelta: state.outputDelta } : {})
         } as any
       })
+      return
+    }
+
+    if (partType === 'subtask') {
+      this.getOrCreateLiveAssistantSubtask(session, this.extractSubtaskDescriptor(part))
     }
   }
 
@@ -2020,6 +2432,29 @@ export class CodexImplementer implements AgentSdkImplementer {
       parts: draft.parts.map((part) => {
         if (part.type === 'text' || part.type === 'reasoning') {
           return { ...part }
+        }
+
+        if (part.type === 'subtask') {
+          return {
+            type: 'subtask',
+            id: part.id,
+            sessionID: part.sessionID,
+            prompt: part.prompt,
+            description: part.description,
+            agent: part.agent,
+            parts: part.parts.map((subtaskPart) => {
+              if (subtaskPart.type === 'text') {
+                return { ...subtaskPart }
+              }
+              return {
+                type: 'tool',
+                callID: subtaskPart.callID,
+                tool: subtaskPart.tool,
+                state: { ...(subtaskPart as CodexLiveToolPart).state }
+              }
+            }),
+            status: part.status
+          }
         }
 
         return {

@@ -30,9 +30,9 @@ function parseToolPart(activity: SessionActivity): StreamingPart | null {
     payload && typeof payload.item === 'object' ? (payload.item as Record<string, unknown>) : null
   const toolName = normalizeCodexToolName(
     (typeof item?.toolName === 'string' && item.toolName) ||
-    (typeof item?.name === 'string' && item.name) ||
-    (typeof item?.type === 'string' && item.type) ||
-    'unknown'
+      (typeof item?.name === 'string' && item.name) ||
+      (typeof item?.type === 'string' && item.type) ||
+      'unknown'
   )
   const rawInput =
     item?.input && typeof item.input === 'object' && !Array.isArray(item.input)
@@ -91,6 +91,57 @@ function parsePlanPart(activity: SessionActivity): StreamingPart | null {
       input: { plan },
       status: 'pending',
       startTime: Date.parse(activity.created_at) || Date.now()
+    }
+  }
+}
+
+function parseTaskPart(activity: SessionActivity): StreamingPart | null {
+  if (
+    activity.kind !== 'task.started' &&
+    activity.kind !== 'task.updated' &&
+    activity.kind !== 'task.completed'
+  ) {
+    return null
+  }
+
+  const payload = parseJson<Record<string, unknown>>(activity.payload_json)
+  const task =
+    payload && typeof payload.task === 'object' && !Array.isArray(payload.task)
+      ? (payload.task as Record<string, unknown>)
+      : null
+
+  const taskId =
+    (typeof task?.id === 'string' && task.id) ||
+    (typeof payload?.taskId === 'string' && payload.taskId) ||
+    activity.item_id ||
+    activity.id
+
+  const sessionID =
+    (typeof task?.threadId === 'string' && task.threadId) ||
+    (typeof payload?.threadId === 'string' && payload.threadId) ||
+    taskId
+
+  const description =
+    (typeof task?.message === 'string' && task.message) ||
+    (typeof payload?.message === 'string' && payload.message) ||
+    activity.summary ||
+    ''
+
+  return {
+    type: 'subtask',
+    subtask: {
+      id: taskId,
+      sessionID,
+      prompt: '',
+      description,
+      agent: 'task',
+      parts: [],
+      status:
+        activity.kind === 'task.completed'
+          ? 'completed'
+          : activity.tone === 'error'
+            ? 'error'
+            : 'running'
     }
   }
 }
@@ -343,6 +394,44 @@ function upsertToolPart(
   return existingParts
 }
 
+function upsertSubtaskPart(
+  parts: StreamingPart[] | undefined,
+  nextPart: StreamingPart
+): StreamingPart[] {
+  const existingParts = parts ? [...parts] : []
+  const nextSubtask = nextPart.subtask
+  if (!nextSubtask) return existingParts
+
+  const partIndex = existingParts.findIndex(
+    (part) =>
+      part.type === 'subtask' &&
+      (part.subtask?.id === nextSubtask.id || part.subtask?.sessionID === nextSubtask.sessionID)
+  )
+
+  if (partIndex >= 0) {
+    const existing = existingParts[partIndex].subtask
+    existingParts[partIndex] = {
+      type: 'subtask',
+      subtask: {
+        id: existing?.id ?? nextSubtask.id,
+        sessionID: existing?.sessionID ?? nextSubtask.sessionID,
+        prompt: nextSubtask.prompt || existing?.prompt || '',
+        description: nextSubtask.description || existing?.description || '',
+        agent: nextSubtask.agent || existing?.agent || 'task',
+        parts: nextSubtask.parts.length > 0 ? nextSubtask.parts : (existing?.parts ?? []),
+        status:
+          nextSubtask.status === 'completed' || nextSubtask.status === 'error'
+            ? nextSubtask.status
+            : (existing?.status ?? nextSubtask.status)
+      }
+    }
+    return existingParts
+  }
+
+  existingParts.push(nextPart)
+  return existingParts
+}
+
 export function mergeCodexActivityMessages(
   baseMessages: OpenCodeMessage[],
   activityRows: SessionActivity[],
@@ -394,16 +483,24 @@ export function mergeCodexActivityMessages(
   for (const activity of sortedActivities) {
     const activityPart = activity.kind.startsWith('tool.')
       ? parseToolPart(activity)
-      : parsePlanPart(activity)
-    if (!activityPart?.toolUse) continue
+      : activity.kind === 'plan.ready'
+        ? parsePlanPart(activity)
+        : parseTaskPart(activity)
+    if (!activityPart) continue
 
-    const toolId = activityPart.toolUse.id
-    if (knownToolIds.has(toolId)) {
+    const toolId = activityPart.toolUse?.id
+    if (toolId && knownToolIds.has(toolId)) {
       continue
     }
 
     const turnId = activity.turn_id
-    const syntheticId = turnId ? `${turnId}:tool:${toolId}` : `tool:${toolId}`
+    const syntheticId = activityPart.toolUse
+      ? turnId
+        ? `${turnId}:tool:${toolId}`
+        : `tool:${toolId}`
+      : turnId
+        ? `${turnId}:task:${activityPart.subtask?.id ?? activity.id}`
+        : `task:${activityPart.subtask?.id ?? activity.id}`
     const targetCollection = turnId
       ? (anchoredSyntheticByTurnId.get(turnId) ?? [])
       : unanchoredSynthetic
@@ -422,7 +519,9 @@ export function mergeCodexActivityMessages(
         anchoredSyntheticByTurnId.set(turnId, targetCollection)
       }
     }
-    target.parts = upsertToolPart(target.parts, activityPart)
+    target.parts = activityPart.toolUse
+      ? upsertToolPart(target.parts, activityPart)
+      : upsertSubtaskPart(target.parts, activityPart)
   }
 
   const injectedTurns = new Set<string>()

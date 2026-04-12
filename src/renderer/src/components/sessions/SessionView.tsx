@@ -1,5 +1,16 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from 'react'
-import { Send, ListPlus, Loader2, AlertCircle, RefreshCw, Square, Archive, X, Github, Minimize2 } from 'lucide-react'
+import {
+  Send,
+  ListPlus,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  Square,
+  Archive,
+  X,
+  Github,
+  Minimize2
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { ProviderIcon } from '@/components/ui/provider-icon'
@@ -14,7 +25,11 @@ import { AttachmentPreview } from './AttachmentPreview'
 import { TicketAttachments } from './TicketAttachments'
 import { CodexFastToggle } from './CodexFastToggle'
 import type { Attachment } from './AttachmentPreview'
-import { buildMessageParts, buildDisplayContent, MAX_ATTACHMENTS } from '@/lib/file-attachment-utils'
+import {
+  buildMessageParts,
+  buildDisplayContent,
+  MAX_ATTACHMENTS
+} from '@/lib/file-attachment-utils'
 import { TicketPickerModal } from '@/components/kanban/TicketPickerModal'
 import type { TicketAttachmentData } from '@/components/kanban/TicketPickerModal'
 import { SlashCommandPopover } from './SlashCommandPopover'
@@ -59,10 +74,7 @@ import { snapshotTokenBaseline, computeTokenDelta } from '@/lib/token-baselines'
 import { notifyKanbanSessionSync } from '@/stores/store-coordination'
 import { isComposingKeyboardEvent } from '@/lib/message-composer-shortcuts'
 import { handleSessionIdleFollowUp } from '@/lib/session-follow-up-dispatch'
-import {
-  buildSdkPlanImplementationPrompt,
-  looksLikeCodexProposedPlan
-} from '@/lib/proposedPlan'
+import { buildSdkPlanImplementationPrompt, looksLikeCodexProposedPlan } from '@/lib/proposedPlan'
 
 // Stable empty array to avoid creating new references in selectors
 const EMPTY_FILE_INDEX: FlatFile[] = []
@@ -71,7 +83,13 @@ import { QuestionPrompt } from './QuestionPrompt'
 import { PermissionPrompt } from './PermissionPrompt'
 import { CommandApprovalPrompt } from './CommandApprovalPrompt'
 import type { ToolStatus, ToolUseInfo } from './ToolCard'
-import { PLAN_MODE_PREFIX, ASK_MODE_PREFIX, SUPER_PLAN_MODE_PREFIX, stripPlanModePrefix, isPlanLike } from '@/lib/constants'
+import {
+  PLAN_MODE_PREFIX,
+  ASK_MODE_PREFIX,
+  SUPER_PLAN_MODE_PREFIX,
+  stripPlanModePrefix,
+  isPlanLike
+} from '@/lib/constants'
 
 /**
  * Resolve an OpenCode session ID to the corresponding Hive session ID
@@ -536,7 +554,9 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
   const [opencodeSessionId, setOpencodeSessionId] = useState<string | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
   const isStreamingRef = useRef(isStreaming)
-  useEffect(() => { isStreamingRef.current = isStreaming }, [isStreaming])
+  useEffect(() => {
+    isStreamingRef.current = isStreaming
+  }, [isStreaming])
   const [isCompacting, setIsCompacting] = useState(false)
   const [sessionRetry, setSessionRetry] = useState<SessionRetryState | null>(null)
   const [sessionErrorMessage, setSessionErrorMessage] = useState<string | null>(null)
@@ -1688,10 +1708,16 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
               sessionTitle || ''
             )
             if (sessionTitle && !isOpenCodeDefault) {
-              console.log('[TITLE_DEBUG] SessionView calling updateSessionName', { sessionId, sessionTitle })
+              console.log('[TITLE_DEBUG] SessionView calling updateSessionName', {
+                sessionId,
+                sessionTitle
+              })
               useSessionStore.getState().updateSessionName(sessionId, sessionTitle)
             } else {
-              console.log('[TITLE_DEBUG] SessionView SKIPPED updateSessionName', { sessionTitle, isOpenCodeDefault })
+              console.log('[TITLE_DEBUG] SessionView SKIPPED updateSessionName', {
+                sessionTitle,
+                isOpenCodeDefault
+              })
             }
             return
           }
@@ -1975,6 +2001,55 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
 
             // Route child/subagent events into their SubtaskCard
             if (event.childSessionId) {
+              if (sessionRecord?.agent_sdk === 'codex') {
+                const childPart = event.data?.part
+                if (childPart?.type === 'text') {
+                  const delta = event.data?.delta || childPart.text || ''
+                  if (delta) {
+                    applyCodexChildStreamingPart(event.childSessionId, {
+                      type: 'text',
+                      text: delta
+                    })
+                  }
+                } else if (childPart?.type === 'tool') {
+                  const state = childPart.state || {}
+                  const statusMap: Record<string, ToolStatus> = {
+                    pending: 'pending',
+                    running: 'running',
+                    completed: 'success',
+                    error: 'error'
+                  }
+                  applyCodexChildStreamingPart(event.childSessionId, {
+                    type: 'tool_use',
+                    toolUse: {
+                      id: childPart.callID || childPart.id || `tool-${Date.now()}`,
+                      name: childPart.tool || 'Unknown',
+                      input: state.input || {},
+                      status: statusMap[state.status] || 'running',
+                      startTime: state.time?.start || Date.now(),
+                      endTime: state.time?.end,
+                      output: state.status === 'completed' ? state.output : undefined,
+                      error: state.status === 'error' ? state.error : undefined
+                    }
+                  })
+                } else if (childPart?.type === 'subtask') {
+                  applyCodexChildStreamingPart(event.childSessionId, {
+                    type: 'subtask',
+                    subtask: {
+                      id: childPart.id || event.childSessionId,
+                      sessionID: childPart.sessionID || event.childSessionId,
+                      prompt: childPart.prompt || '',
+                      description: childPart.description || '',
+                      agent: childPart.agent || 'task',
+                      parts: [],
+                      status: childPart.status || 'running'
+                    }
+                  })
+                }
+                setIsStreaming(true)
+                return
+              }
+
               let subtaskIdx = childToSubtaskIndexRef.current.get(event.childSessionId)
 
               // Auto-create subtask entry on first child event (SDK doesn't
@@ -2122,6 +2197,19 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                     endTime: state.time?.end,
                     output: state.status === 'completed' ? state.output : undefined,
                     error: state.status === 'error' ? state.error : undefined
+                  }
+                })
+              } else if (part.type === 'subtask') {
+                applyCodexStreamingPart({
+                  type: 'subtask',
+                  subtask: {
+                    id: part.id || `subtask-${Date.now()}`,
+                    sessionID: part.sessionID || part.id || '',
+                    prompt: part.prompt || '',
+                    description: part.description || '',
+                    agent: part.agent || 'task',
+                    parts: [],
+                    status: part.status || 'running'
                   }
                 })
               }
@@ -2451,6 +2539,22 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           } else if (event.type === 'session.idle') {
             // Child session idle — update subtask status, don't finalize parent
             if (event.childSessionId) {
+              if (sessionRecord?.agent_sdk === 'codex') {
+                applyCodexChildStreamingPart(event.childSessionId, {
+                  type: 'subtask',
+                  subtask: {
+                    id: event.childSessionId,
+                    sessionID: event.childSessionId,
+                    prompt: '',
+                    description: '',
+                    agent: 'task',
+                    parts: [],
+                    status: 'completed'
+                  }
+                })
+                return
+              }
+
               const subtaskIdx = childToSubtaskIndexRef.current.get(event.childSessionId)
               if (subtaskIdx !== undefined) {
                 updateStreamingPartsRef((parts) => {
@@ -2526,7 +2630,10 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                 sessionId,
                 isBlocked: () => {
                   const currentStatus = useWorktreeStatusStore.getState().sessionStatuses[sessionId]
-                  return currentStatus?.status === 'command_approval' || currentStatus?.status === 'permission'
+                  return (
+                    currentStatus?.status === 'command_approval' ||
+                    currentStatus?.status === 'permission'
+                  )
                 },
                 dequeueFollowUp: () => useSessionStore.getState().consumeFollowUpMessage(sessionId),
                 requeueFollowUp: (message) =>
@@ -2580,9 +2687,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                     ...prev
                   ])
                   if (optimisticMessageId) {
-                    setMessages((prev) =>
-                      prev.filter((entry) => entry.id !== optimisticMessageId)
-                    )
+                    setMessages((prev) => prev.filter((entry) => entry.id !== optimisticMessageId))
                   }
                 },
                 onComplete: () => {
@@ -2605,7 +2710,11 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                   const word = COMPLETION_WORDS[Math.floor(Math.random() * COMPLETION_WORDS.length)]
                   const tokenDelta = computeTokenDelta(sessionId)
                   const statusStore = useWorktreeStatusStore.getState()
-                  statusStore.setSessionStatus(sessionId, 'completed', { word, durationMs, tokenDelta })
+                  statusStore.setSessionStatus(sessionId, 'completed', {
+                    word,
+                    durationMs,
+                    tokenDelta
+                  })
                 }
               })
             } else if (status.type === 'retry') {
@@ -2941,9 +3050,11 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
               .setSessionStatus(sessionId, isPlanLike(currentMode) ? 'planning' : 'working')
             // Apply mode prefix for OpenCode sessions (Claude Code uses native plan mode)
             const modePrefix =
-              currentMode === 'super-plan' ? SUPER_PLAN_MODE_PREFIX
-              : currentMode === 'plan' && !skipPlanModePrefix ? PLAN_MODE_PREFIX
-              : ''
+              currentMode === 'super-plan'
+                ? SUPER_PLAN_MODE_PREFIX
+                : currentMode === 'plan' && !skipPlanModePrefix
+                  ? PLAN_MODE_PREFIX
+                  : ''
             const promptMessage = modePrefix + pendingMsg
             // Store the full prompt so the stream handler can detect SDK echoes
             lastSentPromptRef.current = promptMessage
@@ -3439,7 +3550,15 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                           ...existingPart,
                           subtask: {
                             ...existingPart.subtask,
-                            parts: [...existingPart.subtask.parts]
+                            parts: existingPart.subtask.parts.map((subtaskPart) => {
+                              if (subtaskPart.type === 'tool_use' && subtaskPart.toolUse) {
+                                return {
+                                  ...subtaskPart,
+                                  toolUse: { ...subtaskPart.toolUse }
+                                }
+                              }
+                              return { ...subtaskPart }
+                            })
                           }
                         }
                       }
@@ -3493,8 +3612,165 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           } else {
             nextParts.push(part)
           }
+        } else if (part.type === 'subtask' && part.subtask) {
+          const existingSubtaskIndex = nextParts.findIndex(
+            (candidate) =>
+              candidate.type === 'subtask' &&
+              (candidate.subtask?.id === part.subtask?.id ||
+                candidate.subtask?.sessionID === part.subtask?.sessionID)
+          )
+          if (existingSubtaskIndex >= 0) {
+            const existingSubtask = nextParts[existingSubtaskIndex].subtask!
+            nextParts[existingSubtaskIndex] = {
+              type: 'subtask',
+              subtask: {
+                ...existingSubtask,
+                prompt: part.subtask.prompt || existingSubtask.prompt,
+                description: part.subtask.description || existingSubtask.description,
+                agent: part.subtask.agent || existingSubtask.agent,
+                status:
+                  part.subtask.status === 'completed' || part.subtask.status === 'error'
+                    ? part.subtask.status
+                    : existingSubtask.status,
+                parts: part.subtask.parts.length > 0 ? part.subtask.parts : existingSubtask.parts
+              }
+            }
+          } else {
+            nextParts.push(part)
+          }
         } else {
           nextParts.push(part)
+        }
+
+        const nextContent = nextParts
+          .filter((candidate) => candidate.type === 'text')
+          .map((candidate) => candidate.text ?? '')
+          .join('')
+
+        const nextMessage: OpenCodeMessage = {
+          ...existingMessage,
+          content: nextContent,
+          parts: nextParts
+        }
+
+        if (existingIndex >= 0) {
+          nextMessages[existingIndex] = nextMessage
+          return nextMessages
+        }
+
+        return [...nextMessages, nextMessage]
+      })
+    },
+    [setMessages]
+  )
+
+  const applyCodexChildStreamingPart = useCallback(
+    (childSessionId: string, childPart: StreamingPart) => {
+      setMessages((currentMessages) => {
+        const messageId =
+          codexStreamingMessageIdRef.current ?? `codex-streaming-${crypto.randomUUID()}`
+        codexStreamingMessageIdRef.current = messageId
+
+        const existingIndex = currentMessages.findIndex((message) => message.id === messageId)
+        const nextMessages = [...currentMessages]
+        const existingMessage =
+          existingIndex >= 0
+            ? {
+                ...nextMessages[existingIndex],
+                parts: (nextMessages[existingIndex].parts ?? []).map((existingPart) => {
+                  if (existingPart.type === 'tool_use' && existingPart.toolUse) {
+                    return { ...existingPart, toolUse: { ...existingPart.toolUse } }
+                  }
+                  if (existingPart.type === 'subtask' && existingPart.subtask) {
+                    return {
+                      ...existingPart,
+                      subtask: {
+                        ...existingPart.subtask,
+                        parts: existingPart.subtask.parts.map((subtaskPart) => {
+                          if (subtaskPart.type === 'tool_use' && subtaskPart.toolUse) {
+                            return { ...subtaskPart, toolUse: { ...subtaskPart.toolUse } }
+                          }
+                          return { ...subtaskPart }
+                        })
+                      }
+                    }
+                  }
+                  return { ...existingPart }
+                })
+              }
+            : {
+                id: messageId,
+                role: 'assistant' as const,
+                content: '',
+                timestamp: new Date().toISOString(),
+                parts: [] as StreamingPart[]
+              }
+
+        const nextParts = [...(existingMessage.parts ?? [])]
+        const existingSubtaskIndex = nextParts.findIndex(
+          (candidate) =>
+            candidate.type === 'subtask' &&
+            (candidate.subtask?.id === childSessionId ||
+              candidate.subtask?.sessionID === childSessionId)
+        )
+
+        const subtask =
+          existingSubtaskIndex >= 0
+            ? nextParts[existingSubtaskIndex].subtask!
+            : {
+                id: childSessionId,
+                sessionID: childSessionId,
+                prompt: '',
+                description: '',
+                agent: 'task',
+                parts: [] as StreamingPart[],
+                status: 'running' as const
+              }
+
+        const nextSubtaskParts = [...subtask.parts]
+
+        if (childPart.type === 'text') {
+          const lastPart = nextSubtaskParts[nextSubtaskParts.length - 1]
+          if (lastPart?.type === 'text') {
+            nextSubtaskParts[nextSubtaskParts.length - 1] = {
+              ...lastPart,
+              text: `${lastPart.text ?? ''}${childPart.text ?? ''}`
+            }
+          } else {
+            nextSubtaskParts.push({ type: 'text', text: childPart.text ?? '' })
+          }
+        } else if (childPart.type === 'tool_use' && childPart.toolUse) {
+          const existingToolIndex = nextSubtaskParts.findIndex(
+            (candidate) =>
+              candidate.type === 'tool_use' && candidate.toolUse?.id === childPart.toolUse?.id
+          )
+          if (existingToolIndex >= 0) {
+            nextSubtaskParts[existingToolIndex] = {
+              type: 'tool_use',
+              toolUse: {
+                ...nextSubtaskParts[existingToolIndex].toolUse!,
+                ...childPart.toolUse
+              }
+            }
+          } else {
+            nextSubtaskParts.push(childPart)
+          }
+        } else if (childPart.type === 'subtask' && childPart.subtask) {
+          subtask.prompt = childPart.subtask.prompt || subtask.prompt
+          subtask.description = childPart.subtask.description || subtask.description
+          subtask.agent = childPart.subtask.agent || subtask.agent
+          subtask.status = childPart.subtask.status
+        }
+
+        const nextSubtask: NonNullable<StreamingPart['subtask']> = {
+          ...subtask,
+          parts: nextSubtaskParts
+        }
+
+        if (existingSubtaskIndex >= 0) {
+          nextParts[existingSubtaskIndex] = { type: 'subtask', subtask: nextSubtask }
+        } else {
+          nextParts.push({ type: 'subtask', subtask: nextSubtask })
         }
 
         const nextContent = nextParts
@@ -3582,14 +3858,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
         setForkingMessageId(null)
       }
     },
-    [
-      forkingMessageId,
-      opencodeSessionId,
-      sessionId,
-      sessionRecord,
-      worktreeId,
-      worktreePath
-    ]
+    [forkingMessageId, opencodeSessionId, sessionId, sessionRecord, worktreeId, worktreePath]
   )
 
   // Handle send message
@@ -3861,9 +4130,11 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
         // instead of only appearing after a session reload from disk.
         const optimisticMode = currentModeForStatus
         const optimisticModePrefix =
-          optimisticMode === 'super-plan' ? SUPER_PLAN_MODE_PREFIX
-          : optimisticMode === 'plan' && !skipPlanModePrefix ? PLAN_MODE_PREFIX
-          : ''
+          optimisticMode === 'super-plan'
+            ? SUPER_PLAN_MODE_PREFIX
+            : optimisticMode === 'plan' && !skipPlanModePrefix
+              ? PLAN_MODE_PREFIX
+              : ''
         const optimisticPrComments = usePRReviewStore.getState().attachedComments
         let optimisticPrContext = ''
         if (optimisticPrComments.length > 0) {
@@ -3985,9 +4256,11 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
             } else {
               // Unknown command — send as regular prompt (SDK may handle it)
               const modePrefix =
-                currentModeForStatus === 'super-plan' ? SUPER_PLAN_MODE_PREFIX
-                : currentModeForStatus === 'plan' && !skipPlanModePrefix ? PLAN_MODE_PREFIX
-                : ''
+                currentModeForStatus === 'super-plan'
+                  ? SUPER_PLAN_MODE_PREFIX
+                  : currentModeForStatus === 'plan' && !skipPlanModePrefix
+                    ? PLAN_MODE_PREFIX
+                    : ''
               // Build PR review comment context
               const prAttachedComments = usePRReviewStore.getState().attachedComments
               let prContext = ''
@@ -4021,9 +4294,11 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           } else {
             // Regular prompt — existing code (with mode prefix, attachments, etc.)
             const modePrefix =
-              currentModeForStatus === 'super-plan' ? SUPER_PLAN_MODE_PREFIX
-              : currentModeForStatus === 'plan' && !skipPlanModePrefix ? PLAN_MODE_PREFIX
-              : ''
+              currentModeForStatus === 'super-plan'
+                ? SUPER_PLAN_MODE_PREFIX
+                : currentModeForStatus === 'plan' && !skipPlanModePrefix
+                  ? PLAN_MODE_PREFIX
+                  : ''
             // Build PR review comment context
             const prAttachedComments = usePRReviewStore.getState().attachedComments
             let prContext = ''
@@ -4337,7 +4612,15 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
     notifyKanbanSessionSync(sessionId, { type: 'supercharge', newSessionId: result.session.id })
     sessionStore.setActiveSession(result.session.id)
     await setModePromise
-  }, [messages, worktreeId, sessionRecord?.project_id, connectionId, sessionId, worktreePath, opencodeSessionId])
+  }, [
+    messages,
+    worktreeId,
+    sessionRecord?.project_id,
+    connectionId,
+    sessionId,
+    worktreePath,
+    opencodeSessionId
+  ])
 
   const handlePlanReadySuperpowers = useCallback(async () => {
     // 1. Extract plan content
@@ -4494,7 +4777,15 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
     // 4. Navigate to the new session (same worktree)
     sessionStore.setActiveSession(newSessionId)
     await setModePromise
-  }, [messages, worktreeId, sessionRecord?.project_id, pendingPlan, sessionId, worktreePath, opencodeSessionId])
+  }, [
+    messages,
+    worktreeId,
+    sessionRecord?.project_id,
+    pendingPlan,
+    sessionId,
+    worktreePath,
+    opencodeSessionId
+  ])
 
   const handlePlanReadySaveAsTicket = useCallback(async () => {
     const projectId = sessionRecord?.project_id
@@ -4681,33 +4972,30 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
     setAttachments((prev) => prev.filter((a) => a.id !== id))
   }, [])
 
-  const handleTicketPickerSelect = useCallback(
-    (tickets: TicketAttachmentData[]) => {
-      setAttachments((prev) => {
-        const remaining = MAX_ATTACHMENTS - prev.length
-        if (remaining <= 0) {
-          toast.warning(`Maximum ${MAX_ATTACHMENTS} attachments reached`)
-          return prev
-        }
-        const toAdd = tickets.slice(0, remaining).map((t) => ({
-          kind: 'ticket' as const,
-          id: crypto.randomUUID(),
-          name: t.title,
-          ticketId: t.ticketId,
-          title: t.title,
-          description: t.description,
-          attachments: t.attachments
-        }))
-        if (tickets.length > remaining) {
-          toast.warning(
-            `Only ${remaining} of ${tickets.length} tickets attached (${MAX_ATTACHMENTS} max)`
-          )
-        }
-        return [...prev, ...toAdd]
-      })
-    },
-    []
-  )
+  const handleTicketPickerSelect = useCallback((tickets: TicketAttachmentData[]) => {
+    setAttachments((prev) => {
+      const remaining = MAX_ATTACHMENTS - prev.length
+      if (remaining <= 0) {
+        toast.warning(`Maximum ${MAX_ATTACHMENTS} attachments reached`)
+        return prev
+      }
+      const toAdd = tickets.slice(0, remaining).map((t) => ({
+        kind: 'ticket' as const,
+        id: crypto.randomUUID(),
+        name: t.title,
+        ticketId: t.ticketId,
+        title: t.title,
+        description: t.description,
+        attachments: t.attachments
+      }))
+      if (tickets.length > remaining) {
+        toast.warning(
+          `Only ${remaining} of ${tickets.length} tickets attached (${MAX_ATTACHMENTS} max)`
+        )
+      }
+      return [...prev, ...toAdd]
+    })
+  }, [])
 
   // Slash command handlers
   const handleInputChange = useCallback(
@@ -5195,7 +5483,11 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           onSuperpowers={handlePlanReadySuperpowers}
           onSuperpowersLocal={handlePlanReadySuperpowersLocal}
           isConnectionSession={!!connectionId}
-          onSaveAsTicket={sessionRecord?.project_id && !planSavedAsTicket ? handlePlanReadySaveAsTicket : undefined}
+          onSaveAsTicket={
+            sessionRecord?.project_id && !planSavedAsTicket
+              ? handlePlanReadySaveAsTicket
+              : undefined
+          }
         />
         {/* Scroll-to-bottom FAB */}
         <ScrollToBottomFab
@@ -5382,14 +5674,20 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                   )}
                 >
                   {elapsedTimerText ??
-                    (pendingPlan
-                      ? 'Enter to send feedback to revise the plan'
-                      : <span className="hidden @min-[42rem]:inline">{`${navigator.platform.includes('Mac') ? '⌃' : 'Ctrl+'}T to change variant, Shift+Enter for new line`}</span>)}
+                    (pendingPlan ? (
+                      'Enter to send feedback to revise the plan'
+                    ) : (
+                      <span className="hidden @min-[42rem]:inline">{`${navigator.platform.includes('Mac') ? '⌃' : 'Ctrl+'}T to change variant, Shift+Enter for new line`}</span>
+                    ))}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
                 {isStreaming && (
-                  <IndeterminateProgressBar mode={mode} isAsking={!!activeQuestion} isCompacting={isCompacting} />
+                  <IndeterminateProgressBar
+                    mode={mode}
+                    isAsking={!!activeQuestion}
+                    isCompacting={isCompacting}
+                  />
                 )}
                 {isStreaming && !inputValue.trim() ? (
                   <Button

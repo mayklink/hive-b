@@ -2,7 +2,14 @@ import type { OpenCodeStreamEvent } from '@shared/types/opencode'
 import { normalizeCodexToolName, stripShellPrefix } from '@shared/codex-tool-normalizer'
 import type { CodexManagerEvent } from './codex-app-server-manager'
 import { asObject, asString, asNumber } from './codex-utils'
-import type { ThreadNameUpdatedNotification, TurnCompletedNotification, ThreadItem, CommandExecutionRequestApprovalParams, FileChangeRequestApprovalParams, TerminalInteractionNotification } from '@shared/codex-schemas/v2'
+import type {
+  ThreadNameUpdatedNotification,
+  TurnCompletedNotification,
+  ThreadItem,
+  CommandExecutionRequestApprovalParams,
+  FileChangeRequestApprovalParams,
+  TerminalInteractionNotification
+} from '@shared/codex-schemas/v2'
 
 // ── Content stream kind classification ───────────────────────────
 
@@ -103,10 +110,16 @@ function normalizeToolInput(
 function extractContentDelta(event: CodexManagerEvent): ContentDelta | null {
   // ── Typed fast-path: generated notification types all have `delta: string` ──
   const streamKind = contentStreamKindFromMethod(event.method)
-  if (streamKind && event.payload && typeof event.payload === 'object' && 'delta' in event.payload) {
+  if (
+    streamKind &&
+    event.payload &&
+    typeof event.payload === 'object' &&
+    'delta' in event.payload
+  ) {
     const typed = event.payload as { delta: string }
     if (typeof typed.delta === 'string') {
-      const kind = (streamKind === 'reasoning' || streamKind === 'reasoning_summary') ? 'reasoning' : 'assistant'
+      const kind =
+        streamKind === 'reasoning' || streamKind === 'reasoning_summary' ? 'reasoning' : 'assistant'
       return { kind, text: typed.delta }
     }
   }
@@ -173,11 +186,14 @@ function extractTurnCompletedInfo(event: CodexManagerEvent): TurnCompletedInfo {
   const typed = event.payload as TurnCompletedNotification | undefined
   if (typed?.turn && typeof typed.turn === 'object' && typeof typed.turn.status === 'string') {
     const turn = typed.turn
-    const errorMsg = typeof turn.error === 'object' && turn.error !== null
-      ? turn.error.message
-      // Defensive: handle legacy servers that may send error as a plain string
-      // inside the typed turn structure (generated type says TurnError | null)
-      : typeof turn.error === 'string' ? turn.error as unknown as string : undefined
+    const errorMsg =
+      typeof turn.error === 'object' && turn.error !== null
+        ? turn.error.message
+        : // Defensive: handle legacy servers that may send error as a plain string
+          // inside the typed turn structure (generated type says TurnError | null)
+          typeof turn.error === 'string'
+          ? (turn.error as unknown as string)
+          : undefined
     // usage/cost are not on the Turn type — check at payload level and inside turn (legacy extension)
     const payload = asObject(event.payload)
     const turnObj = asObject(payload?.turn)
@@ -262,7 +278,13 @@ function extractItemInfo(event: CodexManagerEvent): ItemInfo {
   // ── Typed path: ItemStartedNotification / ItemCompletedNotification ──
   const typed = event.payload as { item?: ThreadItem } | undefined
   const candidate = typed?.item
-  if (candidate && typeof candidate === 'object' && typeof candidate.type === 'string' && typeof candidate.id === 'string' && isWellFormedThreadItem(candidate as { type: string; id: string; [k: string]: unknown })) {
+  if (
+    candidate &&
+    typeof candidate === 'object' &&
+    typeof candidate.type === 'string' &&
+    typeof candidate.id === 'string' &&
+    isWellFormedThreadItem(candidate as { type: string; id: string; [k: string]: unknown })
+  ) {
     const item = candidate
     const itemType = item.type
     const toolName = normalizeCodexToolName(item.type)
@@ -287,10 +309,10 @@ function extractItemInfo(event: CodexManagerEvent): ItemInfo {
 
   const toolName = normalizeCodexToolName(
     asString(item?.toolName) ??
-    asString(item?.name) ??
-    asString(item?.type) ??
-    asString(payload?.toolName) ??
-    'unknown'
+      asString(item?.name) ??
+      asString(item?.type) ??
+      asString(payload?.toolName) ??
+      'unknown'
   )
 
   const callId = asString(item?.id) ?? asString(event.itemId) ?? asString(payload?.itemId) ?? ''
@@ -332,6 +354,7 @@ interface TaskInfo {
   status: string
   message?: string
   progress?: number
+  sessionId?: string
 }
 
 function extractTaskInfo(event: CodexManagerEvent): TaskInfo {
@@ -347,8 +370,25 @@ function extractTaskInfo(event: CodexManagerEvent): TaskInfo {
     taskId,
     status,
     ...(message ? { message } : {}),
-    ...(progress !== undefined ? { progress } : {})
+    ...(progress !== undefined ? { progress } : {}),
+    ...((asString(task?.threadId) ?? asString(payload?.threadId))
+      ? { sessionId: asString(task?.threadId) ?? asString(payload?.threadId) }
+      : {})
   }
+}
+
+function mapTaskStatusToSubtaskStatus(status: string): 'running' | 'completed' | 'error' {
+  if (status === 'completed') return 'completed'
+  if (status === 'failed' || status === 'error') return 'error'
+  return 'running'
+}
+
+function formatTaskDescription(task: TaskInfo): string {
+  if (task.message) return task.message
+  if (typeof task.progress === 'number' && Number.isFinite(task.progress)) {
+    return `Progress ${(task.progress * 100).toFixed(0)}%`
+  }
+  return ''
 }
 
 // ── Main mapper ───────────────────────────────────────────────────
@@ -382,7 +422,9 @@ function mapCodexEventToStreamEventsInner(
   // Attach Codex event ID for renderer-side dedup (seenCodexEventIds in
   // SessionView). Placed on stream event `data`; does NOT flow into canonical
   // message parts — extraction functions pick specific fields only.
-  const annotateData = <T extends Record<string, unknown>>(data: T): T & { _codexEventId: string } => ({
+  const annotateData = <T extends Record<string, unknown>>(
+    data: T
+  ): T & { _codexEventId: string } => ({
     ...data,
     _codexEventId: event.id
   })
@@ -395,46 +437,52 @@ function mapCodexEventToStreamEventsInner(
       const params = event.payload as CommandExecutionRequestApprovalParams | undefined
       const payload = asObject(event.payload)
       const item = asObject(payload?.item)
-      const callId = event.itemId ?? params?.itemId ?? asString(item?.id) ?? asString(payload?.itemId) ?? ''
+      const callId =
+        event.itemId ?? params?.itemId ?? asString(item?.id) ?? asString(payload?.itemId) ?? ''
       if (!callId) return []
       const command = params?.command ? stripShellPrefix(params.command) : undefined
       // Typed path: build input from top-level params; fallback to normalizeToolInput for legacy
       const input = command ? { command } : normalizeToolInput(item, payload)
-      return [{
-        type: 'message.part.updated',
-        sessionId: hiveSessionId,
-        data: annotateData({
-          part: {
-            type: 'tool',
-            callID: callId,
-            tool: 'Bash',
-            state: {
-              status: 'running',
-              ...(input !== undefined ? { input } : {})
+      return [
+        {
+          type: 'message.part.updated',
+          sessionId: hiveSessionId,
+          data: annotateData({
+            part: {
+              type: 'tool',
+              callID: callId,
+              tool: 'Bash',
+              state: {
+                status: 'running',
+                ...(input !== undefined ? { input } : {})
+              }
             }
-          }
-        })
-      }]
+          })
+        }
+      ]
     }
 
     if (method === 'item/fileChange/requestApproval') {
       const params = event.payload as FileChangeRequestApprovalParams | undefined
       const fcPayload = asObject(event.payload)
       const fcItem = asObject(fcPayload?.item)
-      const callId = event.itemId ?? params?.itemId ?? asString(fcItem?.id) ?? asString(fcPayload?.itemId) ?? ''
+      const callId =
+        event.itemId ?? params?.itemId ?? asString(fcItem?.id) ?? asString(fcPayload?.itemId) ?? ''
       if (!callId) return []
-      return [{
-        type: 'message.part.updated',
-        sessionId: hiveSessionId,
-        data: annotateData({
-          part: {
-            type: 'tool',
-            callID: callId,
-            tool: 'fileChange',
-            state: { status: 'running' }
-          }
-        })
-      }]
+      return [
+        {
+          type: 'message.part.updated',
+          sessionId: hiveSessionId,
+          data: annotateData({
+            part: {
+              type: 'tool',
+              callID: callId,
+              tool: 'fileChange',
+              state: { status: 'running' }
+            }
+          })
+        }
+      ]
     }
 
     if (method === 'item/fileRead/requestApproval') {
@@ -444,21 +492,23 @@ function mapCodexEventToStreamEventsInner(
       const callId = event.itemId ?? asString(item?.id) ?? asString(payload?.itemId) ?? ''
       if (!callId) return []
       const input = normalizeToolInput(item, payload)
-      return [{
-        type: 'message.part.updated',
-        sessionId: hiveSessionId,
-        data: annotateData({
-          part: {
-            type: 'tool',
-            callID: callId,
-            tool: 'Read',
-            state: {
-              status: 'running',
-              ...(input !== undefined ? { input } : {})
+      return [
+        {
+          type: 'message.part.updated',
+          sessionId: hiveSessionId,
+          data: annotateData({
+            part: {
+              type: 'tool',
+              callID: callId,
+              tool: 'Read',
+              state: {
+                status: 'running',
+                ...(input !== undefined ? { input } : {})
+              }
             }
-          }
-        })
-      }]
+          })
+        }
+      ]
     }
 
     return []
@@ -471,22 +521,21 @@ function mapCodexEventToStreamEventsInner(
     if (!delta) return []
 
     // Route command/file-change output to the tool card as outputDelta
-    if (
-      (streamKind === 'command_output' || streamKind === 'file_change_output') &&
-      event.itemId
-    ) {
-      return [{
-        type: 'message.part.updated',
-        sessionId: hiveSessionId,
-        data: annotateData({
-          part: {
-            type: 'tool',
-            callID: event.itemId,
-            tool: streamKind === 'command_output' ? 'Bash' : 'fileChange',
-            state: { status: 'running', outputDelta: delta.text }
-          }
-        })
-      }]
+    if ((streamKind === 'command_output' || streamKind === 'file_change_output') && event.itemId) {
+      return [
+        {
+          type: 'message.part.updated',
+          sessionId: hiveSessionId,
+          data: annotateData({
+            part: {
+              type: 'tool',
+              callID: event.itemId,
+              tool: streamKind === 'command_output' ? 'Bash' : 'fileChange',
+              state: { status: 'running', outputDelta: delta.text }
+            }
+          })
+        }
+      ]
     }
 
     return [
@@ -642,13 +691,17 @@ function mapCodexEventToStreamEventsInner(
       {
         type: 'message.part.updated',
         sessionId: hiveSessionId,
-        data: {
-          type: 'task',
-          taskId: task.taskId,
-          status: task.status,
-          ...(task.message ? { message: task.message } : {}),
-          ...(task.progress !== undefined ? { progress: task.progress } : {})
-        }
+        data: annotateData({
+          part: {
+            type: 'subtask',
+            id: task.taskId,
+            sessionID: task.sessionId ?? event.childThreadId ?? task.taskId,
+            prompt: '',
+            description: formatTaskDescription(task),
+            agent: 'task',
+            status: mapTaskStatusToSubtaskStatus(task.status)
+          }
+        })
       }
     ]
   }
@@ -751,7 +804,8 @@ function mapCodexEventToStreamEventsInner(
     const typed = event.payload as TerminalInteractionNotification | undefined
     const tiPayload = asObject(event.payload)
     const tiItem = asObject(tiPayload?.item)
-    const callId = event.itemId ?? typed?.itemId ?? asString(tiItem?.id) ?? asString(tiPayload?.itemId) ?? ''
+    const callId =
+      event.itemId ?? typed?.itemId ?? asString(tiItem?.id) ?? asString(tiPayload?.itemId) ?? ''
     if (!callId) return []
 
     return [

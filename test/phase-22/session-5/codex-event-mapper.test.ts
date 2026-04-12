@@ -640,11 +640,15 @@ describe('mapCodexEventToStreamEvents', () => {
       const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
 
       expect(result).toHaveLength(1)
-      expect(result[0].data).toEqual({
-        type: 'task',
-        taskId: 'task-1',
-        status: 'running',
-        message: 'Starting analysis'
+      expect(result[0].type).toBe('message.part.updated')
+      expect((result[0].data as any).part).toEqual({
+        type: 'subtask',
+        id: 'task-1',
+        sessionID: 'task-1',
+        prompt: '',
+        description: 'Starting analysis',
+        agent: 'task',
+        status: 'running'
       })
     })
 
@@ -652,14 +656,19 @@ describe('mapCodexEventToStreamEvents', () => {
       const event = makeEvent({
         method: 'task.progress',
         payload: {
-          task: { id: 'task-2', status: 'running', progress: 0.5 }
+          task: { id: 'task-2', status: 'running', message: 'Halfway there', progress: 0.5 }
         }
       })
 
       const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
 
       expect(result).toHaveLength(1)
-      expect((result[0].data as any).progress).toBe(0.5)
+      expect((result[0].data as any).part).toMatchObject({
+        type: 'subtask',
+        id: 'task-2',
+        description: 'Halfway there',
+        status: 'running'
+      })
     })
 
     it('maps task/completed (slash variant)', () => {
@@ -673,7 +682,11 @@ describe('mapCodexEventToStreamEvents', () => {
       const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
 
       expect(result).toHaveLength(1)
-      expect((result[0].data as any).status).toBe('completed')
+      expect((result[0].data as any).part).toMatchObject({
+        type: 'subtask',
+        id: 'task-3',
+        status: 'completed'
+      })
     })
   })
 

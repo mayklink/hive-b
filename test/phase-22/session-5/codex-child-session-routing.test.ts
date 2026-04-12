@@ -38,7 +38,10 @@ vi.mock('../../../src/main/services/codex-app-server-manager', () => {
   }
 })
 
-import { CodexImplementer, type CodexSessionState } from '../../../src/main/services/codex-implementer'
+import {
+  CodexImplementer,
+  type CodexSessionState
+} from '../../../src/main/services/codex-implementer'
 
 describe('Codex child session routing', () => {
   let impl: CodexImplementer
@@ -67,7 +70,15 @@ describe('Codex child session routing', () => {
       hiveSessionId,
       worktreePath,
       status: 'ready',
-      messages: []
+      messages: [],
+      currentTurnId: null,
+      currentAssistantMessageId: null,
+      revertMessageID: null,
+      revertDiff: null,
+      titleGenerated: false,
+      titleGenerationStarted: false,
+      persistDebounceTimer: null,
+      liveAssistantDraft: null
     }
     impl.getSessions().set(`${worktreePath}::${threadId}`, session)
     return session
@@ -178,6 +189,64 @@ describe('Codex child session routing', () => {
         expect(textPart.text).not.toContain('Response B')
       }
     })
+
+    it('routes child-thread text into a subtask instead of leaking it into the parent assistant text', async () => {
+      const session = seedSession('/project-a', 'thread-a', 'hive-a')
+
+      simulateEvents([
+        {
+          id: 'turn-start',
+          kind: 'notification',
+          provider: 'codex',
+          threadId: 'thread-a',
+          createdAt: new Date().toISOString(),
+          method: 'turn/started',
+          turnId: 'turn-1',
+          payload: { turn: { id: 'turn-1', status: 'running' } }
+        },
+        {
+          id: 'child-text',
+          kind: 'notification',
+          provider: 'codex',
+          threadId: 'thread-a',
+          childThreadId: 'child-1',
+          turnId: 'turn-1',
+          createdAt: new Date().toISOString(),
+          method: 'item/agentMessage/delta',
+          textDelta: 'Child analysis',
+          payload: { delta: 'Child analysis' }
+        },
+        {
+          id: 'turn-complete',
+          kind: 'notification',
+          provider: 'codex',
+          threadId: 'thread-a',
+          createdAt: new Date().toISOString(),
+          method: 'turn/completed',
+          turnId: 'turn-1',
+          payload: { turn: { id: 'turn-1', status: 'completed' } }
+        }
+      ])
+
+      await impl.prompt('/project-a', 'thread-a', 'Investigate')
+
+      const assistantMessage = session.messages.find(
+        (message: any) => message.role === 'assistant'
+      ) as any
+      expect(assistantMessage).toBeTruthy()
+      expect(assistantMessage.parts).toEqual([
+        {
+          type: 'subtask',
+          id: 'child-1',
+          sessionID: 'child-1',
+          prompt: '',
+          description: '',
+          agent: 'task',
+          parts: [{ type: 'text', text: 'Child analysis' }],
+          status: 'running'
+        }
+      ])
+    })
   })
 
   // ── Context injection compatibility ─────────────────────────
@@ -199,7 +268,8 @@ describe('Codex child session routing', () => {
       ])
 
       // IPC handler prepends context like this
-      const contextMessage = '[Worktree Context]\nThis is a React project\n\n[User Message]\nFix the bug'
+      const contextMessage =
+        '[Worktree Context]\nThis is a React project\n\n[User Message]\nFix the bug'
 
       await impl.prompt('/project', 'thread-ctx', contextMessage)
 
@@ -323,9 +393,7 @@ describe('Codex child session routing', () => {
         { role: 'user', parts: [{ type: 'text', text: 'Q-A' }] },
         { role: 'assistant', parts: [{ type: 'text', text: 'A-A' }] }
       ]
-      sessionB.messages = [
-        { role: 'user', parts: [{ type: 'text', text: 'Q-B' }] }
-      ]
+      sessionB.messages = [{ role: 'user', parts: [{ type: 'text', text: 'Q-B' }] }]
 
       const messagesA = await impl.getMessages('/project-a', 'thread-a')
       const messagesB = await impl.getMessages('/project-b', 'thread-b')

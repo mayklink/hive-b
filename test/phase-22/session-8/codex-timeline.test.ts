@@ -142,6 +142,96 @@ describe('codex timeline derivation', () => {
     ).toBe(true)
   })
 
+  it('projects persisted task activities into a single subtask row with the latest status', () => {
+    const messages: SessionMessage[] = [
+      {
+        id: 'db-user-1',
+        session_id: 'session-1',
+        role: 'user',
+        content: 'Delegate the investigation',
+        opencode_message_id: 'turn-1:user',
+        opencode_message_json: null,
+        opencode_parts_json: JSON.stringify([{ type: 'text', text: 'Delegate the investigation' }]),
+        opencode_timeline_json: null,
+        created_at: '2026-03-14T10:00:00.000Z'
+      },
+      {
+        id: 'db-assistant-1',
+        session_id: 'session-1',
+        role: 'assistant',
+        content: 'I delegated the investigation.',
+        opencode_message_id: 'turn-1:assistant',
+        opencode_message_json: null,
+        opencode_parts_json: JSON.stringify([
+          { type: 'text', text: 'I delegated the investigation.' }
+        ]),
+        opencode_timeline_json: null,
+        created_at: '2026-03-14T10:00:05.000Z'
+      }
+    ]
+
+    const activities: SessionActivity[] = [
+      {
+        id: 'task-activity-1',
+        session_id: 'session-1',
+        agent_session_id: 'thread-1',
+        thread_id: 'thread-1',
+        turn_id: 'turn-1',
+        item_id: null,
+        request_id: null,
+        kind: 'task.started',
+        tone: 'info',
+        summary: 'Task started',
+        payload_json: JSON.stringify({
+          task: { id: 'child-1', status: 'running', message: 'Investigating the renderer' },
+          threadId: 'child-1'
+        }),
+        sequence: 10,
+        created_at: '2026-03-14T10:00:01.000Z'
+      },
+      {
+        id: 'task-activity-2',
+        session_id: 'session-1',
+        agent_session_id: 'thread-1',
+        thread_id: 'thread-1',
+        turn_id: 'turn-1',
+        item_id: null,
+        request_id: null,
+        kind: 'task.completed',
+        tone: 'info',
+        summary: 'Task completed',
+        payload_json: JSON.stringify({
+          task: {
+            id: 'child-1',
+            status: 'completed',
+            message: 'Finished investigating the renderer'
+          },
+          threadId: 'child-1'
+        }),
+        sequence: 11,
+        created_at: '2026-03-14T10:00:04.000Z'
+      }
+    ]
+
+    const timeline = deriveCodexTimelineMessages(messages, activities)
+    const taskRow = timeline.find((message) => message.id === 'turn-1:task:child-1')
+
+    expect(taskRow?.parts).toEqual([
+      {
+        type: 'subtask',
+        subtask: {
+          id: 'child-1',
+          sessionID: 'child-1',
+          prompt: '',
+          description: 'Finished investigating the renderer',
+          agent: 'task',
+          parts: [],
+          status: 'completed'
+        }
+      }
+    ])
+  })
+
   it('anchors later-turn tool activities to the matching assistant turn', () => {
     const messages: SessionMessage[] = [
       {
