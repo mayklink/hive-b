@@ -17,7 +17,8 @@ export default defineWorkspace([
         'test/phase-21/**/*.test.ts',
         'test/kanban/session-1/**/*.test.ts',
         'test/kanban/session-2/**/*.test.ts',
-        'test/kanban/session-3/**/*.test.ts'
+        'test/kanban/session-3/**/*.test.ts',
+        'test/codex-migration/**/*.test.ts'
       ]
     }
   },
@@ -34,7 +35,8 @@ export default defineWorkspace([
         'test/phase-21/**/*.test.ts',
         'test/kanban/session-1/**/*.test.ts',
         'test/kanban/session-2/**/*.test.ts',
-        'test/kanban/session-3/**/*.test.ts'
+        'test/kanban/session-3/**/*.test.ts',
+        'test/codex-migration/**/*.test.ts'
       ],
       globals: true
     },
