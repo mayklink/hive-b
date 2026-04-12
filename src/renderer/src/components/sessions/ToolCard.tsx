@@ -777,7 +777,7 @@ const CompactFileToolCard = memo(function CompactFileToolCard({
       <button
         onClick={() => hasExpandableContent && setIsExpanded(!isExpanded)}
         className={cn(
-          'flex items-center gap-1.5 w-full py-0.5 text-left text-xs',
+          'flex items-center gap-1.5 w-full py-1 text-left text-xs',
           hasExpandableContent && 'cursor-pointer hover:bg-accent/50 transition-colors rounded-sm',
           !hasExpandableContent && !isRunning && 'cursor-default'
         )}
@@ -892,7 +892,7 @@ export const ToolCard = memo(function ToolCard({
         <div
           className={cn(
             compact
-              ? 'my-0 rounded-md border border-l-2 text-xs'
+              ? 'my-1 rounded-md border border-l-2 text-xs'
               : 'my-1 rounded-md border border-l-2 text-xs',
             toolUse.status === 'running' && 'animate-pulse',
             'border-border bg-muted/30'
@@ -951,7 +951,7 @@ export const ToolCard = memo(function ToolCard({
           <div
             className={cn(
               compact
-                ? 'my-0 rounded-md border border-l-2 text-xs'
+                ? 'my-1 rounded-md border border-l-2 text-xs'
                 : 'my-1 rounded-md border border-l-2 text-xs',
               planRejected ? 'border-red-500/30 bg-red-500/5' : 'border-border bg-primary/[0.04]'
             )}
@@ -1023,7 +1023,7 @@ export const ToolCard = memo(function ToolCard({
       <div
         className={cn(
           compact
-            ? 'my-0 rounded-md border border-l-2 text-xs'
+            ? 'my-1 rounded-md border border-l-2 text-xs'
             : 'my-1 rounded-md border border-l-2 text-xs',
           toolUse.status === 'running' && 'animate-pulse',
           toolUse.status === 'error'

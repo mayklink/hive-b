@@ -68,7 +68,7 @@ import {
 import { ProviderIcon, getProviderLabel } from '@/components/ui/provider-icon'
 import { useLifecycleActions } from '@/hooks/useLifecycleActions'
 import { usePinAndActivateSession } from '@/hooks/usePinAndActivateSession'
-import { TicketAttachmentEditor, MAX_ATTACHMENTS } from './TicketAttachmentEditor'
+import { TicketAttachmentEditor } from './TicketAttachmentEditor'
 import { useImagePaste } from '@/hooks/useImagePaste'
 import type { KanbanTicket, KanbanTicketUpdate, Worktree } from '../../../../main/db/types'
 

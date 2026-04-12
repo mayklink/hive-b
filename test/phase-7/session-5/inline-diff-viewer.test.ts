@@ -114,8 +114,7 @@ const mockWorktreeOps = {
 }
 
 const mockFileOps = {
-  readFile: vi.fn().mockResolvedValue({ success: false }),
-  readPrompt: vi.fn().mockResolvedValue({ success: false })
+  readFile: vi.fn().mockResolvedValue({ success: false })
 }
 
 describe('Session 5: Inline Diff Viewer', () => {

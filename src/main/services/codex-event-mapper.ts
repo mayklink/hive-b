@@ -218,8 +218,19 @@ function extractItemInfo(event: CodexManagerEvent): ItemInfo {
   }
 }
 
+const TOOL_LIFECYCLE_ITEM_TYPES = new Set([
+  'commandexecution',
+  'filechange',
+  'fileread',
+  'dynamictoolcall',
+  'collabagenttoolcall',
+  'mcptoolcall',
+  'websearch'
+])
+
 function isToolLifecycleItem(item: ItemInfo): boolean {
-  return item.itemType === 'commandExecution' || item.itemType === 'fileChange'
+  if (!item.itemType) return false
+  return TOOL_LIFECYCLE_ITEM_TYPES.has(item.itemType.toLowerCase())
 }
 
 // ── Task payload extraction ───────────────────────────────────────
@@ -261,7 +272,52 @@ export function mapCodexEventToStreamEvents(
   event: CodexManagerEvent,
   hiveSessionId: string
 ): OpenCodeStreamEvent[] {
+  // Attach Codex event ID for renderer-side dedup (seenCodexEventIds in
+  // SessionView). Placed on stream event `data`; does NOT flow into canonical
+  // message parts — extraction functions pick specific fields only.
+  const annotateData = <T extends Record<string, unknown>>(data: T): T & { _codexEventId: string } => ({
+    ...data,
+    _codexEventId: event.id
+  })
+
   const { method } = event
+
+  // ── Approval requests — create/update tool card with command ──
+  if (event.kind === 'request') {
+    if (
+      method === 'item/commandExecution/requestApproval' ||
+      method === 'item/fileChange/requestApproval' ||
+      method === 'item/fileRead/requestApproval'
+    ) {
+      const payload = asObject(event.payload)
+      const item = asObject(payload?.item)
+      const callId = event.itemId ?? asString(item?.id) ?? asString(payload?.itemId) ?? ''
+      if (!callId) return []
+
+      const toolName =
+        method === 'item/commandExecution/requestApproval' ? 'Bash'
+        : method === 'item/fileChange/requestApproval' ? 'fileChange'
+        : 'Read'
+      const input = normalizeToolInput(item, payload)
+
+      return [{
+        type: 'message.part.updated',
+        sessionId: hiveSessionId,
+        data: annotateData({
+          part: {
+            type: 'tool',
+            callID: callId,
+            tool: toolName,
+            state: {
+              status: 'running',
+              ...(input !== undefined ? { input } : {})
+            }
+          }
+        })
+      }]
+    }
+    return []
+  }
 
   // ── Content deltas — actual Codex notification methods ───────
   const streamKind = contentStreamKindFromMethod(method)
@@ -269,14 +325,34 @@ export function mapCodexEventToStreamEvents(
     const delta = extractContentDelta(event)
     if (!delta) return []
 
+    // Route command/file-change output to the tool card as outputDelta
+    if (
+      (streamKind === 'command_output' || streamKind === 'file_change_output') &&
+      event.itemId
+    ) {
+      return [{
+        type: 'message.part.updated',
+        sessionId: hiveSessionId,
+        data: annotateData({
+          part: {
+            type: 'tool',
+            callID: event.itemId,
+            tool: streamKind === 'command_output' ? 'Bash' : 'fileChange',
+            state: { status: 'running', outputDelta: delta.text }
+          }
+        })
+      }]
+    }
+
     return [
       {
         type: 'message.part.updated',
         sessionId: hiveSessionId,
-        data:
+        data: annotateData(
           streamKind === 'reasoning' || streamKind === 'reasoning_summary'
             ? toReasoningPart(delta.text)
             : toTextPart(delta.text)
+        )
       }
     ]
   }
@@ -287,7 +363,7 @@ export function mapCodexEventToStreamEvents(
       {
         type: 'session.status',
         sessionId: hiveSessionId,
-        data: { status: { type: 'busy' } },
+        data: annotateData({ status: { type: 'busy' } }),
         statusPayload: { type: 'busy' }
       }
     ]
@@ -302,7 +378,7 @@ export function mapCodexEventToStreamEvents(
       events.push({
         type: 'session.error',
         sessionId: hiveSessionId,
-        data: { error: info.error ?? 'Turn failed' }
+        data: annotateData({ error: info.error ?? 'Turn failed' })
       })
     }
 
@@ -311,10 +387,10 @@ export function mapCodexEventToStreamEvents(
       events.push({
         type: 'message.updated',
         sessionId: hiveSessionId,
-        data: {
+        data: annotateData({
           ...(info.usage ? { usage: info.usage } : {}),
           ...(info.cost !== undefined ? { cost: info.cost } : {})
-        }
+        })
       })
     }
 
@@ -322,7 +398,7 @@ export function mapCodexEventToStreamEvents(
     events.push({
       type: 'session.status',
       sessionId: hiveSessionId,
-      data: { status: { type: 'idle' } },
+      data: annotateData({ status: { type: 'idle' } }),
       statusPayload: { type: 'idle' }
     })
 
@@ -338,7 +414,7 @@ export function mapCodexEventToStreamEvents(
       {
         type: 'message.part.updated',
         sessionId: hiveSessionId,
-        data: {
+        data: annotateData({
           part: {
             type: 'tool',
             callID: item.callId,
@@ -348,7 +424,7 @@ export function mapCodexEventToStreamEvents(
               ...(item.input !== undefined ? { input: item.input } : {})
             }
           }
-        }
+        })
       }
     ]
   }
@@ -362,7 +438,7 @@ export function mapCodexEventToStreamEvents(
       {
         type: 'message.part.updated',
         sessionId: hiveSessionId,
-        data: {
+        data: annotateData({
           part: {
             type: 'tool',
             callID: item.callId,
@@ -372,7 +448,7 @@ export function mapCodexEventToStreamEvents(
               ...(item.input !== undefined ? { input: item.input } : {})
             }
           }
-        }
+        })
       }
     ]
   }
@@ -386,13 +462,14 @@ export function mapCodexEventToStreamEvents(
       {
         type: 'message.part.updated',
         sessionId: hiveSessionId,
-        data: {
+        data: annotateData({
           part: {
             type: 'tool',
             callID: item.callId,
             tool: item.toolName,
             state: {
               status: item.status === 'failed' ? 'error' : 'completed',
+              ...(item.input !== undefined ? { input: item.input } : {}),
               ...(item.output !== undefined && item.status !== 'failed'
                 ? { output: item.output }
                 : {}),
@@ -401,7 +478,7 @@ export function mapCodexEventToStreamEvents(
                 : {})
             }
           }
-        }
+        })
       }
     ]
   }
@@ -520,6 +597,30 @@ export function mapCodexEventToStreamEvents(
         type: 'session.updated',
         sessionId: hiveSessionId,
         data: { title, info: { title } }
+      }
+    ]
+  }
+
+  // ── Terminal interaction (treat as item update) ──────────────
+  if (method === 'item/commandExecution/terminalInteraction') {
+    const item = extractItemInfo(event)
+    if (!item.callId) return []
+
+    return [
+      {
+        type: 'message.part.updated',
+        sessionId: hiveSessionId,
+        data: annotateData({
+          part: {
+            type: 'tool',
+            callID: item.callId,
+            tool: item.toolName,
+            state: {
+              status: 'running',
+              ...(item.input !== undefined ? { input: item.input } : {})
+            }
+          }
+        })
       }
     ]
   }

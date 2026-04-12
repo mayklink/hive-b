@@ -116,8 +116,9 @@ export function useSessionStream({
   const upsertToolUse = useCallback(
     (
       toolId: string,
-      update: Partial<ToolUseInfo> & { name?: string; input?: Record<string, unknown> }
+      update: Partial<ToolUseInfo> & { name?: string; input?: Record<string, unknown>; outputDelta?: string }
     ) => {
+      const { outputDelta } = update as { outputDelta?: string }
       updateStreamingPartsRef((parts) => {
         const existingIndex = parts.findIndex(
           (p) => p.type === 'tool_use' && p.toolUse?.id === toolId
@@ -125,6 +126,9 @@ export function useSessionStream({
 
         if (existingIndex >= 0) {
           const existing = parts[existingIndex].toolUse!
+          const mergedOutput = outputDelta
+            ? ((existing.output as string) ?? '') + outputDelta
+            : (update.output ?? existing.output)
           return [
             ...parts.slice(0, existingIndex),
             {
@@ -136,9 +140,8 @@ export function useSessionStream({
                 status: update.status ?? existing.status,
                 startTime: update.startTime ?? existing.startTime,
                 endTime: update.endTime ?? existing.endTime,
-                output: update.output ?? existing.output,
-                error: update.error ?? existing.error,
-                ...update
+                output: mergedOutput,
+                error: update.error ?? existing.error
               }
             },
             ...parts.slice(existingIndex + 1)
@@ -151,7 +154,9 @@ export function useSessionStream({
           input: update.input ?? {},
           status: update.status ?? 'running',
           startTime: update.startTime ?? Date.now(),
-          ...update
+          endTime: update.endTime,
+          output: outputDelta ?? update.output,
+          error: update.error
         }
         return [...parts, { type: 'tool_use' as const, toolUse: newToolUse }]
       })
@@ -412,7 +417,8 @@ export function useSessionStream({
                 startTime: state.time?.start || Date.now(),
                 endTime: state.time?.end,
                 output: state.status === 'completed' ? state.output : undefined,
-                error: state.status === 'error' ? state.error : undefined
+                error: state.status === 'error' ? state.error : undefined,
+                ...(state.outputDelta ? { outputDelta: state.outputDelta } : {})
               })
               setIsStreaming(true)
             } else if (part.type === 'subtask') {

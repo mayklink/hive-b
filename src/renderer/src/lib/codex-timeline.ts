@@ -95,10 +95,6 @@ function parsePlanPart(activity: SessionActivity): StreamingPart | null {
   }
 }
 
-function hasCanonicalTurnScopedId(messageId: string | null | undefined): boolean {
-  return typeof messageId === 'string' && /:user(?::|$)|:assistant(?::|$)/.test(messageId)
-}
-
 function extractAssistantTurnId(messageId: string): string | null {
   const assistantMatch = messageId.match(/^(.*):assistant(?::.*)?$/)
   return assistantMatch?.[1] ?? null
@@ -289,6 +285,20 @@ export function mapDbSessionMessagesToOpenCodeMessages(
   messages: SessionMessage[]
 ): OpenCodeMessage[] {
   return messages.map((message) => {
+    const serializedMessage =
+      parseJson<OpenCodeMessage>(message.opencode_message_json) ??
+      parseJson<OpenCodeMessage>(message.opencode_timeline_json)
+
+    if (serializedMessage) {
+      return {
+        id: serializedMessage.id ?? message.opencode_message_id ?? message.id,
+        role: serializedMessage.role ?? message.role,
+        content: serializedMessage.content ?? message.content,
+        timestamp: serializedMessage.timestamp ?? message.created_at,
+        parts: serializedMessage.parts
+      }
+    }
+
     const parsedParts = parseJson<unknown[]>(message.opencode_parts_json)
     const parts = Array.isArray(parsedParts)
       ? parsedParts

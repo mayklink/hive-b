@@ -40,7 +40,7 @@ export async function generateCodexSessionTitle(
         '-s',
         'read-only',
         '--model',
-        'gpt-5.4',
+        'gpt-5.4-mini',
         '--config',
         'model_reasoning_effort="low"',
         '--output-schema',

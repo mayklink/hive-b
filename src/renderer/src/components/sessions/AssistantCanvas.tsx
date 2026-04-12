@@ -1,4 +1,4 @@
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import { ToolCard } from './ToolCard'
 import { StreamingCursor } from './StreamingCursor'
 import { MarkdownRenderer } from './MarkdownRenderer'
@@ -35,9 +35,37 @@ function hasToolParts(parts: StreamingPart[] | undefined): boolean {
   return false
 }
 
+function normalizeRenderableParts(parts: StreamingPart[]): StreamingPart[] {
+  const normalized: StreamingPart[] = []
+
+  for (const part of parts) {
+    const previous = normalized[normalized.length - 1]
+
+    if (part.type === 'text' && previous?.type === 'text') {
+      normalized[normalized.length - 1] = {
+        ...previous,
+        text: `${previous.text ?? ''}${part.text ?? ''}`
+      }
+      continue
+    }
+
+    if (part.type === 'reasoning' && previous?.type === 'reasoning') {
+      normalized[normalized.length - 1] = {
+        ...previous,
+        reasoning: `${previous.reasoning ?? ''}${part.reasoning ?? ''}`
+      }
+      continue
+    }
+
+    normalized.push(part)
+  }
+
+  return normalized
+}
+
 /** Render interleaved parts (text + tool cards) */
 function renderParts(
-  parts: StreamingPart[],
+  normalizedParts: StreamingPart[],
   isStreaming: boolean,
   cwd?: string | null,
   forceCompactTools = false
@@ -45,12 +73,12 @@ function renderParts(
   const renderedParts: React.JSX.Element[] = []
   let index = 0
 
-  while (index < parts.length) {
-    const part = parts[index]
+  while (index < normalizedParts.length) {
+    const part = normalizedParts[index]
 
     if (part.type === 'text') {
       const text = part.text ?? ''
-      const isLastPart = index === parts.length - 1
+      const isLastPart = index === normalizedParts.length - 1
       if (!hasMeaningfulText(text)) {
         if (isStreaming && isLastPart) {
           renderedParts.push(<StreamingCursor key={`cursor-${index}`} />)
@@ -59,10 +87,10 @@ function renderParts(
         continue
       }
       renderedParts.push(
-        <span key={`part-${index}`}>
+        <div key={`part-${index}`}>
           <MarkdownRenderer content={text} />
           {isStreaming && isLastPart && <StreamingCursor />}
-        </span>
+        </div>
       )
       index += 1
       continue
@@ -92,7 +120,7 @@ function renderParts(
     if (part.type === 'reasoning' && part.reasoning) {
       // Reasoning is still streaming only if the overall message is streaming
       // AND there are no meaningful parts after this one (text with content, tool_use, etc.)
-      const hasContentAfter = parts.slice(index + 1).some((p) => {
+      const hasContentAfter = normalizedParts.slice(index + 1).some((p) => {
         if (p.type === 'tool_use') return true
         if (p.type === 'text' && hasMeaningfulText(p.text)) return true
         if (p.type === 'reasoning') return true
@@ -132,9 +160,11 @@ function renderParts(
     <>
       {renderedParts}
       {/* Show streaming cursor at end if last part is a tool (text will come after) */}
-      {isStreaming && parts.length > 0 && parts[parts.length - 1].type === 'tool_use' && (
-        <StreamingCursor />
-      )}
+      {isStreaming &&
+        normalizedParts.length > 0 &&
+        normalizedParts[normalizedParts.length - 1].type === 'tool_use' && (
+          <StreamingCursor />
+        )}
     </>
   )
 }
@@ -147,16 +177,20 @@ export const AssistantCanvas = memo(function AssistantCanvas({
   cwd
 }: AssistantCanvasProps): React.JSX.Element {
   const hasParts = parts && parts.length > 0
+  const normalizedParts = useMemo(
+    () => (hasParts ? normalizeRenderableParts(parts!) : undefined),
+    [hasParts, parts]
+  )
   const shouldUseCompactToolSpacing = hasToolParts(parts)
 
   return (
     <div
-      className={cn('px-6', shouldUseCompactToolSpacing ? 'py-1' : 'py-5')}
+      className={cn('px-6', shouldUseCompactToolSpacing ? 'py-3' : 'py-5')}
       data-testid="message-assistant"
     >
-      <div className="text-sm text-foreground leading-relaxed">
+      <div className="text-sm text-foreground leading-relaxed space-y-2">
         {hasParts ? (
-          renderParts(parts, isStreaming, cwd, shouldUseCompactToolSpacing)
+          renderParts(normalizedParts!, isStreaming, cwd, shouldUseCompactToolSpacing)
         ) : (
           <>
             <MarkdownRenderer content={content} />

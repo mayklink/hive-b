@@ -15,16 +15,6 @@ import { render, screen } from '@testing-library/react'
 import { useGitStore } from '../../../src/renderer/src/stores/useGitStore'
 import { GitCommitForm } from '../../../src/renderer/src/components/git/GitCommitForm'
 
-// Mock window.fileOps for the review feature
-if (!window.fileOps) {
-  Object.defineProperty(window, 'fileOps', {
-    writable: true,
-    configurable: true,
-    value: {
-      readPrompt: vi.fn().mockResolvedValue({ success: false })
-    }
-  })
-}
 
 describe('Session 3: Merge Conflicts in Changes Sidebar', () => {
   beforeEach(() => {

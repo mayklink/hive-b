@@ -78,7 +78,7 @@ describe('generateCodexSessionTitle', () => {
     expect(args).toContain('-s')
     expect(args).toContain('read-only')
     expect(args).toContain('--model')
-    expect(args).toContain('gpt-5.4')
+    expect(args).toContain('gpt-5.4-mini')
     expect(args).toContain('--config')
     expect(args).toContain('model_reasoning_effort="low"')
     expect(args).toContain('--output-schema')

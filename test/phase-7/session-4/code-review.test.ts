@@ -175,37 +175,103 @@ describe('Session 4: Code Review', () => {
   // Review prompt construction tests (branch comparison)
   // ---------------------------------------------------------------------------
   describe('Review prompt construction', () => {
-    test('default prompt includes branch comparison and focus areas', () => {
-      const branchName = 'feature-auth'
-      const targetBranch = 'origin/main'
-      const prompt = [
-        `Please review the changes on branch "${branchName}" compared to ${targetBranch}.`,
-        `Use \`git diff ${targetBranch}...HEAD\` to get the full diff.`,
-        'Focus on: bugs, logic errors, and code quality.'
-      ].join('\n')
+    test('REVIEW_PROMPTS contains all three prompt types', async () => {
+      const { REVIEW_PROMPTS } = await import('../../../src/renderer/src/constants/reviewPrompts')
 
-      expect(prompt).toContain('feature-auth')
-      expect(prompt).toContain('origin/main')
-      expect(prompt).toContain('git diff origin/main...HEAD')
-      expect(prompt).toContain('bugs, logic errors, and code quality')
+      expect(REVIEW_PROMPTS).toHaveProperty('superpowers')
+      expect(REVIEW_PROMPTS).toHaveProperty('adversarial')
+      expect(REVIEW_PROMPTS).toHaveProperty('standard')
     })
 
-    test('prompt with template appends branch comparison', () => {
-      const template = '## Custom Review\nPlease review carefully.'
+    test('default review prompt type is superpowers', async () => {
+      const { DEFAULT_REVIEW_PROMPT_TYPE } = await import(
+        '../../../src/renderer/src/constants/reviewPrompts'
+      )
+
+      expect(DEFAULT_REVIEW_PROMPT_TYPE).toBe('superpowers')
+    })
+
+    test('each prompt type produces a non-empty string', async () => {
+      const { REVIEW_PROMPTS } = await import('../../../src/renderer/src/constants/reviewPrompts')
+
+      for (const [type, content] of Object.entries(REVIEW_PROMPTS)) {
+        expect(content).toBeTruthy()
+        expect(typeof content).toBe('string')
+        expect(content.length).toBeGreaterThan(100)
+      }
+    })
+
+    test('prompt construction appends branch comparison to template', async () => {
+      const { REVIEW_PROMPTS } = await import('../../../src/renderer/src/constants/reviewPrompts')
+
       const branchName = 'feature-auth'
-      const targetBranch = 'origin/main'
+      const target = 'origin/main'
+      const reviewTemplate = REVIEW_PROMPTS.superpowers
+
       const prompt = [
-        template,
+        reviewTemplate,
         '',
         '---',
         '',
-        `Compare the current branch (${branchName}) against ${targetBranch}.`,
-        `Use \`git diff ${targetBranch}...HEAD\` to see all changes.`
+        `Compare the current branch (${branchName}) against ${target}.`,
+        `Use \`git diff ${target}...HEAD\` to see all changes.`
       ].join('\n')
 
-      expect(prompt).toContain('Custom Review')
-      expect(prompt).toContain('git diff origin/main...HEAD')
+      expect(prompt).toContain('Superpowers Code Review')
+      expect(prompt).toContain('---')
       expect(prompt).toContain('feature-auth')
+      expect(prompt).toContain('origin/main')
+      expect(prompt).toContain('git diff origin/main...HEAD')
+    })
+
+    test('selecting adversarial prompt type uses adversarial content', async () => {
+      const { REVIEW_PROMPTS } = await import('../../../src/renderer/src/constants/reviewPrompts')
+
+      const branchName = 'feature-auth'
+      const target = 'origin/main'
+      const reviewTemplate = REVIEW_PROMPTS.adversarial
+
+      const prompt = [
+        reviewTemplate,
+        '',
+        '---',
+        '',
+        `Compare the current branch (${branchName}) against ${target}.`,
+        `Use \`git diff ${target}...HEAD\` to see all changes.`
+      ].join('\n')
+
+      expect(prompt).toContain('Adversarial Code Review')
+      expect(prompt).toContain('feature-auth')
+    })
+
+    test('selecting standard prompt type uses standard content', async () => {
+      const { REVIEW_PROMPTS } = await import('../../../src/renderer/src/constants/reviewPrompts')
+
+      const branchName = 'feature-auth'
+      const target = 'origin/main'
+      const reviewTemplate = REVIEW_PROMPTS.standard
+
+      const prompt = [
+        reviewTemplate,
+        '',
+        '---',
+        '',
+        `Compare the current branch (${branchName}) against ${target}.`,
+        `Use \`git diff ${target}...HEAD\` to see all changes.`
+      ].join('\n')
+
+      expect(prompt).toContain('Code Review Instructions')
+      expect(prompt).toContain('feature-auth')
+    })
+
+    test('REVIEW_PROMPT_LABELS has human-readable labels for all types', async () => {
+      const { REVIEW_PROMPT_LABELS } = await import(
+        '../../../src/renderer/src/constants/reviewPrompts'
+      )
+
+      expect(REVIEW_PROMPT_LABELS.superpowers).toBe('Superpowers')
+      expect(REVIEW_PROMPT_LABELS.adversarial).toBe('Adversarial')
+      expect(REVIEW_PROMPT_LABELS.standard).toBe('Standard')
     })
   })
 
