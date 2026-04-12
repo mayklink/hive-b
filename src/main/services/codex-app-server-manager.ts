@@ -4,6 +4,7 @@ import { EventEmitter } from 'node:events'
 import readline from 'node:readline'
 
 import { createLogger } from './logger'
+import { logCodexMessage, logCodexLifecycleEvent } from './codex-debug-logger'
 import { asObject, asString, toJsonSnapshot } from './codex-utils'
 import { CODEX_DEFAULT_MODEL } from './codex-models'
 import { getDatabase } from '../db'
@@ -809,6 +810,7 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
           }
 
           log.warn('codex stderr', { message: classified.message })
+          logCodexLifecycleEvent('stderr', { message: classified.message })
           // Emit as a notification rather than an error — stderr output
           // from the Codex app-server often includes benign warnings,
           // progress info, or non-standard log formats that should not
@@ -828,6 +830,7 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
 
     context.child.on('error', (error) => {
       const message = error.message || 'codex app-server process errored.'
+      logCodexLifecycleEvent('process/error', { message })
       this.updateSession(context, {
         status: 'error',
         error: message
@@ -836,6 +839,8 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
     })
 
     context.child.on('exit', (code, signal) => {
+      logCodexLifecycleEvent('process/exit', { code: code ?? null, signal: signal ?? null })
+
       if (context.stopping) {
         return
       }
@@ -875,6 +880,8 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
       )
       return
     }
+
+    logCodexMessage('incoming', parsed)
 
     if (!parsed || typeof parsed !== 'object') {
       this.emitErrorEvent(
@@ -1073,6 +1080,7 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
       throw new Error('Cannot write to codex app-server stdin.')
     }
 
+    logCodexMessage('outgoing', message)
     context.child.stdin.write(`${encoded}\n`)
   }
 
