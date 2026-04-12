@@ -299,7 +299,7 @@ describe('CodexAppServerManager — collaborationMode in sendTurn', () => {
       { type: 'text', text: 'Generate a title for this conversation:\n' },
       { type: 'text', text: 'Fix auth refresh token bug' }
     ])
-    expect(params.settings.reasoningEffort).toBe('low')
+    expect(params.effort).toBe('low')
     expect(params.collaborationMode.mode).toBe('default')
     expect(params.collaborationMode.settings.developer_instructions).toBe(
       'Title only instructions'

@@ -135,7 +135,7 @@ describe('Codex Permission Requests', () => {
       expect(written).toEqual({
         jsonrpc: '2.0',
         id: 42,
-        result: { decision: 'once' }
+        result: { decision: 'accept' }
       })
     })
 
@@ -156,7 +156,7 @@ describe('Codex Permission Requests', () => {
       manager.respondToApproval('thread-perm-1', 'req-2', 'always')
 
       const written = JSON.parse((writeSpy.mock.calls[0][0] as string).trim())
-      expect(written.result.decision).toBe('always')
+      expect(written.result.decision).toBe('acceptForSession')
     })
 
     it('sends correct JSON-RPC response with "reject" decision', () => {
@@ -176,7 +176,7 @@ describe('Codex Permission Requests', () => {
       manager.respondToApproval('thread-perm-1', 'req-3', 'reject')
 
       const written = JSON.parse((writeSpy.mock.calls[0][0] as string).trim())
-      expect(written.result.decision).toBe('reject')
+      expect(written.result.decision).toBe('decline')
     })
 
     it('removes the approval from pendingApprovals after responding', () => {

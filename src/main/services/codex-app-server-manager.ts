@@ -9,6 +9,21 @@ import { asObject, asString, toJsonSnapshot } from './codex-utils'
 import { CODEX_DEFAULT_MODEL } from './codex-models'
 import { getDatabase } from '../db'
 import { getUserEnvironmentVariables } from './env-vars'
+import type { CommandExecutionApprovalDecision } from '@shared/codex-schemas/v2/CommandExecutionApprovalDecision'
+import type { FileChangeApprovalDecision } from '@shared/codex-schemas/v2/FileChangeApprovalDecision'
+import type { ThreadStartParams } from '@shared/codex-schemas/v2/ThreadStartParams'
+import type { ThreadResumeParams } from '@shared/codex-schemas/v2/ThreadResumeParams'
+import type { ThreadStartResponse } from '@shared/codex-schemas/v2/ThreadStartResponse'
+import type { ThreadResumeResponse } from '@shared/codex-schemas/v2/ThreadResumeResponse'
+import type { TurnStartParams } from '@shared/codex-schemas/v2/TurnStartParams'
+import type { TurnStartResponse } from '@shared/codex-schemas/v2/TurnStartResponse'
+import type { TurnInterruptParams } from '@shared/codex-schemas/v2/TurnInterruptParams'
+import type { ThreadReadParams } from '@shared/codex-schemas/v2/ThreadReadParams'
+import type { ThreadRollbackParams } from '@shared/codex-schemas/v2/ThreadRollbackParams'
+import type { InitializeParams } from '@shared/codex-schemas/InitializeParams'
+import type { InitializeResponse } from '@shared/codex-schemas/InitializeResponse'
+import type { SandboxMode } from '@shared/codex-schemas/v2/SandboxMode'
+import type { AskForApproval } from '@shared/codex-schemas/v2/AskForApproval'
 
 const log = createLogger({ component: 'CodexAppServerManager' })
 
@@ -160,8 +175,8 @@ const RECOVERABLE_THREAD_RESUME_ERROR_SNIPPETS = [
 ]
 
 function getDefaultCodexRuntimeConfig(): {
-  approvalPolicy: 'never'
-  sandbox: 'danger-full-access'
+  approvalPolicy: AskForApproval
+  sandbox: SandboxMode
 } {
   return {
     approvalPolicy: 'never',
@@ -324,6 +339,36 @@ export function toCodexUserInputAnswer(value: string): CodexUserInputAnswer {
   return { answers: [value] }
 }
 
+// ── Approval decision mapping ────────────────────────────────────
+
+export type HiveApprovalDecision = 'once' | 'always' | 'reject'
+
+function toCodexCommandApprovalDecision(
+  decision: HiveApprovalDecision
+): CommandExecutionApprovalDecision {
+  switch (decision) {
+    case 'once':
+      return 'accept'
+    case 'always':
+      return 'acceptForSession'
+    case 'reject':
+      return 'decline'
+  }
+}
+
+function toCodexFileChangeApprovalDecision(
+  decision: HiveApprovalDecision
+): FileChangeApprovalDecision {
+  switch (decision) {
+    case 'once':
+      return 'accept'
+    case 'always':
+      return 'acceptForSession'
+    case 'reject':
+      return 'decline'
+  }
+}
+
 // ── Manager class ─────────────────────────────────────────────────
 
 export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEvents> {
@@ -407,9 +452,11 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
       }
 
       // Open thread: resume or start fresh
-      const threadStartParams = {
+      const threadStartParams: Omit<ThreadStartParams, 'serviceTier'> & { serviceTier?: string | null } = {
         model: options.model ?? null,
         cwd: resolvedCwd,
+        experimentalRawEvents: false,
+        persistExtendedHistory: false,
         ...getDefaultCodexRuntimeConfig()
       }
 
@@ -418,7 +465,8 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
         try {
           threadOpenResponse = await this.sendRequest(context, 'thread/resume', {
             ...threadStartParams,
-            threadId: options.resumeThreadId
+            threadId: options.resumeThreadId,
+            persistExtendedHistory: false
           })
         } catch (error) {
           if (!isRecoverableThreadResumeError(error)) {
@@ -443,9 +491,8 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
       }
 
       // Extract thread ID from response
-      const responseRecord = asObject(threadOpenResponse)
-      const threadObj = asObject(responseRecord?.thread)
-      const providerThreadId = asString(threadObj?.id) ?? asString(responseRecord?.threadId)
+      const responseRecord = threadOpenResponse as ThreadStartResponse | ThreadResumeResponse
+      const providerThreadId = responseRecord.thread.id
 
       if (!providerThreadId) {
         throw new Error('Thread start/resume response did not include a thread id.')
@@ -561,7 +608,7 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
       input.input && input.input.length > 0
         ? input.input
         : input.text
-          ? [{ type: 'text', text: input.text }]
+          ? [{ type: 'text' as const, text: input.text, text_elements: [] }]
           : []
 
     const params: Record<string, unknown> = {
@@ -574,7 +621,7 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
     }
 
     if (input.reasoningEffort) {
-      params.settings = { reasoningEffort: input.reasoningEffort }
+      params.effort = input.reasoningEffort
     }
 
     if (input.serviceTier !== undefined) {
@@ -603,12 +650,9 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
     this.updateSession(context, { status: 'running' })
     this.emitLifecycleEvent(context, 'turn/sending', 'Sending turn')
 
-    const response = await this.sendRequest<Record<string, unknown>>(context, 'turn/start', params)
-
-    const responseObj = asObject(response)
-    const turnObj = asObject(responseObj?.turn)
-    const turnId = asString(turnObj?.id) ?? asString(responseObj?.turnId) ?? ''
-    const resumeCursor = asString(responseObj?.resumeCursor)
+    const response = await this.sendRequest<TurnStartResponse>(context, 'turn/start', params)
+    const turnId = response.turn.id
+    const resumeCursor = undefined // TurnStartResponse does not include resumeCursor
 
     // Update active turn
     this.updateSession(context, {
@@ -628,7 +672,7 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
   respondToApproval(
     threadId: string,
     requestId: string,
-    decision: 'once' | 'always' | 'reject'
+    decision: HiveApprovalDecision
   ): void {
     const context = this.sessions.get(threadId)
     if (!context) {
@@ -640,10 +684,15 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
       throw new Error(`respondToApproval: no pending approval for requestId=${requestId}`)
     }
 
+    const codexDecision =
+      pending.method === 'item/fileChange/requestApproval'
+        ? toCodexFileChangeApprovalDecision(decision)
+        : toCodexCommandApprovalDecision(decision)
+
     this.writeMessage(context, {
       jsonrpc: '2.0',
       id: pending.jsonRpcId,
-      result: { decision }
+      result: { decision: codexDecision }
     })
 
     context.pendingApprovals.delete(requestId)
@@ -730,10 +779,12 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
 
     const targetTurnId = turnId ?? context.session.activeTurnId
 
-    await this.sendRequest(context, 'turn/interrupt', {
-      threadId: context.session.threadId,
-      ...(targetTurnId ? { turnId: targetTurnId } : {})
-    })
+    const params: TurnInterruptParams = {
+      threadId: context.session.threadId!,
+      turnId: targetTurnId ?? ''
+    }
+
+    await this.sendRequest(context, 'turn/interrupt', params)
 
     this.updateSession(context, {
       status: 'ready',
@@ -749,10 +800,12 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
       throw new Error(`readThread: no session for threadId=${threadId}`)
     }
 
-    return this.sendRequest(context, 'thread/read', {
-      threadId: context.session.threadId,
+    const params: ThreadReadParams = {
+      threadId: context.session.threadId!,
       includeTurns: true
-    })
+    }
+
+    return this.sendRequest(context, 'thread/read', params)
   }
 
   async rollbackThread(threadId: string, numTurns: number): Promise<unknown> {
@@ -765,10 +818,12 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
       throw new Error('numTurns must be an integer >= 1')
     }
 
-    const response = await this.sendRequest(context, 'thread/rollback', {
-      threadId: context.session.threadId,
+    const params: ThreadRollbackParams = {
+      threadId: context.session.threadId!,
       numTurns
-    })
+    }
+
+    const response = await this.sendRequest(context, 'thread/rollback', params)
 
     this.updateSession(context, { status: 'ready', activeTurnId: null })
     this.emitLifecycleEvent(context, 'thread/rolledBack', `Rolled back ${numTurns} turn(s)`)
