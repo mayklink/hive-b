@@ -182,10 +182,10 @@ class CodexProbeClient {
           ) {
             summary.autoResponses.push({
               method: message.method,
-              detail: 'once'
+              detail: 'accept'
             })
 
-            this.respond(message.id, { decision: 'once' })
+            this.respond(message.id, { decision: 'accept' })
           }
         }
 
