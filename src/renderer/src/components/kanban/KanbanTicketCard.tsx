@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useRef, useState } from 'react'
-import { Paperclip, AlertCircle, Trash2, Archive, ArchiveRestore, GitBranch, ExternalLink, X, FileText, Pin, PinOff, RefreshCw, Link as LinkIcon, GitPullRequest, Loader2, Sparkles } from 'lucide-react'
+import { Paperclip, AlertCircle, Trash2, Archive, ArchiveRestore, GitBranch, ExternalLink, X, FileText, Pin, PinOff, RefreshCw, Link as LinkIcon, GitPullRequest, Loader2, Sparkles, Lock, Link2, Plus } from 'lucide-react'
 import { UpdateStatusModal } from './UpdateStatusModal'
 import { cn } from '@/lib/utils'
 import { ProviderIcon, getProviderLabel } from '@/components/ui/provider-icon'
@@ -66,6 +66,8 @@ function getProjectColor(projectId: string, connectionProjectIds: string[]): str
   return PROJECT_TAG_COLORS[idx % PROJECT_TAG_COLORS.length]
 }
 
+const EMPTY_ARRAY: readonly never[] = []
+
 interface KanbanTicketCardProps {
   ticket: KanbanTicket
   /** Position index within the column (used for drag transfer data) */
@@ -95,6 +97,37 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
   const [showPRPicker, setShowPRPicker] = useState(false)
   const isExternalTicket = !!ticket.external_provider
   const dragCloneRef = useRef<HTMLElement | null>(null)
+
+  // ── Dependency selectors ────────────────────────────────────────
+  const blockerTickets = useKanbanStore(
+    useCallback((state) => {
+      const blockerIds = state.dependencyMap.get(ticket.id)
+      if (!blockerIds?.size) return EMPTY_ARRAY as unknown as KanbanTicket[]
+      const result: KanbanTicket[] = []
+      for (const [, projectTickets] of state.tickets) {
+        for (const t of projectTickets) {
+          if (blockerIds.has(t.id)) result.push(t)
+        }
+      }
+      return result
+    }, [ticket.id])
+  )
+
+  const unresolvedBlockerCount = useKanbanStore(
+    useCallback((state) => {
+      const blockers = state.dependencyMap.get(ticket.id)
+      if (!blockers?.size) return 0
+      let count = 0
+      for (const [, projectTickets] of state.tickets) {
+        for (const t of projectTickets) {
+          if (blockers.has(t.id) && t.column !== 'done') count++
+        }
+      }
+      return count
+    }, [ticket.id])
+  )
+
+  const isBlocked = unresolvedBlockerCount > 0
 
   // ── Lookup worktree name ────────────────────────────────────────
   const worktreeName = useWorktreeStore(
@@ -392,6 +425,16 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
     [ticket.worktree_id, ticket.project_id, isArchived]
   )
 
+  const handleMouseEnter = useCallback(() => {
+    if (isBlocked) {
+      useKanbanStore.getState().setHoveredBlockedTicketId(ticket.id)
+    }
+  }, [isBlocked, ticket.id])
+
+  const handleMouseLeave = useCallback(() => {
+    useKanbanStore.getState().setHoveredBlockedTicketId(null)
+  }, [])
+
   const isDone = ticket.column === 'done'
 
   // ── Context menu handlers ─────────────────────────────────────
@@ -514,16 +557,20 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
             <PopoverAnchor asChild>
               <div
                 data-testid={`kanban-ticket-${ticket.id}`}
+                data-ticket-id={ticket.id}
                 draggable={!isArchived}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 onClick={handleClick}
                 onMouseDown={handleMouseDown}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
                 className={cn(
                   'group cursor-pointer rounded-md border bg-card shadow-sm p-2 transition-all duration-200',
                   'hover:bg-muted/40',
                   isDragging && 'invisible',
                   isArchived && 'opacity-50 cursor-default',
+                  isBlocked && 'opacity-60',
                   borderState === 'default' && 'border-border/60',
                   borderState === 'blue' && 'border-blue-500/60',
                   borderState === 'violet' && 'border-violet-500/60',
@@ -561,13 +608,20 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
             </div>
 
             {/* Badges + progress row */}
-            {(hasAttachments || worktreeName || projectTag || connectionName || ticket.plan_ready || isError || isBusy || isAsking || isBeingReviewed || completedReviewSessionId || isArchived || isRunProcessAlive || ticket.github_pr_number || isCreatingPR) && (
+            {(hasAttachments || worktreeName || projectTag || connectionName || ticket.plan_ready || isError || isBusy || isAsking || isBeingReviewed || completedReviewSessionId || isArchived || isBlocked || isRunProcessAlive || ticket.github_pr_number || isCreatingPR) && (
               <div className="mt-1.5 flex flex-wrap items-center gap-1">
                 {/* Archived badge */}
                 {isArchived && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                     <Archive className="h-3 w-3" />
                     Archived
+                  </span>
+                )}
+                {/* Blocked badge */}
+                {isBlocked && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 text-[11px] font-medium text-amber-500">
+                    <Lock className="h-3 w-3" />
+                    {unresolvedBlockerCount}
                   </span>
                 )}
                 {/* Attachment badge */}
@@ -644,7 +698,7 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
                   </span>
                 )}
 
-                {(isBusy || isAsking) && ticket.mode && (
+                {(isBusy || isAsking) && ticket.mode && !isBlocked && (
                   <span data-testid="kanban-ticket-progress" className="ml-auto flex items-center gap-1.5">
                     {timerText && (
                       <span className={cn(
@@ -821,6 +875,42 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
                   Legendary
                 </ContextMenuRadioItem>
               </ContextMenuRadioGroup>
+            </ContextMenuSubContent>
+          </ContextMenuSub>
+
+          <ContextMenuSub>
+            <ContextMenuSubTrigger data-testid="ctx-dependencies-submenu" className="gap-2">
+              <Link2 className="h-3.5 w-3.5" />
+              Dependencies
+            </ContextMenuSubTrigger>
+            <ContextMenuSubContent>
+              <ContextMenuItem
+                data-testid="ctx-add-dependency"
+                onClick={() => useKanbanStore.getState().enterDependencyMode(ticket.id)}
+                className="gap-2"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add dependency...
+              </ContextMenuItem>
+              {blockerTickets.length > 0 && <ContextMenuSeparator />}
+              {blockerTickets.map(blocker => (
+                <ContextMenuItem
+                  key={blocker.id}
+                  className="gap-2 justify-between"
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    useKanbanStore.getState().removeDependency(ticket.id, blocker.id)
+                  }}
+                >
+                  <span className="truncate max-w-[180px]">{blocker.title}</span>
+                  <X className="h-3 w-3 shrink-0 text-muted-foreground hover:text-foreground" />
+                </ContextMenuItem>
+              ))}
+              {blockerTickets.length === 0 && (
+                <ContextMenuItem disabled className="text-muted-foreground text-xs">
+                  (No dependencies)
+                </ContextMenuItem>
+              )}
             </ContextMenuSubContent>
           </ContextMenuSub>
 
