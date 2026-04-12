@@ -392,6 +392,90 @@ describe('typed event mapper migration', () => {
       expect(part.state.input).toEqual(expect.objectContaining({ command: 'ls -la' }))
     })
 
+    it('commandExecution item started maps sed reads to Read with line context', () => {
+      const event = makeEvent({
+        method: 'item/started',
+        payload: {
+          item: {
+            type: 'commandExecution',
+            id: 'cmd-read-1',
+            command: "/bin/zsh -lc 'sed -n \"1,80p\" main.py'",
+            cwd: '/home/user',
+            processId: null,
+            source: 'agent',
+            status: 'running',
+            commandActions: [
+              {
+                type: 'read',
+                command: 'sed -n "1,80p" main.py',
+                name: 'main.py',
+                path: 'main.py'
+              }
+            ],
+            aggregatedOutput: null,
+            exitCode: null,
+            durationMs: null
+          },
+          threadId: 'thread-1',
+          turnId: 'turn-1'
+        }
+      })
+
+      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+
+      expect(result).toHaveLength(1)
+      const part = (result[0].data as any).part
+      expect(part.tool).toBe('Read')
+      expect(part.state.input).toEqual(
+        expect.objectContaining({
+          file_path: 'main.py',
+          offset: 1,
+          limit: 79
+        })
+      )
+    })
+
+    it('commandExecution item started maps rg --files to Glob', () => {
+      const event = makeEvent({
+        method: 'item/started',
+        payload: {
+          item: {
+            type: 'commandExecution',
+            id: 'cmd-glob-1',
+            command: 'rg --files .',
+            cwd: '/home/user',
+            processId: null,
+            source: 'agent',
+            status: 'running',
+            commandActions: [
+              {
+                type: 'listFiles',
+                command: 'rg --files .',
+                path: '.'
+              }
+            ],
+            aggregatedOutput: null,
+            exitCode: null,
+            durationMs: null
+          },
+          threadId: 'thread-1',
+          turnId: 'turn-1'
+        }
+      })
+
+      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+
+      expect(result).toHaveLength(1)
+      const part = (result[0].data as any).part
+      expect(part.tool).toBe('Glob')
+      expect(part.state.input).toEqual(
+        expect.objectContaining({
+          pattern: '*',
+          path: '.'
+        })
+      )
+    })
+
     it('fileChange item started produces fileChange tool card', () => {
       const event = makeEvent({
         method: 'item/started',
@@ -606,6 +690,33 @@ describe('typed event mapper migration', () => {
       expect(part.callID).toBe('cmd-99')
       expect(part.state.status).toBe('running')
       expect(part.state.input).toEqual(expect.objectContaining({ command: 'npm test' }))
+    })
+
+    it('commandExecution approval maps rg --files fallback to Glob', () => {
+      const event = makeEvent({
+        kind: 'request',
+        method: 'item/commandExecution/requestApproval',
+        itemId: 'cmd-glob-approval',
+        payload: {
+          threadId: 'thread-1',
+          turnId: 'turn-1',
+          itemId: 'cmd-glob-approval',
+          command: "/bin/zsh -lc 'rg --files .'",
+          cwd: '/project'
+        }
+      })
+
+      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+
+      expect(result).toHaveLength(1)
+      const part = (result[0].data as any).part
+      expect(part.tool).toBe('Glob')
+      expect(part.state.input).toEqual(
+        expect.objectContaining({
+          pattern: '*',
+          path: '.'
+        })
+      )
     })
 
     it('fileChange approval with typed params', () => {
