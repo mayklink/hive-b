@@ -2,6 +2,10 @@ import type { SessionActivityCreate, SessionActivityKind, SessionActivityTone } 
 import { normalizeCodexToolName } from '@shared/codex-tool-normalizer'
 import type { CodexManagerEvent } from './codex-app-server-manager'
 import { asObject, asString } from './codex-utils'
+import type { ItemStartedNotification } from '@shared/codex-schemas/v2/ItemStartedNotification'
+import type { ItemCompletedNotification } from '@shared/codex-schemas/v2/ItemCompletedNotification'
+import type { ThreadNameUpdatedNotification } from '@shared/codex-schemas/v2/ThreadNameUpdatedNotification'
+import type { ThreadItem } from '@shared/codex-schemas/v2/ThreadItem'
 
 function stringifyPayload(payload: unknown): string | null {
   if (payload === undefined) return null
@@ -66,17 +70,33 @@ export function mapCodexManagerEventToActivity(
     case 'item/updated':
     case 'item.completed':
     case 'item/completed': {
-      const item = asObject(payload?.item)
-      const itemType = asString(item?.type)?.toLowerCase()
+      // Try typed access first, fall back to asObject/asString for legacy payloads
+      const notification = event.payload as
+        | ItemStartedNotification
+        | ItemCompletedNotification
+        | undefined
+      const typedItem = notification?.item as ThreadItem | undefined
+      const legacyItem = asObject(payload?.item)
+
+      // Detect item type: typed ThreadItem uses exact case (e.g. 'commandExecution'),
+      // legacy payloads may use lowercase (e.g. 'commandexecution')
+      const typedType = typedItem?.type
+      const legacyType = asString(legacyItem?.type)?.toLowerCase()
+      const isTool =
+        typedType === 'commandExecution' ||
+        typedType === 'fileChange' ||
+        legacyType === 'commandexecution' ||
+        legacyType === 'filechange'
+      if (!isTool) return null
+
       const toolName = normalizeCodexToolName(
-        asString(item?.toolName) ??
-        asString(item?.name) ??
-        asString(item?.type) ??
+        typedType ??
+        asString(legacyItem?.toolName) ??
+        asString(legacyItem?.name) ??
+        asString(legacyItem?.type) ??
         asString(payload?.toolName) ??
         'unknown'
       )
-      const isTool = itemType === 'commandexecution' || itemType === 'filechange'
-      if (!isTool) return null
 
       if (event.method === 'item.started' || event.method === 'item/started') {
         return buildActivity(sessionId, agentSessionId, event, 'tool.started', 'tool', toolName)
@@ -86,7 +106,10 @@ export function mapCodexManagerEventToActivity(
         return buildActivity(sessionId, agentSessionId, event, 'tool.updated', 'tool', toolName)
       }
 
-      const status = asString(item?.status) ?? asString(payload?.status)
+      const status =
+        asString((typedItem as Record<string, unknown> | undefined)?.status) ??
+        asString(legacyItem?.status) ??
+        asString(payload?.status)
       return buildActivity(
         sessionId,
         agentSessionId,
@@ -163,15 +186,17 @@ export function mapCodexManagerEventToActivity(
         asString(payload?.message) ?? asString(payload?.error) ?? 'Runtime error'
       )
 
-    case 'thread/name/updated':
+    case 'thread/name/updated': {
+      const params = event.payload as ThreadNameUpdatedNotification | undefined
       return buildActivity(
         sessionId,
         agentSessionId,
         event,
         'session.info',
         'info',
-        asString(payload?.threadName) ?? 'Thread title updated'
+        params?.threadName ?? asString(payload?.threadName) ?? 'Thread title updated'
       )
+    }
 
     default:
       return null
