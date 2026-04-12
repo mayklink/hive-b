@@ -402,6 +402,10 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
   // ── Click handler — open ticket detail modal ───────────────────
   const handleClick = useCallback(
     (e: React.MouseEvent) => {
+      // In dependency mode, don't open the modal — let click bubble
+      // to the board's handleBoardClick which toggles the dependency
+      if (useKanbanStore.getState().dependencyMode?.active) return
+
       // Cmd+click (Mac) / Ctrl+click (Win/Linux) — select attached worktree
       if ((e.metaKey || e.ctrlKey) && ticket.worktree_id && !isArchived) {
         e.preventDefault()

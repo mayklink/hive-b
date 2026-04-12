@@ -228,7 +228,10 @@ export function KanbanBoard({ projectId, projectPath, connectionId, isPinnedMode
                 Selecting dependencies for: <strong>{sourceTicketTitle}</strong> — click tickets to toggle
               </span>
               <button
-                onClick={exitDependencyMode}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  exitDependencyMode()
+                }}
                 className="px-3 py-1 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 Done
