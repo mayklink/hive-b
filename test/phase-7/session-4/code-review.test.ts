@@ -185,12 +185,35 @@ describe('Session 4: Code Review', () => {
       expect(REVIEW_PROMPTS).toHaveProperty('standard')
     })
 
-    test('default review prompt type is superpowers', async () => {
+    test('default review prompt type is standard', async () => {
       const { DEFAULT_REVIEW_PROMPT_TYPE } = await import(
         '../../../src/renderer/src/constants/reviewPrompts'
       )
 
-      expect(DEFAULT_REVIEW_PROMPT_TYPE).toBe('superpowers')
+      expect(DEFAULT_REVIEW_PROMPT_TYPE).toBe('standard')
+    })
+
+    test('settings reset restores standard review prompt type', async () => {
+      const { useSettingsStore } = await import('../../../src/renderer/src/stores/useSettingsStore')
+
+      useSettingsStore.getState().updateSetting('reviewPromptType', 'superpowers')
+      expect(useSettingsStore.getState().reviewPromptType).toBe('superpowers')
+
+      useSettingsStore.getState().resetToDefaults()
+
+      expect(useSettingsStore.getState().reviewPromptType).toBe('standard')
+    })
+
+    test('loading persisted superpowers review prompt preserves existing user preference', async () => {
+      const { useSettingsStore } = await import('../../../src/renderer/src/stores/useSettingsStore')
+
+      mockDb.setting.get.mockResolvedValueOnce(JSON.stringify({
+        reviewPromptType: 'superpowers'
+      }))
+
+      await useSettingsStore.getState().loadFromDatabase()
+
+      expect(useSettingsStore.getState().reviewPromptType).toBe('superpowers')
     })
 
     test('each prompt type produces a non-empty string', async () => {

@@ -6,7 +6,7 @@ export const REVIEW_PROMPT_LABELS: Record<ReviewPromptType, string> = {
   standard: 'Standard',
 }
 
-export const DEFAULT_REVIEW_PROMPT_TYPE: ReviewPromptType = 'superpowers'
+export const DEFAULT_REVIEW_PROMPT_TYPE: ReviewPromptType = 'standard'
 
 export const REVIEW_PROMPTS: Record<ReviewPromptType, string> = {
   superpowers: `## Superpowers Code Review

@@ -185,7 +185,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   perfDiagnosticsEnabled: false,
   codexJsonlLoggingEnabled: false,
   codexJsonlResetPerSession: true,
-  reviewPromptType: 'superpowers',
+  reviewPromptType: 'standard',
   _boardModeMigratedToStickyTab: false
 }
 
