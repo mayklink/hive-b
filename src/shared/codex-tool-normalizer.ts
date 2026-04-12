@@ -8,6 +8,8 @@
  * produces consistent names that the renderer's ToolCard can match.
  */
 
+import type { CommandAction } from './codex-schemas/v2/CommandAction'
+
 // ── Tool name normalization ──────────────────────────────────────
 
 const CODEX_TOOL_NAME_MAP: Record<string, string> = {
@@ -72,4 +74,165 @@ export function stripShellPrefix(command: string): string {
   }
 
   return command
+}
+
+// ── Command execution normalization ──────────────────────────────
+
+export interface NormalizedCommandExecutionTool {
+  toolName: string
+  input: Record<string, unknown>
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null
+}
+
+function normalizeCommandValue(value: unknown): string | null {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed.length > 0 ? trimmed : null
+  }
+
+  if (!Array.isArray(value)) return null
+
+  const parts = value
+    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
+    .filter((entry) => entry.length > 0)
+
+  return parts.length > 0 ? parts.join(' ') : null
+}
+
+function stripMatchingQuotes(value: string): string {
+  const trimmed = value.trim()
+  if (trimmed.length < 2) return trimmed
+
+  const first = trimmed[0]
+  const last = trimmed[trimmed.length - 1]
+  if ((first === "'" || first === '"') && first === last) {
+    return trimmed.slice(1, -1)
+  }
+
+  return trimmed
+}
+
+function mapCommandActionToTool(action: CommandAction): NormalizedCommandExecutionTool | null {
+  switch (action.type) {
+    case 'read':
+      return {
+        toolName: 'Read',
+        input: { file_path: action.path }
+      }
+    case 'listFiles':
+      return {
+        toolName: 'Glob',
+        input: {
+          pattern: '*',
+          path: action.path ?? '.'
+        }
+      }
+    case 'search':
+      return {
+        toolName: 'Grep',
+        input: {
+          pattern: action.query ?? '',
+          path: action.path ?? '.'
+        }
+      }
+    default:
+      return null
+  }
+}
+
+function tryParseSedRead(command: string): NormalizedCommandExecutionTool | null {
+  const match = /^sed\s+-n\s+(?:(['"])(\d+),(\d+)p\1|(\d+),(\d+)p)\s+(.+)$/.exec(command)
+  if (!match) return null
+
+  const startLine = Number.parseInt(match[2] ?? match[4] ?? '', 10)
+  const endLine = Number.parseInt(match[3] ?? match[5] ?? '', 10)
+  const rawPath = stripMatchingQuotes(match[6] ?? '')
+  if (!Number.isFinite(startLine) || !Number.isFinite(endLine) || !rawPath) return null
+  if (startLine <= 0 || endLine < startLine) return null
+
+  const input: Record<string, unknown> = { file_path: rawPath }
+  if (endLine > startLine) {
+    input.offset = startLine
+    // ReadToolView currently renders the range as offset + limit.
+    input.limit = endLine - startLine
+  }
+
+  return {
+    toolName: 'Read',
+    input
+  }
+}
+
+function tryParseRgFiles(command: string): NormalizedCommandExecutionTool | null {
+  const match = /^rg\s+--files(?:\s+(.+))?$/.exec(command)
+  if (!match) return null
+
+  const path = stripMatchingQuotes(match[1] ?? '.')
+
+  return {
+    toolName: 'Glob',
+    input: {
+      pattern: '*',
+      path: path || '.'
+    }
+  }
+}
+
+function extractNormalizedCommand(
+  command: unknown,
+  inputRecord: Record<string, unknown>
+): string | null {
+  const rawCommand =
+    normalizeCommandValue(command) ??
+    normalizeCommandValue(inputRecord.command) ??
+    normalizeCommandValue(inputRecord.cmd) ??
+    normalizeCommandValue(inputRecord.argv)
+
+  return rawCommand ? stripShellPrefix(rawCommand) : null
+}
+
+export function normalizeCommandExecutionTool(options: {
+  command?: unknown
+  input?: unknown
+  commandActions?: CommandAction[] | null
+}): NormalizedCommandExecutionTool {
+  const inputRecord = asRecord(options.input) ?? {}
+  const command = extractNormalizedCommand(options.command, inputRecord)
+  const parsedTool = command ? tryParseSedRead(command) ?? tryParseRgFiles(command) : null
+  const actions = Array.isArray(options.commandActions)
+    ? options.commandActions
+        .map(mapCommandActionToTool)
+        .filter((tool): tool is NormalizedCommandExecutionTool => tool !== null)
+    : []
+
+  if (actions.length === 1 && options.commandActions?.length === 1) {
+    const enrichedInput =
+      parsedTool?.toolName === actions[0].toolName
+        ? { ...actions[0].input, ...parsedTool.input }
+        : actions[0].input
+    return {
+      toolName: actions[0].toolName,
+      input: { ...inputRecord, ...enrichedInput }
+    }
+  }
+
+  if (parsedTool) {
+    return {
+      toolName: parsedTool.toolName,
+      input: { ...inputRecord, ...parsedTool.input }
+    }
+  }
+
+  return {
+    toolName: 'Bash',
+    input: {
+      ...inputRecord,
+      ...(command ? { command } : {})
+    }
+  }
 }

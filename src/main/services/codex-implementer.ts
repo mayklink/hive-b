@@ -18,7 +18,10 @@ import { logCodexLifecycleEvent } from './codex-debug-logger'
 import { generateCodexSessionTitle } from './codex-session-title'
 import type { DatabaseService } from '../db/database'
 import { autoRenameWorktreeBranch } from './git-service'
-import { normalizeCodexToolName, stripShellPrefix } from '@shared/codex-tool-normalizer'
+import {
+  normalizeCodexToolName,
+  normalizeCommandExecutionTool
+} from '@shared/codex-tool-normalizer'
 import type { UserInput } from '@shared/codex-schemas/v2/UserInput'
 import type { TurnStartParams } from '@shared/codex-schemas/v2/TurnStartParams'
 import type { ThreadNameUpdatedNotification } from '@shared/codex-schemas/v2/ThreadNameUpdatedNotification'
@@ -149,27 +152,15 @@ export function normalizeCodexMessageTimestamps<T extends { created_at: string }
 
 // ── Snapshot tool-call helpers ────────────────────────────────────
 
-function extractSnapshotToolCommand(itemObj: Record<string, unknown>): string | undefined {
-  const inputObj =
-    typeof itemObj.input === 'object' && itemObj.input !== null
-      ? (itemObj.input as Record<string, unknown>)
-      : undefined
-
-  const candidates = [itemObj.command, inputObj?.command, itemObj.cmd, inputObj?.cmd]
-
-  for (const candidate of candidates) {
-    if (typeof candidate === 'string' && candidate.trim().length > 0) {
-      return stripShellPrefix(candidate.trim())
-    }
-    if (Array.isArray(candidate)) {
-      const joined = candidate
-        .filter((entry): entry is string => typeof entry === 'string')
-        .join(' ')
-        .trim()
-      if (joined.length > 0) return stripShellPrefix(joined)
-    }
-  }
-  return undefined
+function buildSnapshotCommandExecutionTool(itemObj: Record<string, unknown>): {
+  toolName: string
+  input: Record<string, unknown>
+} {
+  return normalizeCommandExecutionTool({
+    command: itemObj.command ?? itemObj.cmd,
+    input: itemObj.input,
+    commandActions: Array.isArray(itemObj.commandActions) ? itemObj.commandActions : null
+  })
 }
 
 function buildSnapshotToolInput(itemObj: Record<string, unknown>): Record<string, unknown> {
@@ -177,12 +168,10 @@ function buildSnapshotToolInput(itemObj: Record<string, unknown>): Record<string
     typeof itemObj.input === 'object' && itemObj.input !== null && !Array.isArray(itemObj.input)
       ? (itemObj.input as Record<string, unknown>)
       : {}
-  const command = extractSnapshotToolCommand(itemObj)
   const changes = Array.isArray(itemObj.changes) ? itemObj.changes : undefined
 
   return {
     ...inputObj,
-    ...(command ? { command } : {}),
     ...(changes ? { changes } : {})
   }
 }
@@ -3044,10 +3033,14 @@ export class CodexImplementer implements AgentSdkImplementer {
           }
 
           if (itemType === 'commandExecution' || itemType === 'fileChange') {
-            const toolName = normalizeCodexToolName(
-              asString(itemObj.toolName) ?? asString(itemObj.name) ?? itemType
-            )
-            const input = buildSnapshotToolInput(itemObj)
+            const normalizedCommandTool =
+              itemType === 'commandExecution' ? buildSnapshotCommandExecutionTool(itemObj) : null
+            const toolName =
+              normalizedCommandTool?.toolName ??
+              normalizeCodexToolName(
+                asString(itemObj.toolName) ?? asString(itemObj.name) ?? itemType
+              )
+            const input = normalizedCommandTool?.input ?? buildSnapshotToolInput(itemObj)
             const output = itemObj.output ?? itemObj.aggregatedOutput
             const status = asString(itemObj.status)
 

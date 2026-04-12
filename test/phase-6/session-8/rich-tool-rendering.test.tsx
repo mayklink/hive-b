@@ -107,6 +107,19 @@ describe('Session 8: Rich Tool Rendering', () => {
       expect(screen.getByText(/Lines 10/)).toBeTruthy()
     })
 
+    test('renders sed-derived line range context', () => {
+      render(
+        <ReadToolView
+          name="Read"
+          input={{ file_path: 'main.py', offset: 1, limit: 79 }}
+          output="print('hello')"
+          status="success"
+        />
+      )
+
+      expect(screen.getByText('Lines 1–80')).toBeTruthy()
+    })
+
     test('renders error state', () => {
       render(
         <ReadToolView
@@ -474,7 +487,8 @@ describe('Session 8: Rich Tool Rendering', () => {
     test('routes Grep tool to GrepToolView', () => {
       render(<ToolCard toolUse={makeToolUse('Grep', 'src/a.ts:1:match', { pattern: 'test' })} />)
 
-      fireEvent.click(screen.getByTestId('tool-card-header'))
+      const compactTool = screen.getByTestId('compact-file-tool')
+      fireEvent.click(compactTool.querySelector('button')!)
 
       expect(screen.getByTestId('grep-tool-view')).toBeTruthy()
     })
@@ -482,7 +496,8 @@ describe('Session 8: Rich Tool Rendering', () => {
     test('routes Glob tool to GrepToolView', () => {
       render(<ToolCard toolUse={makeToolUse('Glob', 'src/a.ts\nsrc/b.ts', { pattern: '*.ts' })} />)
 
-      fireEvent.click(screen.getByTestId('tool-card-header'))
+      const compactTool = screen.getByTestId('compact-file-tool')
+      fireEvent.click(compactTool.querySelector('button')!)
 
       expect(screen.getByTestId('grep-tool-view')).toBeTruthy()
     })

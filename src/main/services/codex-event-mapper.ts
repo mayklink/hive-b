@@ -1,5 +1,8 @@
 import type { OpenCodeStreamEvent } from '@shared/types/opencode'
-import { normalizeCodexToolName, stripShellPrefix } from '@shared/codex-tool-normalizer'
+import {
+  normalizeCodexToolName,
+  normalizeCommandExecutionTool
+} from '@shared/codex-tool-normalizer'
 import type { CodexManagerEvent } from './codex-app-server-manager'
 import { asObject, asString, asNumber } from './codex-utils'
 import type {
@@ -71,41 +74,32 @@ function toReasoningPart(text: string): {
   }
 }
 
-function normalizeCommandValue(value: unknown): string | undefined {
-  if (typeof value === 'string') {
-    const trimmed = value.trim()
-    return trimmed.length > 0 ? trimmed : undefined
-  }
-
-  if (!Array.isArray(value)) return undefined
-
-  const parts = value
-    .map((entry) => (typeof entry === 'string' ? entry.trim() : ''))
-    .filter((entry) => entry.length > 0)
-
-  return parts.length > 0 ? parts.join(' ') : undefined
-}
-
 function normalizeToolInput(
   item: Record<string, unknown> | undefined,
   payload: Record<string, unknown> | undefined
 ): unknown {
   const rawInput = item?.input ?? payload?.input
   const inputRecord = asObject(rawInput)
-  const command =
-    normalizeCommandValue(item?.command) ??
-    normalizeCommandValue(inputRecord?.command) ??
-    normalizeCommandValue(payload?.command)
-  const cleanCommand = command ? stripShellPrefix(command) : undefined
   const changes = Array.isArray(item?.changes) ? item.changes : undefined
 
-  if (!cleanCommand && !changes) return rawInput
+  if (!changes) return rawInput
 
   return {
     ...(inputRecord ?? {}),
-    ...(cleanCommand ? { command: cleanCommand } : {}),
     ...(changes ? { changes } : {})
   }
+}
+
+function normalizeCommandExecutionPresentation(
+  item: Record<string, unknown> | undefined,
+  payload: Record<string, unknown> | undefined
+): { toolName: string; input: Record<string, unknown> } {
+  return normalizeCommandExecutionTool({
+    command: item?.command ?? payload?.command,
+    input: item?.input ?? payload?.input,
+    commandActions:
+      (Array.isArray(item?.commandActions) ? item.commandActions : payload?.commandActions) ?? null
+  })
 }
 
 function extractContentDelta(event: CodexManagerEvent): ContentDelta | null {
@@ -312,10 +306,11 @@ function isWellFormedThreadItem(item: { type: string; id: string; [k: string]: u
 
 function deriveInputFromThreadItem(item: ThreadItem): unknown {
   switch (item.type) {
-    case 'commandExecution': {
-      const command = stripShellPrefix(item.command)
-      return { command }
-    }
+    case 'commandExecution':
+      return normalizeCommandExecutionTool({
+        command: item.command,
+        commandActions: item.commandActions
+      }).input
     case 'fileChange':
       return { changes: item.changes }
     case 'mcpToolCall':
@@ -344,11 +339,19 @@ function extractItemInfo(event: CodexManagerEvent): ItemInfo {
     const item = candidate
     const itemRecord = item as Record<string, unknown>
     const itemType = item.type
-    const toolName = normalizeCodexToolName(item.type)
     const callId = item.id || event.itemId || ''
     const status = 'status' in itemRecord ? asString(itemRecord.status) : undefined
     const output = 'aggregatedOutput' in itemRecord ? itemRecord.aggregatedOutput : undefined
-    const input = deriveInputFromThreadItem(item)
+    const normalizedCommandTool =
+      item.type === 'commandExecution'
+        ? normalizeCommandExecutionTool({
+            command: item.command,
+            commandActions: item.commandActions
+          })
+        : null
+    const toolName =
+      normalizedCommandTool?.toolName ?? normalizeCodexToolName(item.type)
+    const input = normalizedCommandTool?.input ?? deriveInputFromThreadItem(item)
     return {
       ...(itemType ? { itemType } : {}),
       toolName,
@@ -363,21 +366,27 @@ function extractItemInfo(event: CodexManagerEvent): ItemInfo {
   const payload = asObject(event.payload)
   const item = asObject(payload?.item)
   const itemType = asString(item?.type) ?? asString(payload?.type)
+  const isCommandExecution = itemType?.toLowerCase() === 'commandexecution'
+  const normalizedCommandTool = isCommandExecution
+    ? normalizeCommandExecutionPresentation(item, payload)
+    : null
 
-  const toolName = normalizeCodexToolName(
-    asString(item?.toolName) ??
-      asString(item?.name) ??
-      asString(item?.type) ??
-      asString(payload?.toolName) ??
-      'unknown'
-  )
+  const toolName =
+    normalizedCommandTool?.toolName ??
+    normalizeCodexToolName(
+      asString(item?.toolName) ??
+        asString(item?.name) ??
+        asString(item?.type) ??
+        asString(payload?.toolName) ??
+        'unknown'
+    )
 
   const callId = asString(item?.id) ?? asString(event.itemId) ?? asString(payload?.itemId) ?? ''
 
   const status = asString(item?.status) ?? asString(payload?.status)
   const output =
     item?.output ?? item?.aggregatedOutput ?? payload?.output ?? payload?.aggregatedOutput
-  const input = normalizeToolInput(item, payload)
+  const input = normalizedCommandTool?.input ?? normalizeToolInput(item, payload)
 
   return {
     ...(itemType ? { itemType } : {}),
@@ -497,9 +506,14 @@ function mapCodexEventToStreamEventsInner(
       const callId =
         event.itemId ?? params?.itemId ?? asString(item?.id) ?? asString(payload?.itemId) ?? ''
       if (!callId) return []
-      const command = params?.command ? stripShellPrefix(params.command) : undefined
-      // Typed path: build input from top-level params; fallback to normalizeToolInput for legacy
-      const input = command ? { command } : normalizeToolInput(item, payload)
+      const normalizedCommandTool = normalizeCommandExecutionTool({
+        command: params?.command ?? item?.command ?? payload?.command,
+        input: item?.input ?? payload?.input,
+        commandActions:
+          params?.commandActions ??
+          (Array.isArray(item?.commandActions) ? item.commandActions : payload?.commandActions) ??
+          null
+      })
       return [
         {
           type: 'message.part.updated',
@@ -508,10 +522,10 @@ function mapCodexEventToStreamEventsInner(
             part: {
               type: 'tool',
               callID: callId,
-              tool: 'Bash',
+              tool: normalizedCommandTool.toolName,
               state: {
                 status: 'running',
-                ...(input !== undefined ? { input } : {})
+                input: normalizedCommandTool.input
               }
             }
           })
