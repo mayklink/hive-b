@@ -3,6 +3,7 @@ import {
   type OpenCodeMessage,
   type StreamingPart
 } from '@/lib/opencode-transcript'
+import { correlateSubtasksIntoTaskTools } from '@/lib/codex-subtask-correlation'
 import { normalizeCodexToolName } from '@shared/codex-tool-normalizer'
 
 function parseJson<T>(value: string | null): T | null {
@@ -35,9 +36,16 @@ function parseToolPart(activity: SessionActivity): StreamingPart | null {
       'unknown'
   )
   const rawInput =
-    item?.input && typeof item.input === 'object' && !Array.isArray(item.input)
-      ? (item.input as Record<string, unknown>)
-      : {}
+    item?.type === 'collabAgentToolCall'
+      ? {
+          ...(typeof item?.prompt === 'string' ? { prompt: item.prompt } : {}),
+          ...(Array.isArray(item?.receiverThreadIds)
+            ? { receiverThreadIds: item.receiverThreadIds }
+            : {})
+        }
+      : item?.input && typeof item.input === 'object' && !Array.isArray(item.input)
+        ? (item.input as Record<string, unknown>)
+        : {}
   const input = Array.isArray(item?.changes) ? { ...rawInput, changes: item.changes } : rawInput
   const output =
     item?.output ?? payload?.output ?? item?.aggregatedOutput ?? payload?.aggregatedOutput
@@ -610,7 +618,7 @@ export function mergeCodexActivityMessages(
     }
   }
 
-  return orderedMessages
+  return correlateSubtasksIntoTaskTools(orderedMessages)
 }
 
 export function deriveCodexTimelineMessages(
