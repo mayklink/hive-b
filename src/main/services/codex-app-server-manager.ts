@@ -629,6 +629,10 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
       params.effort = input.reasoningEffort
     }
 
+    // Enable reasoning summary streaming so reasoning deltas appear in the UI.
+    // Without this parameter the server sends no reasoning deltas at all.
+    params.summary = 'auto'
+
     if (input.serviceTier !== undefined) {
       params.serviceTier = input.serviceTier
     }
