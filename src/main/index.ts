@@ -2,8 +2,7 @@ import { loadShellEnv } from './services/shell-env'
 import { app, shell, BrowserWindow, screen, ipcMain, clipboard } from 'electron'
 import { join } from 'path'
 import { spawn, exec } from 'child_process'
-import { promisify } from 'util'
-import { existsSync, readFileSync, writeFileSync, mkdirSync, unlinkSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs'
 import { electronApp, is } from '@electron-toolkit/utils'
 import { getDatabase, closeDatabase } from './db'
 import {
@@ -63,16 +62,6 @@ const appStartTime = Date.now()
 // Parse CLI flags
 const cliArgs = process.argv.slice(2)
 const isLogMode = cliArgs.includes('--log')
-const isHeadless = cliArgs.includes('--headless')
-const headlessPort = cliArgs.includes('--port')
-  ? parseInt(cliArgs[cliArgs.indexOf('--port') + 1])
-  : undefined
-const headlessBind = cliArgs.includes('--bind') ? cliArgs[cliArgs.indexOf('--bind') + 1] : undefined
-const isRotateKey = cliArgs.includes('--rotate-key')
-const isRegenCerts = cliArgs.includes('--regen-certs')
-const isShowStatus = cliArgs.includes('--show-status')
-const isKill = cliArgs.includes('--kill')
-const isUnlock = cliArgs.includes('--unlock')
 
 interface WindowBounds {
   x: number
@@ -394,112 +383,6 @@ function registerSystemHandlers(): void {
     return process.platform
   })
 
-  // Install hive-server shell wrapper to PATH
-  ipcMain.handle('system:installServerToPath', async () => {
-    const execAsync = promisify(exec)
-    const execPath = process.execPath
-
-    if (process.platform === 'win32') {
-      try {
-        const installDir = join(process.env.LOCALAPPDATA || join(app.getPath('home'), 'AppData', 'Local'), 'Hive')
-        mkdirSync(installDir, { recursive: true })
-        const targetPath = join(installDir, 'hive-server.cmd')
-        const scriptContent = `@echo off\r\n"${execPath}" --headless %*\r\n`
-        writeFileSync(targetPath, scriptContent)
-
-        // Add to user PATH via PowerShell if not already present (escape single quotes for safe interpolation)
-        const escapedDir = installDir.replace(/'/g, "''")
-        const psCmd = `$d='${escapedDir}'; $p=[Environment]::GetEnvironmentVariable('Path','User'); if($p -split ';' -notcontains $d){ [Environment]::SetEnvironmentVariable('Path',$p+';'+$d,'User') }`
-        await execAsync(`powershell -Command "${psCmd}"`, { timeout: 15000 })
-
-        return { success: true, path: targetPath }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        return { success: false, error: message }
-      }
-    }
-
-    // macOS / Linux
-    const targetPath = '/usr/local/bin/hive-server'
-    try {
-      const scriptContent =
-        [
-          '#!/bin/bash',
-          '# hive-server — Hive headless mode launcher',
-          '# Installed by Hive.app',
-          `exec "${execPath}" --headless "$@"`
-        ].join('\n') + '\n'
-
-      // Write to a temp file first (no admin needed), then move with elevation
-      const tmpPath = join(app.getPath('temp'), 'hive-server-install')
-      writeFileSync(tmpPath, scriptContent, { mode: 0o755 })
-
-      if (process.platform === 'darwin') {
-        const osascript = `do shell script "mv '${tmpPath}' '${targetPath}' && chmod +x '${targetPath}'" with administrator privileges`
-        await execAsync(`osascript -e '${osascript}'`, { timeout: 30000 })
-      } else {
-        await execAsync(`pkexec sh -c "mv '${tmpPath}' '${targetPath}' && chmod +x '${targetPath}'"`, { timeout: 30000 })
-      }
-
-      return { success: true, path: targetPath }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      if (message.includes('User canceled') || message.includes('-128') || message.includes('Not authorized')) {
-        return { success: false, error: 'Installation cancelled' }
-      }
-      return { success: false, error: message }
-    }
-  })
-
-  // Uninstall hive-server from PATH
-  ipcMain.handle('system:uninstallServerFromPath', async () => {
-    const execAsync = promisify(exec)
-
-    if (process.platform === 'win32') {
-      try {
-        const installDir = join(process.env.LOCALAPPDATA || join(app.getPath('home'), 'AppData', 'Local'), 'Hive')
-        const targetPath = join(installDir, 'hive-server.cmd')
-        if (!existsSync(targetPath)) {
-          return { success: false, error: 'hive-server is not installed' }
-        }
-
-        unlinkSync(targetPath)
-
-        // Remove from user PATH via PowerShell (escape single quotes for safe interpolation)
-        const escapedDir = installDir.replace(/'/g, "''")
-        const psCmd = `$d='${escapedDir}'; $p = [Environment]::GetEnvironmentVariable('Path','User'); [Environment]::SetEnvironmentVariable('Path', ($p -split ';' | Where-Object { $_ -ne $d }) -join ';','User')`
-        await execAsync(`powershell -Command "${psCmd}"`, { timeout: 15000 })
-
-        return { success: true }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error)
-        return { success: false, error: message }
-      }
-    }
-
-    // macOS / Linux
-    const targetPath = '/usr/local/bin/hive-server'
-    try {
-      if (!existsSync(targetPath)) {
-        return { success: false, error: 'hive-server is not installed' }
-      }
-
-      if (process.platform === 'darwin') {
-        const osascript = `do shell script "rm '${targetPath}'" with administrator privileges`
-        await execAsync(`osascript -e '${osascript}'`, { timeout: 30000 })
-      } else {
-        await execAsync(`pkexec rm '${targetPath}'`, { timeout: 30000 })
-      }
-
-      return { success: true }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      if (message.includes('User canceled') || message.includes('-128') || message.includes('Not authorized')) {
-        return { success: false, error: 'Uninstall cancelled' }
-      }
-      return { success: false, error: message }
-    }
-  })
 }
 
 // Register response logging IPC handlers (only when --log is active)
@@ -536,31 +419,6 @@ app.whenReady().then(async () => {
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.hive')
-
-  // --- Headless mode ---
-  if (isHeadless) {
-    log.info('Starting in headless mode')
-
-    // Handle one-shot management commands
-    if (isRotateKey || isRegenCerts || isShowStatus || isKill || isUnlock) {
-      const { handleManagementCommand } = await import('../server/headless-bootstrap')
-      await handleManagementCommand({
-        rotateKey: isRotateKey,
-        regenCerts: isRegenCerts,
-        showStatus: isShowStatus,
-        kill: isKill,
-        unlock: isUnlock
-      })
-      app.quit()
-      return
-    }
-
-    // Normal headless startup
-    const { headlessBootstrap } = await import('../server/headless-bootstrap')
-    await headlessBootstrap({ port: headlessPort, bind: headlessBind })
-    return
-  }
-  // --- End headless mode ---
 
   // Initialize database
   log.info('Initializing database')

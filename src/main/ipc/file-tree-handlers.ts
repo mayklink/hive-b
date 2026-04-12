@@ -4,7 +4,6 @@ import simpleGit from 'simple-git'
 import { Dirent, promises as fs, existsSync, statSync } from 'fs'
 import { join, basename, extname, relative } from 'path'
 import { createLogger } from '../services/logger'
-import { getEventBus } from '../../server/event-bus'
 import type { FileEventType } from '../../shared/types/file-tree'
 
 const log = createLogger({ component: 'FileTreeHandlers' })
@@ -332,7 +331,6 @@ function deduplicateEvents(
  *
  * Events are accumulated during the debounce window and sent as a batch.
  * The IPC payload carries `events: Array<{ eventType, changedPath, relativePath }>`.
- * The EventBus still emits one event per accumulated item for backward compat.
  */
 function emitFileTreeChange(
   worktreePath: string,
@@ -373,16 +371,6 @@ function emitFileTreeChange(
     const payload = { worktreePath, events }
     if (!mainWindow || mainWindow.isDestroyed()) return
     mainWindow.webContents.send('file-tree:change', payload)
-
-    // EventBus: emit individual events for backward compat with GraphQL subscribers
-    try {
-      const bus = getEventBus()
-      for (const evt of events) {
-        bus.emit('file-tree:change', { worktreePath, ...evt })
-      }
-    } catch {
-      /* EventBus not available */
-    }
   }, 100)
 
   debounceTimers.set(worktreePath, timer)
