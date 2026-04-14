@@ -8,6 +8,7 @@ import type { Hunk } from '@/lib/diff-utils'
 import { MonacoDiffToolbar } from './MonacoDiffToolbar'
 import { HunkActionGutter } from './HunkActionGutter'
 import { PrCommentGutter } from './PrCommentGutter'
+import { DiffCommentGutter } from './DiffCommentGutter'
 import { usePRReviewStore } from '@/stores/usePRReviewStore'
 import type { PRReviewComment } from '@shared/types/git'
 import type { editor } from 'monaco-editor'
@@ -388,6 +389,12 @@ export default function MonacoDiffView({
               onZonesReady={() => setZonesReady(true)}
             />
           )}
+        {!prReviewWorktreeId && originalContent !== null && modifiedContent !== null && (
+          <DiffCommentGutter
+            modifiedEditor={modifiedEditorRef.current}
+            filePath={filePath}
+          />
+        )}
       </div>
     </div>
   )
