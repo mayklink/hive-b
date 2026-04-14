@@ -599,20 +599,30 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
 
   useEffect(() => {
     setQueuedMessages((prev) => {
-      const sameLength = prev.length === persistedFollowUpMessages.length
+      // Preserve messages that have been steered (they were already removed from the follow-up queue)
+      const steered = prev.filter((msg) => msg.steered)
+
+      // Derive non-steered entries from the follow-up queue
+      const prevNonSteered = prev.filter((msg) => !msg.steered)
+      const sameLength = prevNonSteered.length === persistedFollowUpMessages.length
       const sameContent =
         sameLength &&
-        prev.every((entry, index) => entry.content === persistedFollowUpMessages[index])
+        prevNonSteered.every((entry, index) => entry.content === persistedFollowUpMessages[index])
 
-      if (sameContent) {
+      if (sameContent && steered.length === prev.filter((msg) => msg.steered).length) {
         return prev
       }
 
-      return persistedFollowUpMessages.map((content, index) => ({
-        id: prev[index]?.content === content ? prev[index].id : crypto.randomUUID(),
-        content,
-        timestamp: prev[index]?.content === content ? prev[index].timestamp : Date.now() + index
-      }))
+      const nonSteered = persistedFollowUpMessages.map((content, index) => {
+        const existing = prevNonSteered.find((p) => p.content === content)
+        return {
+          id: existing?.id ?? crypto.randomUUID(),
+          content,
+          timestamp: existing?.timestamp ?? Date.now() + index
+        }
+      })
+
+      return [...steered, ...nonSteered]
     })
   }, [persistedFollowUpMessages])
 
@@ -3869,7 +3879,16 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           setQueuedMessages((prev) =>
             prev.map((msg) => (msg.id === messageId ? { ...msg, steered: true } : msg))
           )
-          useSessionStore.getState().consumeFollowUpMessage(sessionId)
+          // Remove the steered message from the follow-up queue by content
+          const currentFollowUps = useSessionStore.getState().pendingFollowUpMessages.get(sessionId) ?? []
+          const indexToRemove = currentFollowUps.indexOf(content)
+          if (indexToRemove >= 0) {
+            const updatedFollowUps = [
+              ...currentFollowUps.slice(0, indexToRemove),
+              ...currentFollowUps.slice(indexToRemove + 1)
+            ]
+            useSessionStore.getState().setPendingFollowUpMessages(sessionId, updatedFollowUps)
+          }
         } else {
           console.warn('Steer failed', { messageId, error: result?.error })
         }
