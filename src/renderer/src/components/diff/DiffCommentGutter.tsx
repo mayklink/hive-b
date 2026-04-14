@@ -13,6 +13,34 @@ import type { editor } from 'monaco-editor'
 const EMPTY_COMMENTS: DiffComment[] = []
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Map an absolute Y pixel position (clientY - editorTop + scrollTop) to a
+ * 1-based line number, correctly accounting for Monaco view zones (comment
+ * cards injected between lines).  Uses binary search over the editor's
+ * getTopForLineNumber API which is view-zone-aware.
+ */
+function getLineFromAbsoluteY(
+  ed: editor.IStandaloneCodeEditor,
+  absoluteY: number
+): number {
+  const lineCount = ed.getModel()?.getLineCount() ?? 1
+  let low = 1
+  let high = lineCount
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2)
+    if (ed.getTopForLineNumber(mid) <= absoluteY) {
+      low = mid
+    } else {
+      high = mid - 1
+    }
+  }
+  return low
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -139,12 +167,8 @@ export function DiffCommentGutter({
 
       const rect = editorDom.getBoundingClientRect()
       const currentScrollTop = modifiedEditor.getScrollTop()
-      const lineCount = modifiedEditor.getModel()?.getLineCount() ?? 1
-
-      const line = Math.min(
-        Math.max(1, Math.floor((e.clientY - rect.top + currentScrollTop) / 20) + 1),
-        lineCount
-      )
+      const absoluteY = e.clientY - rect.top + currentScrollTop
+      const line = getLineFromAbsoluteY(modifiedEditor, absoluteY)
 
       setHoveredLine(line)
     }
@@ -224,12 +248,8 @@ export function DiffCommentGutter({
       const handleDocMouseMove = (e: MouseEvent): void => {
         const rect = editorDom.getBoundingClientRect()
         const currentScrollTop = modifiedEditor.getScrollTop()
-        const lineCount = modifiedEditor.getModel()?.getLineCount() ?? 1
-
-        const currentLine = Math.min(
-          Math.max(1, Math.floor((e.clientY - rect.top + currentScrollTop) / 20) + 1),
-          lineCount
-        )
+        const absoluteY = e.clientY - rect.top + currentScrollTop
+        const currentLine = getLineFromAbsoluteY(modifiedEditor, absoluteY)
 
         setDragEndLine(currentLine)
 
@@ -642,11 +662,8 @@ export function DiffCommentGutter({
             if (!editorDom || !modifiedEditor) return
             const rect = editorDom.getBoundingClientRect()
             const currentScrollTop = modifiedEditor.getScrollTop()
-            const lineCount = modifiedEditor.getModel()?.getLineCount() ?? 1
-            const line = Math.min(
-              Math.max(1, Math.floor((e.clientY - rect.top + currentScrollTop) / 20) + 1),
-              lineCount
-            )
+            const absoluteY = e.clientY - rect.top + currentScrollTop
+            const line = getLineFromAbsoluteY(modifiedEditor, absoluteY)
             setHoveredLine(line)
           }}
           onMouseLeave={(e) => {
