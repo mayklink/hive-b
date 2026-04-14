@@ -27,7 +27,6 @@ import { ContextIndicator } from './ContextIndicator'
 import { AttachmentButton } from './AttachmentButton'
 import { AttachmentPreview } from './AttachmentPreview'
 import { TicketAttachments } from './TicketAttachments'
-import { DiffCommentAttachments } from './DiffCommentAttachments'
 import { CodexFastToggle } from './CodexFastToggle'
 import type { Attachment } from './AttachmentPreview'
 import {
@@ -69,7 +68,6 @@ import { useProjectStore } from '@/stores/useProjectStore'
 import { useKanbanStore } from '@/stores/useKanbanStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { usePRReviewStore } from '@/stores/usePRReviewStore'
-import { useDiffCommentStore } from '@/stores/useDiffCommentStore'
 import { useFileTreeStore } from '@/stores/useFileTreeStore'
 import { mapOpencodeMessagesToSessionViewMessages } from '@/lib/opencode-transcript'
 import { appendStreamedAssistantFallback } from '@/lib/transcript-refresh'
@@ -4190,8 +4188,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
 
           // Add user message to UI immediately (before response)
           // Include attachment XML so cards render instantly
-          const diffComments = useDiffCommentStore.getState().getAttachedComments()
-          const askDisplayContent = buildDisplayContent(attachments, prefixedQuestion, diffComments)
+          const askDisplayContent = buildDisplayContent(attachments, prefixedQuestion)
           setMessages((prev) => [...prev, createLocalMessage('user', askDisplayContent)])
 
           // Mark that a new prompt is in flight
@@ -4204,10 +4201,9 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           }
 
           // Build message parts (support file attachments if any)
-          const parts = buildMessageParts(attachments, prefixedQuestion, diffComments)
+          const parts = buildMessageParts(attachments, prefixedQuestion)
           setAttachments([])
           usePRReviewStore.getState().clearAttachments()
-          useDiffCommentStore.getState().clearAttached()
 
           try {
             const result = await window.opencodeOps.prompt(
@@ -4317,11 +4313,9 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
               )
               .join('\n\n') + '\n\n'
         }
-        const diffComments = useDiffCommentStore.getState().getAttachedComments()
         const optimisticContent = buildDisplayContent(
           attachments,
-          optimisticPrContext + optimisticModePrefix + trimmedValue,
-          diffComments
+          optimisticPrContext + optimisticModePrefix + trimmedValue
         )
 
         setMessages((prev) => {
@@ -4414,7 +4408,6 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
               lastSentPromptRef.current = trimmedValue
               setAttachments([])
               usePRReviewStore.getState().clearAttachments()
-              useDiffCommentStore.getState().clearAttached()
               const result = await window.opencodeOps.command(
                 worktreePath,
                 opencodeSessionId,
@@ -4449,10 +4442,9 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
               }
               const promptMessage = prContext + modePrefix + trimmedValue
               lastSentPromptRef.current = promptMessage
-              const parts = buildMessageParts(attachments, promptMessage, diffComments)
+              const parts = buildMessageParts(attachments, promptMessage)
               setAttachments([])
               usePRReviewStore.getState().clearAttachments()
-              useDiffCommentStore.getState().clearAttached()
               const result = await window.opencodeOps.prompt(
                 worktreePath,
                 opencodeSessionId,
@@ -4491,10 +4483,9 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
             // of the user message (the SDK often re-emits the prompt without a
             // role field, making it indistinguishable from assistant text).
             lastSentPromptRef.current = promptMessage
-            const parts = buildMessageParts(attachments, promptMessage, diffComments)
+            const parts = buildMessageParts(attachments, promptMessage)
             setAttachments([])
             usePRReviewStore.getState().clearAttachments()
-            useDiffCommentStore.getState().clearAttached()
             const result = await window.opencodeOps.prompt(
               worktreePath,
               opencodeSessionId,
@@ -4513,7 +4504,6 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           // No OpenCode connection - show placeholder
           setAttachments([])
           usePRReviewStore.getState().clearAttachments()
-          useDiffCommentStore.getState().clearAttached()
           console.warn('No OpenCode connection, showing placeholder response')
           setTimeout(() => {
             const placeholderContent =
@@ -5746,8 +5736,6 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           />
           {/* PR review comment attachments — above the input container */}
           <PrCommentAttachments />
-          {/* Diff comment attachments — above the input container */}
-          <DiffCommentAttachments />
           {/* Ticket attachments — above the input container */}
           <TicketAttachments attachments={attachments} onRemove={handleRemoveAttachment} />
           <div

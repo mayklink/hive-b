@@ -11,9 +11,7 @@ import type {
   SessionUpdate,
   SessionSearchOptions,
   SpaceCreate,
-  SpaceUpdate,
-  DiffCommentCreate,
-  DiffCommentUpdate
+  SpaceUpdate
 } from '../db'
 
 const log = createLogger({ component: 'DatabaseHandlers' })
@@ -347,31 +345,6 @@ export function registerDatabaseHandlers(): void {
   ipcMain.handle('db:space:reorder', (_event, orderedIds: string[]) => {
     getDatabase().reorderSpaces(orderedIds)
     return true
-  })
-
-  // Diff Comments
-  ipcMain.handle('db:diffComment:create', (_event, data: DiffCommentCreate) => {
-    return getDatabase().createDiffComment(data)
-  })
-
-  ipcMain.handle('db:diffComment:list', (_event, worktreeId: string) => {
-    return getDatabase().getDiffCommentsByWorktree(worktreeId)
-  })
-
-  ipcMain.handle('db:diffComment:update', (_event, id: string, data: DiffCommentUpdate) => {
-    return getDatabase().updateDiffComment(id, data)
-  })
-
-  ipcMain.handle('db:diffComment:setOutdated', (_event, id: string, isOutdated: boolean) => {
-    return getDatabase().setDiffCommentOutdated(id, isOutdated)
-  })
-
-  ipcMain.handle('db:diffComment:delete', (_event, id: string) => {
-    return getDatabase().deleteDiffComment(id)
-  })
-
-  ipcMain.handle('db:diffComment:clearAll', (_event, worktreeId: string) => {
-    return getDatabase().clearAllDiffComments(worktreeId)
   })
 
   // Utility
