@@ -43,17 +43,18 @@ export function IndeterminateProgressBar({
     const el = barRef.current
     if (!el) return
 
-    // Respect prefers-reduced-motion — CSS fallback handles static positioning
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    try {
+      const anim = el.animate(BOUNCE_KEYFRAMES, BOUNCE_TIMING)
 
-    const anim = el.animate(BOUNCE_KEYFRAMES, BOUNCE_TIMING)
+      // Sync to global clock so every bar — regardless of when it mounts — is
+      // at the same phase in the 3-second cycle. This is the key fix: setting
+      // currentTime directly is deterministic and avoids CSS animation-delay quirks.
+      anim.currentTime = Date.now() % ANIMATION_DURATION_MS
 
-    // Sync to global clock so every bar — regardless of when it mounts — is
-    // at the same phase in the 3-second cycle. This is the key fix: setting
-    // currentTime directly is deterministic and avoids CSS animation-delay quirks.
-    anim.currentTime = Date.now() % ANIMATION_DURATION_MS
-
-    return () => anim.cancel()
+      return () => anim.cancel()
+    } catch {
+      // Animation failed — bar stays visible at CSS default position
+    }
   }, [])
 
   const bgTrack = isCompacting

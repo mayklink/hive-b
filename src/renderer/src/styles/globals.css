@@ -449,13 +449,10 @@ body::after {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .progress-bounce-bar {
-    animation: none !important;
-    left: 37.5%;
-    right: 37.5%;
-    opacity: 0.7;
-  }
+/* Safety-net defaults: bar is visible even if JS animation fails to start */
+.progress-bounce-bar {
+  left: 0;
+  width: 25%;
 }
 
 /* PR review comment HTML body styling (GitHub bodyHTML) */
