@@ -572,9 +572,6 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
   const [retryTickMs, setRetryTickMs] = useState<number>(Date.now())
   const [planSavedAsTicket, setPlanSavedAsTicket] = useState(false)
 
-  // Steer capability: available when backend supports it AND a turn is actively streaming
-  const canSteer = sessionCapabilities?.supportsSteer === true && isStreaming
-
   // Prompt history key: works for both worktree and connection sessions
   const historyKey = worktreeId ?? connectionId
 
@@ -647,6 +644,9 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
   // Check if this is an orphaned (read-only) session
   const isOrphanedSession = useSessionStore((state) => state.orphanedSessions.has(sessionId))
   const sessionAgentSdk = sessionRecord?.agent_sdk ?? 'opencode'
+  // Steer capability: available when backend supports it AND a turn is actively streaming
+  // Falls back to checking sessionAgentSdk when capabilities haven't loaded yet (race condition)
+  const canSteer = (sessionCapabilities?.supportsSteer ?? sessionAgentSdk === 'codex') && isStreaming
   const globalModel = useSettingsStore((state) => resolveModelForSdk(sessionAgentSdk, state))
   const effectiveModel: SelectedModel | null =
     sessionRecord?.model_provider_id && sessionRecord.model_id
