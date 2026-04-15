@@ -365,6 +365,7 @@ declare global {
           name?: string | null
           opencode_session_id?: string | null
           agent_sdk?: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+          session_type?: 'default' | 'board-assistant'
           model_provider_id?: string | null
           model_id?: string | null
           model_variant?: string | null
@@ -396,6 +397,7 @@ declare global {
         getActiveByConnection: (connectionId: string) => Promise<Session[]>
         setPinnedToBoard: (sessionId: string, pinned: boolean) => Promise<Session | null>
         getPinnedSessions: (worktreeId: string) => Promise<Session[]>
+        getActiveBoardAssistant: (projectId: string) => Promise<Session | null>
       }
       sessionMessage: {
         list: (sessionId: string) => Promise<SessionMessage[]>
