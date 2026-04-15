@@ -17,6 +17,7 @@ export function SettingsGeneral(): React.JSX.Element {
     autoStartSession,
     autoPullBeforeWorktree,
     boardMode,
+    followUpTriggerColumn,
     vimModeEnabled,
     mergeConflictMode,
     tipsEnabled,
@@ -143,6 +144,40 @@ export function SettingsGeneral(): React.JSX.Element {
             data-testid="board-mode-sticky-tab"
           >
             Sticky Tab
+          </button>
+        </div>
+      </div>
+
+      {/* Follow-up ticket trigger */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Follow-up Ticket Trigger</label>
+        <p className="text-xs text-muted-foreground">
+          When should blocked tickets auto-launch? When all blockers reach this column.
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => updateSetting('followUpTriggerColumn', 'review')}
+            className={cn(
+              'px-3 py-1.5 rounded-md text-sm border transition-colors',
+              followUpTriggerColumn === 'review'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent/50'
+            )}
+            data-testid="follow-up-trigger-review"
+          >
+            Review
+          </button>
+          <button
+            onClick={() => updateSetting('followUpTriggerColumn', 'done')}
+            className={cn(
+              'px-3 py-1.5 rounded-md text-sm border transition-colors',
+              followUpTriggerColumn === 'done'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent/50'
+            )}
+            data-testid="follow-up-trigger-done"
+          >
+            Done
           </button>
         </div>
       </div>
