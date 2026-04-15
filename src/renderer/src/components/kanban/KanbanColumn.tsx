@@ -29,6 +29,7 @@ import { useKanbanStore, getKanbanDragData, setKanbanDragData, suppressLayoutAni
 import { useWorktreeStatusStore } from '@/stores/useWorktreeStatusStore'
 import { useUsageStore, resolveDefaultUsageProvider } from '@/stores/useUsageStore'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { isBlockerSatisfied } from '@/lib/blocker-utils'
 import type { KanbanTicket, KanbanTicketColumn as ColumnType } from '../../../../main/db/types'
 
 // ── Layout animation spring ─────────────────────────────────────────
@@ -249,11 +250,12 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
           if (draggedTicket) {
             // Check if ticket has unresolved blockers
             const blockerIds = store.dependencyMap.get(ticketId)
+            const triggerColumn = useSettingsStore.getState().followUpTriggerColumn
             let isBlocked = false
             if (blockerIds?.size) {
               for (const [, projTickets] of store.tickets) {
                 for (const t of projTickets) {
-                  if (blockerIds.has(t.id) && t.column !== 'done') {
+                  if (blockerIds.has(t.id) && !isBlockerSatisfied(t.column, triggerColumn)) {
                     isBlocked = true
                     break
                   }

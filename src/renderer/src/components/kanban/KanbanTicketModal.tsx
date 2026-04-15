@@ -47,6 +47,7 @@ import { useWorktreeStatusStore } from '@/stores/useWorktreeStatusStore'
 import { useCommandApprovalStore } from '@/stores/useCommandApprovalStore'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useSettingsStore, resolveModelForSdk } from '@/stores/useSettingsStore'
+import { isBlockerSatisfied } from '@/lib/blocker-utils'
 import { useGitStore } from '@/stores/useGitStore'
 import { notifyKanbanSessionSync } from '@/stores/store-coordination'
 import { messageSendTimes, lastSendMode, userExplicitSendTimes } from '@/lib/message-send-times'
@@ -340,6 +341,7 @@ function KanbanTicketModalContent({
   const updateTicket = useKanbanStore((s) => s.updateTicket)
   const deleteTicket = useKanbanStore((s) => s.deleteTicket)
   const moveTicket = useKanbanStore((s) => s.moveTicket)
+  const followUpTriggerColumn = useSettingsStore(s => s.followUpTriggerColumn)
   const [editDraftDirty, setEditDraftDirty] = useState(false)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
 
@@ -1018,7 +1020,7 @@ function EditModeContent({
                 {blockerTickets.map(blocker => (
                   <div key={blocker.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded-md bg-muted/30">
                     <div className="flex items-center gap-2 min-w-0">
-                      {blocker.column === 'done' ? (
+                      {isBlockerSatisfied(blocker.column, followUpTriggerColumn) ? (
                         <span className="text-green-500 text-xs">&#10003;</span>
                       ) : (
                         <Lock className="h-3 w-3 text-amber-500" />

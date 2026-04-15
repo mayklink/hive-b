@@ -36,6 +36,8 @@ import { PulseAnimation } from '@/components/worktrees/PulseAnimation'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { useWorktreeStore } from '@/stores/useWorktreeStore'
 import { setKanbanDragData, useKanbanStore } from '@/stores/useKanbanStore'
+import { useSettingsStore } from '@/stores/useSettingsStore'
+import { isBlockerSatisfied } from '@/lib/blocker-utils'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useScriptStore } from '@/stores/useScriptStore'
@@ -116,6 +118,8 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
     })
   )
 
+  const followUpTriggerColumn = useSettingsStore(s => s.followUpTriggerColumn)
+
   const unresolvedBlockerCount = useKanbanStore(
     useCallback((state) => {
       const blockers = state.dependencyMap.get(ticket.id)
@@ -123,11 +127,11 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
       let count = 0
       for (const [, projectTickets] of state.tickets) {
         for (const t of projectTickets) {
-          if (blockers.has(t.id) && t.column !== 'done') count++
+          if (blockers.has(t.id) && !isBlockerSatisfied(t.column, followUpTriggerColumn)) count++
         }
       }
       return count
-    }, [ticket.id])
+    }, [ticket.id, followUpTriggerColumn])
   )
 
   const isSimpleMode = useKanbanStore(
