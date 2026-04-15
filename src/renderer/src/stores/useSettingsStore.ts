@@ -22,6 +22,7 @@ export type TerminalOption =
 export type EmbeddedTerminalBackend = 'xterm' | 'ghostty'
 export type TerminalPosition = 'sidebar' | 'bottom'
 export type MergeConflictMode = 'build' | 'plan' | 'always-ask'
+export type FollowUpTriggerColumn = 'review' | 'done'
 
 export interface SelectedModel {
   providerID: string
@@ -53,6 +54,7 @@ export interface AppSettings {
   vimModeEnabled: boolean
   mergeConflictMode: MergeConflictMode
   boardMode: 'toggle' | 'sticky-tab'
+  followUpTriggerColumn: FollowUpTriggerColumn
 
   // Editor
   defaultEditor: EditorOption
@@ -139,6 +141,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   vimModeEnabled: false,
   mergeConflictMode: 'always-ask',
   boardMode: 'sticky-tab',
+  followUpTriggerColumn: 'done',
   defaultEditor: 'vscode',
   customEditorCommand: '',
   defaultTerminal: 'terminal',
@@ -291,6 +294,7 @@ function extractSettings(state: SettingsState): AppSettings {
     vimModeEnabled: state.vimModeEnabled,
     mergeConflictMode: state.mergeConflictMode,
     boardMode: state.boardMode,
+    followUpTriggerColumn: state.followUpTriggerColumn,
     defaultEditor: state.defaultEditor,
     customEditorCommand: state.customEditorCommand,
     defaultTerminal: state.defaultTerminal,
@@ -548,6 +552,7 @@ export const useSettingsStore = create<SettingsState>()(
         vimModeEnabled: state.vimModeEnabled,
         mergeConflictMode: state.mergeConflictMode,
         boardMode: state.boardMode,
+        followUpTriggerColumn: state.followUpTriggerColumn,
         defaultEditor: state.defaultEditor,
         customEditorCommand: state.customEditorCommand,
         defaultTerminal: state.defaultTerminal,
