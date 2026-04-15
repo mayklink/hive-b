@@ -98,6 +98,7 @@ const db = {
       opencode_session_id?: string | null
       agent_sdk?: 'opencode' | 'claude-code' | 'codex' | 'terminal'
       mode?: 'build' | 'plan'
+      session_type?: 'default' | 'board-assistant'
       model_provider_id?: string | null
       model_id?: string | null
       model_variant?: string | null
@@ -142,7 +143,9 @@ const db = {
     setPinnedToBoard: (sessionId: string, pinned: boolean) =>
       ipcRenderer.invoke('db:session:setPinnedToBoard', sessionId, pinned),
     getPinnedSessions: (worktreeId: string) =>
-      ipcRenderer.invoke('db:session:getPinnedSessions', worktreeId)
+      ipcRenderer.invoke('db:session:getPinnedSessions', worktreeId),
+    getActiveBoardAssistant: (projectId: string) =>
+      ipcRenderer.invoke('db:session:getActiveBoardAssistant', projectId)
   },
 
   sessionMessage: {
