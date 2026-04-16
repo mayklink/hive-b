@@ -14,6 +14,7 @@ import { SetupTab } from './SetupTab'
 import { RunTab } from './RunTab'
 import { toast } from '@/lib/toast'
 import { useGhosttyPromotion } from '@/hooks/useGhosttyPromotion'
+import { TerminalTabsHorizontal } from '@/components/terminal/TerminalTabsHorizontal'
 
 const tabs: { id: BottomPanelTab; label: string; keybind: string }[] = [
   { id: 'setup', label: 'Setup', keybind: 'S' },
@@ -49,10 +50,15 @@ export function BottomPanel({
     ? tabs.filter((t) => t.id !== 'terminal')
     : isConnectionMode
       ? tabs.filter((t) => t.id === 'terminal')
-      : tabs
+      : tabs.filter((t) => t.id !== 'terminal')   // sidebar: hide static terminal, use dynamic
 
-  // If terminal tab was active but is now hidden (moved to bottom panel), fall back
-  const resolvedTab = (terminalPosition === 'bottom' && effectiveTab === 'terminal') ? 'run' : effectiveTab
+  // If terminal tab was active but is now hidden, fall back to 'run':
+  // - bottom mode: terminal lives in the sidebar, not the bottom panel
+  // - sidebar mode without a worktree: dynamic terminal tabs can't render
+  const resolvedTab =
+    (terminalPosition === 'bottom' && effectiveTab === 'terminal') ? 'run' :
+    (terminalPosition === 'sidebar' && effectiveTab === 'terminal' && !selectedWorktreeId) ? 'run' :
+    effectiveTab
   useGhosttyPromotion(resolvedTab === 'terminal')
 
   // Open in Chrome state
@@ -98,31 +104,39 @@ export function BottomPanel({
   return (
     <div className="flex flex-col min-h-0 flex-1" data-testid="bottom-panel">
       <div className="flex border-b border-border" data-testid="bottom-panel-tabs">
-        {visibleTabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`text-xs px-3 py-1.5 transition-colors relative ${
-              resolvedTab === tab.id
-                ? 'text-foreground'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-            data-testid={`bottom-panel-tab-${tab.id}`}
-            data-active={resolvedTab === tab.id}
-          >
-            {vimModeEnabled ? (
-              <>
-                <span className="text-primary">{tab.keybind}</span>
-                {tab.label.slice(1)}
-              </>
-            ) : (
-              tab.label
-            )}
-            {resolvedTab === tab.id && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-            )}
-          </button>
-        ))}
+        <div className="flex overflow-x-auto scrollbar-hide min-w-0">
+          {visibleTabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`text-xs px-3 py-1.5 transition-colors relative ${
+                resolvedTab === tab.id
+                  ? 'text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              data-testid={`bottom-panel-tab-${tab.id}`}
+              data-active={resolvedTab === tab.id}
+            >
+              {vimModeEnabled ? (
+                <>
+                  <span className="text-primary">{tab.keybind}</span>
+                  {tab.label.slice(1)}
+                </>
+              ) : (
+                tab.label
+              )}
+              {resolvedTab === tab.id && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
+            </button>
+          ))}
+          {terminalPosition === 'sidebar' && !isConnectionMode && selectedWorktreeId && (
+            <TerminalTabsHorizontal
+              worktreeId={selectedWorktreeId}
+              isTerminalActive={resolvedTab === 'terminal'}
+            />
+          )}
+        </div>
 
         {/* Flex spacer pushes Chrome URL button and chevron to the right */}
         <div className="flex-1" />

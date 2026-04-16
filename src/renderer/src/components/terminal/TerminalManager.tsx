@@ -35,6 +35,7 @@ export function TerminalManager({
   const destroyTerminal = useTerminalStore((s) => s.destroyTerminal)
   const worktreesByProject = useWorktreeStore((s) => s.worktreesByProject)
   const embeddedTerminalBackend = useSettingsStore((s) => s.embeddedTerminalBackend)
+  const terminalPosition = useSettingsStore((s) => s.terminalPosition)
   const prevBackendRef = useRef(embeddedTerminalBackend)
 
   const { tabsByWorktree, activeTabByWorktree, createTab, removeWorktree, removeAllTabs } =
@@ -67,15 +68,19 @@ export function TerminalManager({
   }
 
   // Auto-create "Terminal 1" when a worktree is selected and has no tabs.
+  // In sidebar mode, create eagerly (regardless of visibility) so the tab appears
+  // in the BottomPanel tab bar immediately. In bottom mode, wait until the terminal
+  // panel is visible to avoid unnecessary PTY creation.
   // Read tabs via getState() to avoid re-triggering on every tab state change.
   useEffect(() => {
-    if (selectedWorktreeId && worktreePath && isVisible) {
+    const shouldCreate = terminalPosition === 'sidebar' || isVisible
+    if (selectedWorktreeId && worktreePath && shouldCreate) {
       const tabs = useTerminalTabStore.getState().getTabs(selectedWorktreeId)
       if (tabs.length === 0) {
         createTab(selectedWorktreeId)
       }
     }
-  }, [selectedWorktreeId, worktreePath, isVisible, createTab])
+  }, [selectedWorktreeId, worktreePath, isVisible, terminalPosition, createTab])
 
   // When backend setting changes, tear down all active terminals so they get re-created
   // with the new backend on next visibility.
@@ -167,7 +172,9 @@ export function TerminalManager({
           </div>
         )}
       </div>
-      {selectedWorktreeId && <TerminalTabSidebar worktreeId={selectedWorktreeId} />}
+      {selectedWorktreeId && terminalPosition !== 'sidebar' && (
+        <TerminalTabSidebar worktreeId={selectedWorktreeId} />
+      )}
     </div>
   )
 }
