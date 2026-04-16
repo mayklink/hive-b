@@ -585,8 +585,6 @@ export function SessionTabs(): React.JSX.Element | null {
   const { projects } = useProjectStore()
   const selectedConnectionId = useConnectionStore((state) => state.selectedConnectionId)
   const connections = useConnectionStore((state) => state.connections)
-  const pushGhosttySuppression = useLayoutStore((state) => state.pushGhosttySuppression)
-  const popGhosttySuppression = useLayoutStore((state) => state.popGhosttySuppression)
   const isBoardViewActive = useKanbanStore((state) => state.isBoardViewActive)
   const pinnedSessionIds = useSessionStore((state) => state.pinnedSessionIds)
   const activePinnedSessionId = useSessionStore((state) => state.activePinnedSessionId)
@@ -784,13 +782,6 @@ export function SessionTabs(): React.JSX.Element | null {
     tabOrderByConnection,
     openFiles
   ])
-
-  // Safety: never leave Ghostty overlays suppressed if this component unmounts.
-  useEffect(() => {
-    return () => {
-      popGhosttySuppression('session-tabs-context')
-    }
-  }, [popGhosttySuppression])
 
   // Scroll functions
   const scrollLeft = () => {
@@ -1195,12 +1186,7 @@ export function SessionTabs(): React.JSX.Element | null {
         /* Session create button with right-click provider menu */
         <Tip tipId="provider-right-click" enabled={multipleProvidersAvailable}>
           <div className="shrink-0">
-            <ContextMenu
-              onOpenChange={(open) => {
-                if (open) pushGhosttySuppression('session-tabs-context')
-                else popGhosttySuppression('session-tabs-context')
-              }}
-            >
+            <ContextMenu>
               <ContextMenuTrigger asChild>
                 <button
                   onClick={handleCreateSession}

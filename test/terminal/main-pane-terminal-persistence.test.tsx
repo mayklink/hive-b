@@ -1,11 +1,19 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest'
 import { act, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MainPane } from '../../src/renderer/src/components/layout/MainPane'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle
+} from '../../src/renderer/src/components/ui/dialog'
 import { useSessionStore } from '../../src/renderer/src/stores/useSessionStore'
 import { useWorktreeStore } from '../../src/renderer/src/stores/useWorktreeStore'
 import { useConnectionStore } from '../../src/renderer/src/stores/useConnectionStore'
 import { useFileViewerStore } from '../../src/renderer/src/stores/useFileViewerStore'
 import { useLayoutStore } from '../../src/renderer/src/stores/useLayoutStore'
+import { useState } from 'react'
 
 const terminalMounts = new Map<string, number>()
 
@@ -69,6 +77,23 @@ function makeTerminalSession(id: string) {
     updated_at: '2026-01-01T00:00:00.000Z',
     completed_at: null
   }
+}
+
+function DialogHarness(): React.JSX.Element {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>Open dialog</button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent>
+          <DialogTitle>Terminal overlay test</DialogTitle>
+          <DialogDescription>Ensures shared dialogs hide native terminals.</DialogDescription>
+          <button onClick={() => setOpen(false)}>Close dialog</button>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
 }
 
 describe('MainPane terminal persistence', () => {
@@ -144,6 +169,27 @@ describe('MainPane terminal persistence', () => {
 
     expect(screen.getByTestId('session-terminal-term-1')).toHaveAttribute('data-visible', 'false')
     expect(screen.getByTestId('session-terminal-term-2')).toHaveAttribute('data-visible', 'false')
+  })
+
+  test('hides terminal surfaces when a shared dialog opens and restores them after close', async () => {
+    const user = userEvent.setup()
+    render(
+      <>
+        <MainPane />
+        <DialogHarness />
+      </>
+    )
+
+    expect(screen.getByTestId('session-terminal-term-1')).toHaveAttribute('data-visible', 'true')
+
+    await user.click(screen.getByRole('button', { name: 'Open dialog' }))
+
+    expect(screen.getByTestId('session-terminal-term-1')).toHaveAttribute('data-visible', 'false')
+    expect(screen.getByTestId('session-terminal-term-2')).toHaveAttribute('data-visible', 'false')
+
+    await user.click(screen.getByRole('button', { name: 'Close dialog' }))
+
+    expect(screen.getByTestId('session-terminal-term-1')).toHaveAttribute('data-visible', 'true')
   })
 
   test('removes terminal from mounted list when session is closed via store signal', () => {

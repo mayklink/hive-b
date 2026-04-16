@@ -8,6 +8,7 @@ import { useProjectStore } from '@/stores/useProjectStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { DEFAULT_SHORTCUTS, formatBinding, shortcutCategoryOrder } from '@/lib/keyboard-shortcuts'
 import { cn } from '@/lib/utils'
+import { useGhosttySuppression } from '@/hooks'
 
 // ---------------------------------------------------------------------------
 // Mnemonic highlighting helper
@@ -173,6 +174,8 @@ export function HelpOverlay(): React.JSX.Element | null {
     }
     return groups
   }, [])
+
+  useGhosttySuppression('help-overlay', helpOverlayOpen)
 
   if (!vimModeEnabled || !helpOverlayOpen) return null
 

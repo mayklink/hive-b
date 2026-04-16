@@ -35,8 +35,6 @@ export function TerminalTabsHorizontal({
   } = useTerminalTabActions(worktreeId)
 
   const setBottomPanelTab = useLayoutStore((s) => s.setBottomPanelTab)
-  const pushGhosttySuppression = useLayoutStore((s) => s.pushGhosttySuppression)
-  const popGhosttySuppression = useLayoutStore((s) => s.popGhosttySuppression)
 
   const [renamingTabId, setRenamingTabId] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
@@ -97,17 +95,6 @@ export function TerminalTabsHorizontal({
     [setBottomPanelTab, handleSelectTab]
   )
 
-  const handleContextMenuOpenChange = useCallback(
-    (open: boolean) => {
-      if (open) {
-        pushGhosttySuppression('terminal-tabs-context')
-      } else {
-        popGhosttySuppression('terminal-tabs-context')
-      }
-    },
-    [pushGhosttySuppression, popGhosttySuppression]
-  )
-
   const handlePlusClick = useCallback(() => {
     setBottomPanelTab('terminal')
     handleCreateTab()
@@ -116,7 +103,7 @@ export function TerminalTabsHorizontal({
   return (
     <>
       {tabs.map((tab) => (
-        <ContextMenu key={tab.id} onOpenChange={handleContextMenuOpenChange}>
+        <ContextMenu key={tab.id}>
           <ContextMenuTrigger asChild>
             <button
               onClick={() => handleTabClick(tab.id)}

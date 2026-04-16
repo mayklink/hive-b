@@ -30,6 +30,7 @@ import { useProjectStore } from '@/stores/useProjectStore'
 import { useWorktreeStore } from '@/stores/useWorktreeStore'
 import { useSessionStore } from '@/stores/useSessionStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
+import { useGhosttySuppression } from '@/hooks'
 
 // Debounce hook for search input
 function useDebounce<T>(value: T, delay: number): T {
@@ -453,6 +454,8 @@ export function SessionHistory(): React.JSX.Element | null {
     if (!selectedSessionId) return null
     return searchResults.find((s) => s.id === selectedSessionId) || null
   }, [searchResults, selectedSessionId])
+
+  useGhosttySuppression('session-history', isOpen)
 
   if (!isOpen) return null
 
