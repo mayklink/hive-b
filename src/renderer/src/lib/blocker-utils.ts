@@ -3,10 +3,13 @@ import type { FollowUpTriggerColumn } from '@/stores/useSettingsStore'
 
 export function isBlockerSatisfied(
   blockerColumn: KanbanTicketColumn,
+  blockerMode: 'build' | 'plan' | 'super-plan' | null,
   triggerColumn: FollowUpTriggerColumn
 ): boolean {
   if (triggerColumn === 'review') {
-    return blockerColumn === 'review' || blockerColumn === 'done'
+    if (blockerColumn === 'done') return true
+    if (blockerColumn === 'review' && blockerMode === 'build') return true
+    return false
   }
   return blockerColumn === 'done'
 }

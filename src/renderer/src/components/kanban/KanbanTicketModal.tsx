@@ -1021,7 +1021,7 @@ function EditModeContent({
                 {blockerTickets.map(blocker => (
                   <div key={blocker.id} className="flex items-center justify-between gap-2 px-2 py-1 rounded-md bg-muted/30">
                     <div className="flex items-center gap-2 min-w-0">
-                      {isBlockerSatisfied(blocker.column, followUpTriggerColumn) ? (
+                      {isBlockerSatisfied(blocker.column, blocker.mode, followUpTriggerColumn) ? (
                         <span className="text-green-500 text-xs">&#10003;</span>
                       ) : (
                         <Lock className="h-3 w-3 text-amber-500" />

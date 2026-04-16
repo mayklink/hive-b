@@ -127,7 +127,7 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
       let count = 0
       for (const [, projectTickets] of state.tickets) {
         for (const t of projectTickets) {
-          if (blockers.has(t.id) && !isBlockerSatisfied(t.column, followUpTriggerColumn)) count++
+          if (blockers.has(t.id) && !isBlockerSatisfied(t.column, t.mode, followUpTriggerColumn)) count++
         }
       }
       return count

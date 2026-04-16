@@ -501,7 +501,7 @@ export const useKanbanStore = create<KanbanState>()(
           const { useSettingsStore } = await import('./useSettingsStore')
           const { isBlockerSatisfied } = await import('../lib/blocker-utils')
           const triggerColumn = useSettingsStore.getState().followUpTriggerColumn
-          if (column === 'done' || (triggerColumn === 'review' && column === 'review')) {
+          if (column === 'done' || (triggerColumn === 'review' && column === 'review' && movedTicket?.mode === 'build')) {
             const { dependencyMap, tickets: allTickets } = get()
             // Find tickets that list this ticket as a blocker
             for (const [depId, blockers] of dependencyMap) {
@@ -512,7 +512,7 @@ export const useKanbanStore = create<KanbanState>()(
                 // Find the blocker ticket across all projects
                 for (const [, projTickets] of allTickets) {
                   const bt = projTickets.find(t => t.id === bid)
-                  if (bt && !isBlockerSatisfied(bt.column, triggerColumn)) { allSatisfied = false; break }
+                  if (bt && !isBlockerSatisfied(bt.column, bt.mode, triggerColumn)) { allSatisfied = false; break }
                 }
                 if (!allSatisfied) break
               }

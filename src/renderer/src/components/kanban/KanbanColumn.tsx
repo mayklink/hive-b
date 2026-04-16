@@ -255,7 +255,7 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
             if (blockerIds?.size) {
               for (const [, projTickets] of store.tickets) {
                 for (const t of projTickets) {
-                  if (blockerIds.has(t.id) && !isBlockerSatisfied(t.column, triggerColumn)) {
+                  if (blockerIds.has(t.id) && !isBlockerSatisfied(t.column, t.mode, triggerColumn)) {
                     isBlocked = true
                     break
                   }
