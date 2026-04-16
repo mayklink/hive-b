@@ -22,11 +22,28 @@ export class GhosttyBackend implements TerminalBackend {
   private mounted = false
   private syncFrameTimer: ReturnType<typeof requestAnimationFrame> | null = null
   private lastVisibleRect: { x: number; y: number; w: number; h: number } | null = null
+  private opts: TerminalOpts | null = null
+  private callbacks: TerminalBackendCallbacks | null = null
+  private visible = true
+  private runtimeReady = false
+  private runtimeInitPromise: Promise<boolean> | null = null
+  private createSurfacePromise: Promise<void> | null = null
+  private surfaceCreated = false
+  private failed = false
 
   mount(container: HTMLDivElement, opts: TerminalOpts, callbacks: TerminalBackendCallbacks): void {
     this.terminalId = opts.terminalId
     this.container = container
+    this.opts = opts
+    this.callbacks = callbacks
     this.mounted = true
+    this.visible = true
+    this.runtimeReady = false
+    this.runtimeInitPromise = null
+    this.createSurfacePromise = null
+    this.surfaceCreated = false
+    this.failed = false
+    this.lastVisibleRect = null
 
     // The container acts as a transparent "hole" — the native NSView renders behind it.
     // We need pointer-events: none so mouse events pass through to the native view.
@@ -35,14 +52,7 @@ export class GhosttyBackend implements TerminalBackend {
     container.style.position = 'relative'
 
     callbacks.onStatusChange('creating')
-
-    this.initAndCreateSurface(opts).then((success) => {
-      if (success) {
-        callbacks.onStatusChange('running')
-      } else {
-        callbacks.onStatusChange('exited')
-      }
-    })
+    void this.ensureSurface()
 
     // Track container position/size and update the native NSView frame.
     // Debounced via requestAnimationFrame to avoid rapid-fire IPC during resizing.
@@ -59,43 +69,146 @@ export class GhosttyBackend implements TerminalBackend {
   }
 
   /**
-   * Initialize the Ghostty runtime (if needed) and create a surface.
+   * Initialize the Ghostty runtime once.
    */
-  private async initAndCreateSurface(opts: TerminalOpts): Promise<boolean> {
-    try {
-      // Ensure Ghostty runtime is initialized
-      const initResult = await window.terminalOps.ghosttyInit()
-      if (!initResult.success) {
-        console.error('Failed to initialize Ghostty:', initResult.error)
-        return false
-      }
+  private async ensureRuntimeReady(): Promise<boolean> {
+    if (this.runtimeReady) return true
+    if (this.runtimeInitPromise) return this.runtimeInitPromise
 
-      // Get container rect for initial surface placement
+    this.runtimeInitPromise = (async () => {
+      try {
+        const initResult = await window.terminalOps.ghosttyInit()
+        if (!initResult.success) {
+          console.error('Failed to initialize Ghostty:', initResult.error)
+          return false
+        }
+        this.runtimeReady = true
+        return true
+      } catch (err) {
+        console.error('Error initializing Ghostty:', err)
+        return false
+      } finally {
+        this.runtimeInitPromise = null
+      }
+    })()
+
+    return this.runtimeInitPromise
+  }
+
+  /**
+   * Create the native Ghostty surface once the container has a measurable rect.
+   * Hidden or zero-sized containers are treated as "not ready yet", not terminal failure.
+   */
+  private async ensureSurface(): Promise<void> {
+    if (
+      !this.mounted ||
+      this.failed ||
+      this.surfaceCreated ||
+      this.createSurfacePromise ||
+      !this.opts
+    ) {
+      return
+    }
+
+    const initialRect = this.getContainerRect()
+    if (!initialRect) return
+
+    this.createSurfacePromise = (async () => {
+      const runtimeReady = await this.ensureRuntimeReady()
+      if (!runtimeReady) {
+        this.fail()
+        return
+      }
+      if (!this.mounted || this.failed || this.surfaceCreated || !this.opts) return
+
       const rect = this.getContainerRect()
-      if (!rect) return false
+      if (!rect) return
       this.lastVisibleRect = rect
 
-      // Create the native surface
-      const result = await window.terminalOps.ghosttyCreateSurface(this.terminalId, rect, {
-        cwd: opts.cwd,
-        shell: opts.shell,
-        scaleFactor: window.devicePixelRatio || 2.0,
-        fontSize: useSettingsStore.getState().ghosttyFontSize || GhosttyBackend.FALLBACK_FONT_SIZE
-      })
+      try {
+        const result = await window.terminalOps.ghosttyCreateSurface(this.terminalId, rect, {
+          cwd: this.opts.cwd,
+          shell: this.opts.shell,
+          scaleFactor: window.devicePixelRatio || 2.0,
+          fontSize: useSettingsStore.getState().ghosttyFontSize || GhosttyBackend.FALLBACK_FONT_SIZE
+        })
 
-      if (!result.success) {
-        console.error('Failed to create Ghostty surface:', result.error)
-        return false
+        if (!result.success) {
+          console.error('Failed to create Ghostty surface:', result.error)
+          this.fail()
+          return
+        }
+
+        if (!this.mounted || this.failed) {
+          // Disposed or failed between the create call and its resolution.
+          // The native surface exists but we never stored it as surfaceCreated,
+          // so dispose() skipped cleanup — destroy it here to avoid leaking.
+          window.terminalOps.ghosttyDestroySurface(this.terminalId).catch(() => {
+            // Best-effort cleanup
+          })
+          return
+        }
+
+        this.surfaceCreated = true
+        this.callbacks?.onStatusChange('running')
+
+        if (this.visible) {
+          this.syncFrame()
+          await window.terminalOps.ghosttySetFocus(this.terminalId, true)
+        } else {
+          this.hideSurface()
+        }
+      } catch (err) {
+        console.error('Error creating Ghostty surface:', err)
+        this.fail()
+      } finally {
+        this.createSurfacePromise = null
       }
+    })()
 
-      // Set initial focus
-      await window.terminalOps.ghosttySetFocus(this.terminalId, true)
+    await this.createSurfacePromise
+  }
 
-      return true
-    } catch (err) {
-      console.error('Error creating Ghostty surface:', err)
-      return false
+  private fail(): void {
+    if (!this.mounted || this.failed) return
+    this.failed = true
+    this.callbacks?.onStatusChange('exited')
+  }
+
+  private hideSurface(): void {
+    if (!this.surfaceCreated) return
+
+    window.terminalOps.ghosttySetFocus(this.terminalId, false).catch(() => {
+      // Ignore focus errors
+    })
+    const hiddenRect = this.lastVisibleRect
+      ? {
+          x: GhosttyBackend.HIDDEN_RECT.x,
+          y: GhosttyBackend.HIDDEN_RECT.y,
+          w: this.lastVisibleRect.w,
+          h: this.lastVisibleRect.h
+        }
+      : GhosttyBackend.HIDDEN_RECT
+
+    window.terminalOps.ghosttySetFrame(this.terminalId, hiddenRect).catch(() => {
+      // Ignore frame sync errors during teardown
+    })
+  }
+
+  private showSurface(): void {
+    if (!this.surfaceCreated) {
+      void this.ensureSurface()
+      return
     }
+
+    this.syncFrame()
+    // Restore macOS first responder so focusedSurfaceId() returns this surface
+    // and the menu paste handler routes Cmd+V correctly. Without this, focus
+    // restoration depends on a fragile setTimeout in TerminalView that can be
+    // cancelled by rapid effectiveVisible changes (e.g. overlay suppression race).
+    window.terminalOps.ghosttySetFocus(this.terminalId, true).catch(() => {
+      // Ignore focus errors
+    })
   }
 
   /**
@@ -154,7 +267,14 @@ export class GhosttyBackend implements TerminalBackend {
    * internally, so we only need the single setFrame call here.
    */
   private syncFrame(): void {
-    if (!this.mounted) return
+    if (!this.mounted || this.failed) return
+
+    if (!this.surfaceCreated) {
+      if (this.visible) {
+        void this.ensureSurface()
+      }
+      return
+    }
 
     const rect = this.getContainerRect()
     if (!rect) return
@@ -178,6 +298,10 @@ export class GhosttyBackend implements TerminalBackend {
 
   focus(): void {
     if (!this.mounted) return
+    if (!this.surfaceCreated) {
+      void this.ensureSurface()
+      return
+    }
     window.terminalOps.ghosttySetFocus(this.terminalId, true).catch(() => {
       // Ignore focus errors
     })
@@ -185,34 +309,14 @@ export class GhosttyBackend implements TerminalBackend {
 
   setVisible(visible: boolean): void {
     if (!this.mounted) return
+    this.visible = visible
 
     if (!visible) {
-      window.terminalOps.ghosttySetFocus(this.terminalId, false).catch(() => {
-        // Ignore focus errors
-      })
-      const hiddenRect = this.lastVisibleRect
-        ? {
-            x: GhosttyBackend.HIDDEN_RECT.x,
-            y: GhosttyBackend.HIDDEN_RECT.y,
-            w: this.lastVisibleRect.w,
-            h: this.lastVisibleRect.h
-          }
-        : GhosttyBackend.HIDDEN_RECT
-
-      window.terminalOps.ghosttySetFrame(this.terminalId, hiddenRect).catch(() => {
-        // Ignore frame sync errors during teardown
-      })
+      this.hideSurface()
       return
     }
 
-    this.syncFrame()
-    // Restore macOS first responder so focusedSurfaceId() returns this surface
-    // and the menu paste handler routes Cmd+V correctly. Without this, focus
-    // restoration depends on a fragile setTimeout in TerminalView that can be
-    // cancelled by rapid effectiveVisible changes (e.g. overlay suppression race).
-    window.terminalOps.ghosttySetFocus(this.terminalId, true).catch(() => {
-      // Ignore focus errors
-    })
+    this.showSurface()
   }
 
   clear(): void {
@@ -241,9 +345,19 @@ export class GhosttyBackend implements TerminalBackend {
       this.container = null
     }
 
-    window.terminalOps.ghosttyDestroySurface(this.terminalId).catch(() => {
-      // Best-effort cleanup
-    })
+    if (this.surfaceCreated) {
+      window.terminalOps.ghosttyDestroySurface(this.terminalId).catch(() => {
+        // Best-effort cleanup
+      })
+    }
+
+    this.opts = null
+    this.callbacks = null
+    this.runtimeReady = false
+    this.runtimeInitPromise = null
+    this.createSurfacePromise = null
+    this.surfaceCreated = false
+    this.failed = false
   }
 }
 

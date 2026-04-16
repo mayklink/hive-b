@@ -94,12 +94,14 @@ function TerminalManagerPortal(): React.JSX.Element {
     : !rightSidebarCollapsed && effectiveBottomPanelTab === 'terminal' && collapsedPanel !== 'bottom'
 
   const target = getTarget(terminalPosition)
+  const portalReady = target !== null
 
   const terminalManager = (
     <TerminalManager
       selectedWorktreeId={selectedWorktreeId}
       worktreePath={selectedWorktreePath}
       isVisible={isVisible}
+      portalReady={portalReady}
     />
   )
 

@@ -14,6 +14,8 @@ interface TerminalManagerProps {
   worktreePath: string | null
   /** Whether the terminal tab is currently visible */
   isVisible: boolean
+  /** Whether a real portal target exists for terminal rendering */
+  portalReady: boolean
 }
 
 /**
@@ -26,7 +28,8 @@ interface TerminalManagerProps {
 export function TerminalManager({
   selectedWorktreeId,
   worktreePath,
-  isVisible
+  isVisible,
+  portalReady
 }: TerminalManagerProps): React.JSX.Element {
   // Map worktreeId -> path for resolving CWD of non-selected worktrees' tabs
   const worktreePathsRef = useRef<Map<string, string>>(new Map())
@@ -73,14 +76,14 @@ export function TerminalManager({
   // panel is visible to avoid unnecessary PTY creation.
   // Read tabs via getState() to avoid re-triggering on every tab state change.
   useEffect(() => {
-    const shouldCreate = terminalPosition === 'sidebar' || isVisible
+    const shouldCreate = portalReady && (terminalPosition === 'sidebar' || isVisible)
     if (selectedWorktreeId && worktreePath && shouldCreate) {
       const tabs = useTerminalTabStore.getState().getTabs(selectedWorktreeId)
       if (tabs.length === 0) {
         createTab(selectedWorktreeId)
       }
     }
-  }, [selectedWorktreeId, worktreePath, isVisible, terminalPosition, createTab])
+  }, [selectedWorktreeId, worktreePath, isVisible, terminalPosition, portalReady, createTab])
 
   // When backend setting changes, tear down all active terminals so they get re-created
   // with the new backend on next visibility.
