@@ -604,7 +604,6 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
 
   // Mode state for input border color
   const mode = useSessionStore((state) => state.modeBySession.get(sessionId) || 'build')
-  const isBashMode = inputValue.startsWith('!') && !!worktreePath
   const persistedFollowUpMessages =
     useSessionStore((state) => state.pendingFollowUpMessages.get(sessionId)) ?? EMPTY_STRING_ARRAY
 
@@ -620,6 +619,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
   }, [isStreaming])
   const [isCompacting, setIsCompacting] = useState(false)
   const { runs: bashRuns, isRunning: isBashRunning, runCommand: runBashCommand, abort: abortBash } = useBashRuns(sessionId)
+  const isBashMode = inputValue.startsWith('!') && !!worktreePath
   const [sessionRetry, setSessionRetry] = useState<SessionRetryState | null>(null)
   const [sessionErrorMessage, setSessionErrorMessage] = useState<string | null>(null)
   const [sessionErrorStderr, setSessionErrorStderr] = useState<string | null>(null)
