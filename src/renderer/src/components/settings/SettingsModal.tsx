@@ -16,7 +16,6 @@ import {
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useSettingsStore } from '@/stores/useSettingsStore'
-import { useGhosttySuppression } from '@/hooks'
 import { SettingsAppearance } from './SettingsAppearance'
 import { SettingsGeneral } from './SettingsGeneral'
 import { SettingsModels } from './SettingsModels'
@@ -47,7 +46,6 @@ const SECTIONS = [
 export function SettingsModal(): React.JSX.Element {
   const { isOpen, activeSection, closeSettings, openSettings, setActiveSection } =
     useSettingsStore()
-  useGhosttySuppression('settings-modal', isOpen)
 
   // Listen for the custom event dispatched by keyboard shortcut handler
   useEffect(() => {

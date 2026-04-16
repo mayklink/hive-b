@@ -1,4 +1,5 @@
 import { AlertTriangle, Download } from 'lucide-react'
+import { useGhosttySuppression } from '@/hooks'
 
 interface DropOverlayProps {
   variant: 'normal' | 'warning'
@@ -6,6 +7,7 @@ interface DropOverlayProps {
 
 export function DropOverlay({ variant }: DropOverlayProps) {
   const isWarning = variant === 'warning'
+  useGhosttySuppression('drop-overlay', true)
 
   return (
     <div

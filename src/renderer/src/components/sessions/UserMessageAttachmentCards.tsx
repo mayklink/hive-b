@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { KanbanSquare, FileText, MessageSquareText, X } from 'lucide-react'
 import { ProviderIcon } from '@/components/ui/provider-icon'
 import type { ParsedTicket, ParsedPrComment, ParsedFile, ParsedDataAttachment, ParsedDiffComment } from '@/lib/parse-user-message-attachments'
+import { useGhosttySuppression } from '@/hooks'
 
 interface UserMessageAttachmentCardsProps {
   tickets: ParsedTicket[]
@@ -19,6 +20,7 @@ export function UserMessageAttachmentCards({
   diffComments
 }: UserMessageAttachmentCardsProps): React.JSX.Element | null {
   const [expandedImage, setExpandedImage] = useState<{ dataUrl: string; name: string } | null>(null)
+  useGhosttySuppression('image-lightbox', expandedImage !== null)
 
   // Handle Escape key to close lightbox
   useEffect(() => {
