@@ -1419,6 +1419,10 @@ declare global {
       fetch: () => Promise<import('../shared/types/usage').UsageResult>
       fetchOpenai: () => Promise<import('../shared/types/usage').OpenAIUsageResult>
     }
+    accountOps: {
+      getClaudeEmail: () => Promise<string | null>
+      getOpenAIEmail: () => Promise<string | null>
+    }
     analyticsOps: {
       track: (event: string, properties?: Record<string, unknown>) => Promise<void>
       setEnabled: (enabled: boolean) => Promise<void>

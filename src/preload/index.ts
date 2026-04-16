@@ -1879,6 +1879,11 @@ const usageOps = {
   fetchOpenai: () => ipcRenderer.invoke('usage:fetchOpenai')
 }
 
+const accountOps = {
+  getClaudeEmail: (): Promise<string | null> => ipcRenderer.invoke('account:getClaudeEmail'),
+  getOpenAIEmail: (): Promise<string | null> => ipcRenderer.invoke('account:getOpenAIEmail')
+}
+
 const perfDiagnosticsOps = {
   enable: (enabled: boolean) => ipcRenderer.invoke('perf-diagnostics:enable', enabled),
   getSnapshot: () => ipcRenderer.invoke('perf-diagnostics:snapshot')
@@ -2107,6 +2112,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('updaterOps', updaterOps)
     contextBridge.exposeInMainWorld('connectionOps', connectionOps)
     contextBridge.exposeInMainWorld('usageOps', usageOps)
+    contextBridge.exposeInMainWorld('accountOps', accountOps)
     contextBridge.exposeInMainWorld('analyticsOps', analyticsOps)
     contextBridge.exposeInMainWorld('perfDiagnosticsOps', perfDiagnosticsOps)
     contextBridge.exposeInMainWorld('codexDebugLoggerOps', codexDebugLoggerOps)
@@ -2146,6 +2152,8 @@ if (process.contextIsolated) {
   window.connectionOps = connectionOps
   // @ts-expect-error (define in dts)
   window.usageOps = usageOps
+  // @ts-expect-error (define in dts)
+  window.accountOps = accountOps
   // @ts-expect-error (define in dts)
   window.analyticsOps = analyticsOps
   // @ts-expect-error (define in dts)

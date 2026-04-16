@@ -46,6 +46,7 @@ export {
   resolveDefaultUsageProvider,
   normalizeUsage
 } from './useUsageStore'
+export { useAccountStore } from './useAccountStore'
 export { useHintStore } from './useHintStore'
 export { useVimModeStore } from './useVimModeStore'
 export { usePRReviewStore } from './usePRReviewStore'

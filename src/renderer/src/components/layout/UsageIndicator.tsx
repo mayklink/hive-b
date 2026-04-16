@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { useUsageStore, useSessionStore, resolveUsageProvider, resolveDefaultUsageProvider, normalizeUsage } from '@/stores'
+import { useUsageStore, useAccountStore, useSessionStore, resolveUsageProvider, resolveDefaultUsageProvider, normalizeUsage } from '@/stores'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
@@ -115,6 +115,8 @@ function ProviderUsageBlock({
   const isLoading = useUsageStore((s) =>
     provider === 'anthropic' ? s.anthropicIsLoading : s.openaiIsLoading
   )
+  const email = useAccountStore((s) => provider === 'anthropic' ? s.anthropicEmail : s.openaiEmail)
+  const fetchEmail = useAccountStore((s) => s.fetchEmail)
 
   const usage = normalizeUsage(provider, anthropicUsage, openaiUsage)
 
@@ -133,7 +135,7 @@ function ProviderUsageBlock({
               <button
                 type="button"
                 className="shrink-0 cursor-pointer bg-transparent border-none p-0"
-                onClick={() => forceRefreshProvider(provider)}
+                onClick={() => { forceRefreshProvider(provider); fetchEmail(provider) }}
                 aria-label={`Refresh ${providerLabel} usage`}
               >
                 <img
@@ -176,7 +178,7 @@ function ProviderUsageBlock({
             <button
               type="button"
               className="shrink-0 cursor-pointer bg-transparent border-none p-0"
-              onClick={() => forceRefreshProvider(provider)}
+              onClick={() => { forceRefreshProvider(provider); fetchEmail(provider) }}
               aria-label={`Refresh ${providerLabel} usage`}
             >
               <img
@@ -198,6 +200,7 @@ function ProviderUsageBlock({
       <TooltipContent side="top" sideOffset={8}>
         <div className="space-y-1">
           <div className="font-medium">{tooltipTitle}</div>
+          {email && <div className="text-[10px] text-muted-foreground">{email}</div>}
           <div className="text-[10px]">
             5-hour: {Math.round(fiveHourPercent)}% (resets {fiveHourReset})
           </div>
@@ -223,6 +226,7 @@ export function UsageIndicator(): React.JSX.Element | null {
   const activeProvider = useUsageStore((s) => s.activeProvider)
   const fetchUsageForProvider = useUsageStore((s) => s.fetchUsageForProvider)
   const setActiveProvider = useUsageStore((s) => s.setActiveProvider)
+  const fetchEmail = useAccountStore((s) => s.fetchEmail)
 
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
 
@@ -251,8 +255,11 @@ export function UsageIndicator(): React.JSX.Element | null {
     const { usageIndicatorMode: mode, usageIndicatorProviders: selected } =
       useSettingsStore.getState()
     const current = useUsageStore.getState().activeProvider
-    getVisibleProviders(mode, selected, current).forEach((p) => fetchUsageForProvider(p))
-  }, [activeSessionId, setActiveProvider, fetchUsageForProvider])
+    getVisibleProviders(mode, selected, current).forEach((p) => {
+      fetchUsageForProvider(p)
+      fetchEmail(p)
+    })
+  }, [activeSessionId, setActiveProvider, fetchUsageForProvider, fetchEmail])
 
   const visibleProviders = getVisibleProviders(
     usageIndicatorMode,
