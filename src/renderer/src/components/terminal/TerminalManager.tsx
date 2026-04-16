@@ -35,6 +35,7 @@ export function TerminalManager({
   const destroyTerminal = useTerminalStore((s) => s.destroyTerminal)
   const worktreesByProject = useWorktreeStore((s) => s.worktreesByProject)
   const embeddedTerminalBackend = useSettingsStore((s) => s.embeddedTerminalBackend)
+  const terminalPosition = useSettingsStore((s) => s.terminalPosition)
   const prevBackendRef = useRef(embeddedTerminalBackend)
 
   const { tabsByWorktree, activeTabByWorktree, createTab, removeWorktree, removeAllTabs } =
@@ -167,7 +168,9 @@ export function TerminalManager({
           </div>
         )}
       </div>
-      {selectedWorktreeId && <TerminalTabSidebar worktreeId={selectedWorktreeId} />}
+      {selectedWorktreeId && terminalPosition !== 'sidebar' && (
+        <TerminalTabSidebar worktreeId={selectedWorktreeId} />
+      )}
     </div>
   )
 }
