@@ -31,7 +31,6 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 export async function getClaudeAccountEmail(): Promise<string | null> {
   const claudePath = join(homedir(), '.claude.json')
   if (!existsSync(claudePath)) {
-    log.warn('Claude config file not found', { path: claudePath })
     return null
   }
   try {
@@ -57,7 +56,6 @@ export async function getClaudeAccountEmail(): Promise<string | null> {
 export async function getOpenAIAccountEmail(): Promise<string | null> {
   const authPath = join(CODEX_HOME, 'auth.json')
   if (!existsSync(authPath)) {
-    log.warn('Codex auth file not found', { path: authPath })
     return null
   }
   try {
