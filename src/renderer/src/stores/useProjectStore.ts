@@ -22,6 +22,10 @@ interface Project {
   last_accessed_at: string
 }
 
+interface ProjectSelectionOptions {
+  preservePinnedBoard?: boolean
+}
+
 interface ProjectState {
   // Data
   projects: Project[]
@@ -54,7 +58,7 @@ interface ProjectState {
       auto_assign_port?: boolean
     }
   ) => Promise<boolean>
-  selectProject: (id: string | null) => void
+  selectProject: (id: string | null, options?: ProjectSelectionOptions) => void
   toggleProjectExpanded: (id: string) => void
   setEditingProject: (id: string | null) => void
   touchProject: (id: string) => Promise<void>
@@ -275,12 +279,12 @@ export const useProjectStore = create<ProjectState>()(
       },
 
       // Select a project
-      selectProject: (id: string | null) => {
+      selectProject: (id: string | null, options?: ProjectSelectionOptions) => {
         set({ selectedProjectId: id })
         if (id) {
           // Close pinned board when navigating to a specific project
           const kanbanState = useKanbanStore.getState()
-          if (kanbanState.isPinnedBoardActive) {
+          if (!options?.preservePinnedBoard && kanbanState.isPinnedBoardActive) {
             kanbanState.togglePinnedBoard()
           }
           // Touch project to update last_accessed_at

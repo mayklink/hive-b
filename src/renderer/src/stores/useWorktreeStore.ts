@@ -85,6 +85,10 @@ interface Worktree {
   github_pr_url: string | null
 }
 
+interface WorktreeSelectionOptions {
+  preservePinnedBoard?: boolean
+}
+
 interface WorktreeState {
   // Data - keyed by project ID
   worktreesByProject: Map<string, Worktree[]>
@@ -116,7 +120,7 @@ interface WorktreeState {
     branchName: string,
     projectPath: string
   ) => Promise<{ success: boolean; error?: string }>
-  selectWorktree: (id: string | null) => void
+  selectWorktree: (id: string | null, options?: WorktreeSelectionOptions) => void
   selectWorktreeOnly: (id: string | null) => void
   touchWorktree: (id: string) => Promise<void>
   syncWorktrees: (projectId: string, projectPath: string) => Promise<void>
@@ -630,12 +634,12 @@ export const useWorktreeStore = create<WorktreeState>((set, get) => ({
   },
 
   // Select a worktree (with connection deconfliction)
-  selectWorktree: (id: string | null) => {
+  selectWorktree: (id: string | null, options?: WorktreeSelectionOptions) => {
     const previousWorktreeId = get().selectedWorktreeId
     set({ selectedWorktreeId: id })
     applyWorktreeSelectionEffects(previousWorktreeId, id, {
       clearConnectionSelection: Boolean(id),
-      closePinnedBoard: Boolean(id),
+      closePinnedBoard: Boolean(id) && !options?.preservePinnedBoard,
       refreshLanguage: Boolean(id)
     })
   },

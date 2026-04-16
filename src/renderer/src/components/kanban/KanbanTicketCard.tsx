@@ -423,15 +423,16 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
       // Cmd+click (Mac) / Ctrl+click (Win/Linux) — select attached worktree
       if ((e.metaKey || e.ctrlKey) && ticket.worktree_id && !isArchived) {
         e.preventDefault()
-        useWorktreeStore.getState().selectWorktree(ticket.worktree_id)
-        useProjectStore.getState().selectProject(ticket.project_id)
+        const selectionOptions = isPinnedMode ? { preservePinnedBoard: true } : undefined
+        useWorktreeStore.getState().selectWorktree(ticket.worktree_id, selectionOptions)
+        useProjectStore.getState().selectProject(ticket.project_id, selectionOptions)
         useWorktreeStatusStore.getState().clearWorktreeUnread(ticket.worktree_id)
         return
       }
 
       useKanbanStore.getState().setSelectedTicketId(ticket.id)
     },
-    [ticket.id, ticket.worktree_id, ticket.project_id, isArchived]
+    [ticket.id, ticket.worktree_id, ticket.project_id, isArchived, isPinnedMode]
   )
 
   // ── Middle-click — select attached worktree (same as sidebar) ─
@@ -443,11 +444,12 @@ export const KanbanTicketCard = memo(function KanbanTicketCard({
       e.preventDefault()                     // suppress browser auto-scroll
 
       // Select worktree — same as sidebar's WorktreeItem.handleClick
-      useWorktreeStore.getState().selectWorktree(ticket.worktree_id)
-      useProjectStore.getState().selectProject(ticket.project_id)
+      const selectionOptions = isPinnedMode ? { preservePinnedBoard: true } : undefined
+      useWorktreeStore.getState().selectWorktree(ticket.worktree_id, selectionOptions)
+      useProjectStore.getState().selectProject(ticket.project_id, selectionOptions)
       useWorktreeStatusStore.getState().clearWorktreeUnread(ticket.worktree_id)
     },
-    [ticket.worktree_id, ticket.project_id, isArchived]
+    [ticket.worktree_id, ticket.project_id, isArchived, isPinnedMode]
   )
 
   const handleMouseEnter = useCallback(() => {
