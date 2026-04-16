@@ -1,6 +1,7 @@
 import { memo } from 'react'
 import { UserBubble } from './UserBubble'
 import { AssistantCanvas } from './AssistantCanvas'
+import { BashCommandBubble } from './BashCommandBubble'
 import { CopyMessageButton } from './CopyMessageButton'
 import { ForkMessageButton } from './ForkMessageButton'
 import {
@@ -98,7 +99,13 @@ export const MessageRenderer = memo(function MessageRenderer({
           isForking={isForking}
         />
       )}
-      {message.role === 'user' ? (
+      {message.role === 'bash' ? (
+        <BashCommandBubble
+          command={displayContent}
+          output={message.bashOutput ?? ''}
+          status={message.bashStatus ?? 'running'}
+        />
+      ) : message.role === 'user' ? (
         <UserBubble
           content={displayContent}
           timestamp={message.timestamp}

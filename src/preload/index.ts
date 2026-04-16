@@ -2091,6 +2091,27 @@ const ticketImport = {
     ipcRenderer.invoke('ticketImport:updateRemoteStatus', providerId, repo, externalId, statusId, settings)
 }
 
+const bash = {
+  run: (sessionId: string, command: string, cwd: string): Promise<{ success: boolean; runId?: string; error?: string }> =>
+    ipcRenderer.invoke('bash:run', { sessionId, command, cwd }),
+
+  abort: (sessionId: string): Promise<boolean> =>
+    ipcRenderer.invoke('bash:abort', sessionId),
+
+  getRun: (sessionId: string): Promise<BashRunSnapshot | null> =>
+    ipcRenderer.invoke('bash:getRun', sessionId),
+
+  onStream: (callback: (event: BashStreamEvent) => void): (() => void) => {
+    const handler = (_e: Electron.IpcRendererEvent, event: BashStreamEvent): void => {
+      callback(event)
+    }
+    ipcRenderer.on('bash:stream', handler)
+    return () => {
+      ipcRenderer.removeListener('bash:stream', handler)
+    }
+  }
+}
+
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise
 // just add to the DOM global.
@@ -2118,6 +2139,7 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('codexDebugLoggerOps', codexDebugLoggerOps)
     contextBridge.exposeInMainWorld('kanban', kanban)
     contextBridge.exposeInMainWorld('ticketImport', ticketImport)
+    contextBridge.exposeInMainWorld('bash', bash)
   } catch (error) {
     console.error(error)
   }
@@ -2164,4 +2186,6 @@ if (process.contextIsolated) {
   window.kanban = kanban
   // @ts-expect-error (define in dts)
   window.ticketImport = ticketImport
+  // @ts-expect-error (define in dts)
+  window.bash = bash
 }

@@ -264,6 +264,25 @@ declare global {
     space_id: string
   }
 
+  // Bash run snapshot (ephemeral in-memory state from main process)
+  interface BashRunSnapshot {
+    sessionId: string
+    id: string
+    command: string
+    cwd: string
+    startedAt: number
+    status: 'running' | 'exited' | 'killed' | 'truncated' | 'error'
+    outputBuffer: string
+    outputBytes: number
+    exitCode?: number
+  }
+
+  // Bash stream event (sent from main process via 'bash:stream' channel)
+  type BashStreamEvent =
+    | { type: 'start'; sessionId: string; runId: string; command: string; cwd: string; startedAt: number }
+    | { type: 'output'; sessionId: string; runId: string; data: string }
+    | { type: 'end'; sessionId: string; runId: string; status: 'exited' | 'killed' | 'truncated' | 'error'; exitCode?: number }
+
   interface Window {
     db: {
       setting: {
@@ -1564,6 +1583,12 @@ declare global {
         statusId: string,
         settings: Record<string, string>
       ) => Promise<{ success: boolean; error?: string }>
+    }
+    bash: {
+      run: (sessionId: string, command: string, cwd: string) => Promise<{ success: boolean; runId?: string; error?: string }>
+      abort: (sessionId: string) => Promise<boolean>
+      getRun: (sessionId: string) => Promise<BashRunSnapshot | null>
+      onStream: (callback: (event: BashStreamEvent) => void) => () => void
     }
   }
 

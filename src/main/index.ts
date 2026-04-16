@@ -59,6 +59,8 @@ import { perfDiagnostics } from './services/perf-diagnostics'
 import { configure as configureCodexDebugLogger } from './services/codex-debug-logger'
 import { ptyService } from './services/pty-service'
 import { scriptRunner } from './services/script-runner'
+import { bashService } from './services/bash-service'
+import { registerBashHandlers } from './ipc/bash-handlers'
 import { registerTicketImportHandlers } from './ipc/ticket-import-handlers'
 import { initTicketProviderManager, GitHubProvider, JiraProvider } from './services/ticket-providers'
 import { APP_SETTINGS_DB_KEY } from '../shared/types/settings'
@@ -581,6 +583,8 @@ app.whenReady().then(async () => {
     registerGitFileHandlers(mainWindow)
     log.info('Registering Script handlers')
     registerScriptHandlers(mainWindow)
+    log.info('Registering Bash handlers')
+    registerBashHandlers(mainWindow)
     log.info('Registering Terminal handlers')
     registerTerminalHandlers(mainWindow)
 
@@ -681,6 +685,8 @@ app.on('will-quit', async () => {
   cleanupTerminals()
   // Cleanup running scripts
   cleanupScripts()
+  // Cleanup running bash runs (best-effort, no await)
+  bashService.killAll()
   // Cleanup file tree watchers
   await cleanupFileTreeWatchers()
   // Cleanup worktree watchers (git status monitoring)
