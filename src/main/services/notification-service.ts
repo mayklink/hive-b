@@ -14,6 +14,7 @@ interface SessionNotificationData {
 class NotificationService {
   private mainWindow: BrowserWindow | null = null
   private unreadCount = 0
+  private sessionsWithQueuedMessages = new Set<string>()
 
   setMainWindow(window: BrowserWindow): void {
     this.mainWindow = window
@@ -25,6 +26,15 @@ class NotificationService {
   }
 
   showSessionComplete(data: SessionNotificationData): void {
+    if (this.sessionsWithQueuedMessages.has(data.sessionId)) {
+      log.info('Skipping session complete notification: session has queued follow-up messages', {
+        sessionId: data.sessionId,
+        projectName: data.projectName,
+        sessionName: data.sessionName
+      })
+      return
+    }
+
     if (!Notification.isSupported()) {
       log.warn('Notifications not supported on this platform')
       return
@@ -61,6 +71,17 @@ class NotificationService {
       app.dock?.setBadge(String(this.unreadCount))
     } else {
       app.setBadgeCount(this.unreadCount)
+    }
+  }
+
+  // Track which sessions currently have queued follow-up messages so that
+  // `showSessionComplete` can suppress notifications while the session is
+  // about to continue with the next queued message.
+  setSessionQueuedState(sessionId: string, hasQueued: boolean): void {
+    if (hasQueued) {
+      this.sessionsWithQueuedMessages.add(sessionId)
+    } else {
+      this.sessionsWithQueuedMessages.delete(sessionId)
     }
   }
 
