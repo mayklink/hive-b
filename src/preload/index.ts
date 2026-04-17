@@ -548,7 +548,13 @@ const systemOps = {
   isPackaged: (): Promise<boolean> => ipcRenderer.invoke('system:isPackaged'),
 
   // Get the current platform (darwin, win32, linux)
-  getPlatform: (): Promise<string> => ipcRenderer.invoke('system:getPlatform')
+  getPlatform: (): Promise<string> => ipcRenderer.invoke('system:getPlatform'),
+
+  // Push the renderer's follow-up-message queue state into the main process so
+  // `notificationService.showSessionComplete` can suppress notifications while
+  // more queued messages are about to be auto-sent.
+  setSessionQueuedState: (sessionId: string, hasQueued: boolean): Promise<void> =>
+    ipcRenderer.invoke('notification:setSessionQueuedState', sessionId, hasQueued)
 }
 
 // Response logging operations API (only functional when --log is active)

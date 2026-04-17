@@ -6,6 +6,23 @@ import { notifyKanbanSessionSync, notifyKanbanNewSession } from './store-coordin
 import { useSettingsStore } from './useSettingsStore'
 import { getUnavailableAgentSdkMessage } from '@/lib/agent-sdk-availability'
 
+/**
+ * Push the follow-up-message queue state for a session into the main process
+ * via IPC. Main uses this to suppress session-complete notifications while
+ * more queued messages are about to be auto-sent.
+ *
+ * Fire-and-forget: swallows errors because the IPC surface may be absent in
+ * test harnesses and a failure here must not block queue mutations.
+ */
+const pushQueuedState = (sessionId: string, hasQueued: boolean): void => {
+  // Optional chaining short-circuits to `undefined` if `window.systemOps` or the
+  // method are missing (test harness), and `?.catch` short-circuits in turn — so
+  // this single expression covers both the "IPC surface absent" and "IPC rejects"
+  // cases. An IPC failure just falls back to the default (show notification),
+  // which is the safer behavior.
+  window.systemOps?.setSessionQueuedState?.(sessionId, hasQueued)?.catch?.(() => {})
+}
+
 export const BOARD_TAB_ID = '__board__'
 export const BOARD_ASSISTANT_SESSION_NAME_PREFIX = '[Board Assistant]'
 
@@ -600,6 +617,11 @@ export const useSessionStore = create<SessionState>()(
             const newConnectionSessionsMap = new Map(state.sessionsByConnection)
             const newConnectionTabOrderMap = new Map(state.tabOrderByConnection)
             const newOrphanedSessions = new Map(state.orphanedSessions)
+            // Clone up-front so both the orphan early-return and the main path
+            // drop any queued follow-up messages for the closed session — keeping
+            // the renderer map consistent with the main-process `Set` cleared below.
+            const newPendingFollowUps = new Map(state.pendingFollowUpMessages)
+            newPendingFollowUps.delete(sessionId)
             let newActiveSessionId = state.activeSessionId
 
             // Check if this is an orphaned session
@@ -610,7 +632,8 @@ export const useSessionStore = create<SessionState>()(
               }
               return {
                 orphanedSessions: newOrphanedSessions,
-                activeSessionId: newActiveSessionId
+                activeSessionId: newActiveSessionId,
+                pendingFollowUpMessages: newPendingFollowUps
               }
             }
 
@@ -711,11 +734,13 @@ export const useSessionStore = create<SessionState>()(
               activeSessionByConnection: newActiveByConnection,
               closedTerminalSessionIds: newClosedTerminals,
               pinnedSessionIds: newPinnedIds,
+              pendingFollowUpMessages: newPendingFollowUps,
               activePinnedSessionId:
                 state.activePinnedSessionId === sessionId ? null : state.activePinnedSessionId
             }
           })
 
+          pushQueuedState(sessionId, false)
           return { success: true }
         } catch (error) {
           return {
@@ -1478,6 +1503,7 @@ export const useSessionStore = create<SessionState>()(
           newMap.set(sessionId, [...messages])
           return { pendingFollowUpMessages: newMap }
         })
+        pushQueuedState(sessionId, messages.length > 0)
       },
 
       // Dequeue (pop first) a follow-up message for a session
@@ -1496,6 +1522,7 @@ export const useSessionStore = create<SessionState>()(
           }
           return { pendingFollowUpMessages: newMap }
         })
+        pushQueuedState(sessionId, rest.length > 0)
         return first
       },
 
@@ -1507,6 +1534,7 @@ export const useSessionStore = create<SessionState>()(
           newMap.set(sessionId, [message, ...existing])
           return { pendingFollowUpMessages: newMap }
         })
+        pushQueuedState(sessionId, true)
       },
 
       // Consume (pop first) a follow-up message for a session
@@ -1521,6 +1549,7 @@ export const useSessionStore = create<SessionState>()(
           newMap.set(sessionId, [...existing, message])
           return { pendingFollowUpMessages: newMap }
         })
+        pushQueuedState(sessionId, true)
       },
 
       // Close all sessions except the kept one

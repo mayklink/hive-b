@@ -122,7 +122,8 @@ if (typeof window !== 'undefined') {
         onWindowFocused: vi.fn().mockReturnValue(() => {}),
         updateMenuState: vi.fn().mockResolvedValue(undefined),
         isPackaged: vi.fn().mockResolvedValue(false),
-        getPlatform: vi.fn().mockResolvedValue('darwin')
+        getPlatform: vi.fn().mockResolvedValue('darwin'),
+        setSessionQueuedState: vi.fn().mockResolvedValue(undefined)
       }
     })
   }

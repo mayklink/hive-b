@@ -404,6 +404,15 @@ function registerSystemHandlers(openCodeLaunchSpec: OpenCodeLaunchSpec | null): 
     return process.platform
   })
 
+  // Mirror renderer-side follow-up message queue state into the main process so
+  // notification-service can suppress session-complete notifications while more
+  // queued messages are about to be auto-sent.
+  ipcMain.handle(
+    'notification:setSessionQueuedState',
+    (_event, sessionId: string, hasQueued: boolean) => {
+      notificationService.setSessionQueuedState(sessionId, hasQueued)
+    }
+  )
 }
 
 // Register response logging IPC handlers (only when --log is active)
