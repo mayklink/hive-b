@@ -1264,8 +1264,8 @@ function PlanReviewModeContent({
           setSlashCommands(result.commands)
         }
       })
-      .catch(() => {
-        /* non-fatal; supercharge buttons stay hidden */
+      .catch((err) => {
+        console.warn('[KanbanTicketModal] Failed to fetch slash commands:', err)
       })
     return () => {
       cancelled = true
@@ -1686,6 +1686,13 @@ function PlanReviewModeContent({
 
       // Connection-session branch: use eager start since modal closes to the board.
       if (sessionRecord?.connection_id) {
+        if (!worktreePath) {
+          toast.error('Connection path unavailable')
+          return
+        }
+        // worktreePath is the connection path for connection sessions (parent resolves it).
+        // Narrow to const so TS narrowing survives across the background IIFE closure.
+        const connectionPath = worktreePath
         const sessionStore = useSessionStore.getState()
         const sessionResult = await sessionStore.createConnectionSession(sessionRecord.connection_id)
         if (!sessionResult.success || !sessionResult.session) {
@@ -1698,10 +1705,13 @@ function PlanReviewModeContent({
         prepareTicketSuperchargeSession(newSessionId)
         onClose()
 
+        // NOTE: On IIFE failure, the ticket is left re-linked to the new session (via
+        // prepareTicketSuperchargeSession above) — same failure mode as the worktree
+        // branch below. We don't roll back because the error toast tells the user what
+        // happened and retrying (via a new supercharge click) creates a fresh session.
         void (async () => {
           await setModePromise
-          // worktreePath is the connection path for connection sessions (parent resolves it).
-          await eagerSuperchargeStart(worktreePath!, newSessionId)
+          await eagerSuperchargeStart(connectionPath, newSessionId)
           toast.success('Supercharge session started')
         })().catch((error) => {
           console.error('[KanbanTicketModal] supercharge (connection) background start failed:', error)
