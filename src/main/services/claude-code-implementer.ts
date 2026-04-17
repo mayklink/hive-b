@@ -1829,6 +1829,8 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         hiveSessionId: session.hiveSessionId
       })
 
+      this.maybeNotifyUserFeedbackNeeded(session.hiveSessionId, 'permission')
+
       // If the session is aborted while waiting, auto-reject and notify renderer
       const onAbort = (): void => {
         if (session.pendingPlanApproval?.requestId === requestId) {
@@ -1994,6 +1996,8 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
             requestId,
             hiveSessionId: session.hiveSessionId
           })
+
+          this.maybeNotifyUserFeedbackNeeded(session.hiveSessionId, 'question')
 
           // If the session is aborted while waiting, auto-reject
           const onAbort = (): void => {
@@ -2173,6 +2177,8 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       commandStr,
       waitStartTime: new Date().toISOString()
     })
+
+    this.maybeNotifyUserFeedbackNeeded(session.hiveSessionId, 'permission')
 
     // Block execution with a Promise that waits for user response (no timeout, like questions)
     const userResponse = await new Promise<{
@@ -2439,6 +2445,49 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       })
     } catch (error) {
       log.warn('Failed to show session completion notification', { hiveSessionId, error })
+    }
+  }
+
+  /**
+   * Show a native notification when a session is blocked waiting for user
+   * feedback (question, plan approval, or command permission) while the app
+   * window is unfocused. Mirrors maybeNotifySessionComplete.
+   */
+  private maybeNotifyUserFeedbackNeeded(
+    hiveSessionId: string,
+    kind: 'question' | 'permission'
+  ): void {
+    try {
+      if (!this.mainWindow || this.mainWindow.isDestroyed() || this.mainWindow.isFocused()) {
+        return
+      }
+
+      if (!this.dbService) return
+
+      const session = this.dbService.getSession(hiveSessionId)
+      if (!session) {
+        log.warn('Cannot notify: session not found', { hiveSessionId })
+        return
+      }
+
+      const project = this.dbService.getProject(session.project_id)
+      if (!project) {
+        log.warn('Cannot notify: project not found', { projectId: session.project_id })
+        return
+      }
+
+      notificationService.showPendingUserFeedback(
+        {
+          projectName: project.name,
+          sessionName: session.name || 'Untitled',
+          projectId: session.project_id,
+          worktreeId: session.worktree_id || '',
+          sessionId: hiveSessionId
+        },
+        kind
+      )
+    } catch (error) {
+      log.warn('Failed to show pending user feedback notification', { hiveSessionId, error, kind })
     }
   }
 
