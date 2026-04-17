@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { StickyNote } from 'lucide-react'
 import {
   Dialog,
@@ -29,7 +29,6 @@ export function NoteEditorModal({
 }: NoteEditorModalProps) {
   const [value, setValue] = useState('')
   const [saving, setSaving] = useState(false)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (!open) return
@@ -83,7 +82,6 @@ export function NoteEditorModal({
 
         <div className="flex flex-col gap-2 py-2">
           <Textarea
-            ref={textareaRef}
             autoFocus
             value={value}
             onChange={(e) => setValue(e.target.value.slice(0, MAX_NOTE_LENGTH))}
