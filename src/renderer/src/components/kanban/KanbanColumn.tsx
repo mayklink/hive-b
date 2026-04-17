@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, Fragment } from 'react'
+import { useState, useCallback, useRef, useLayoutEffect, Fragment } from 'react'
 import { motion } from 'motion/react'
 import { ChevronRight, ChevronDown, Plus, Zap, Archive } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -71,6 +71,18 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
   } | null>(null)
   const [showArchiveAllConfirm, setShowArchiveAllConfirm] = useState(false)
 
+  // ── In Progress header title fit mode ───────────────────────────
+  // 'centered'    = default; title centered with 50px left spacer
+  // 'right'       = title right-aligned with 8px gap from toggle
+  // 'abbreviated' = title shows "In Prog" right-aligned
+  type TitleMode = 'centered' | 'right' | 'abbreviated'
+  const [titleMode, setTitleMode] = useState<TitleMode>('centered')
+  const headerRef = useRef<HTMLDivElement>(null)
+  const badgeRef = useRef<HTMLSpanElement>(null)
+  const toggleRef = useRef<HTMLDivElement>(null)
+  const fullTextMeasureRef = useRef<HTMLSpanElement>(null)
+  const shortTextMeasureRef = useRef<HTMLSpanElement>(null)
+
   const isDoneColumn = column === 'done'
   const isTodoColumn = column === 'todo'
   const isInProgressColumn = column === 'in_progress'
@@ -138,6 +150,66 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
       [projectId]
     )
   )
+
+  // ── Measure header and pick title fit mode (In Progress column only) ─────
+  useLayoutEffect(() => {
+    if (!isInProgressColumn) return
+    const header = headerRef.current
+    const badge = badgeRef.current
+    const toggle = toggleRef.current
+    const fullMeasure = fullTextMeasureRef.current
+    if (!header || !badge || !toggle || !fullMeasure) return
+
+    const LEFT_SPACER_PX = 50
+    const TITLE_BADGE_GAP_PX = 8   // gap-2 in title group
+    const TITLE_TOGGLE_GAP_PX = 8  // ml-2 between title group and toggle
+    const RIGHT_MIN_PADDING_PX = 8 // min gap in 'right' mode
+
+    const compute = (): void => {
+      const cs = window.getComputedStyle(header)
+      const innerWidth =
+        header.clientWidth -
+        parseFloat(cs.paddingLeft || '0') -
+        parseFloat(cs.paddingRight || '0')
+
+      const fullTextW = fullMeasure.offsetWidth
+      const badgeW = badge.offsetWidth
+      const toggleW = toggle.offsetWidth
+
+      // Mode 1: centered with full text (needs left spacer)
+      const centeredNeeded =
+        LEFT_SPACER_PX + fullTextW + TITLE_BADGE_GAP_PX + badgeW +
+        TITLE_TOGGLE_GAP_PX + toggleW
+      if (centeredNeeded <= innerWidth) {
+        setTitleMode('centered')
+        return
+      }
+
+      // Mode 2: right-aligned full text (no spacer, 8px min padding on left of title)
+      const rightNeeded =
+        RIGHT_MIN_PADDING_PX + fullTextW + TITLE_BADGE_GAP_PX + badgeW +
+        TITLE_TOGGLE_GAP_PX + toggleW
+      if (rightNeeded <= innerWidth) {
+        setTitleMode('right')
+        return
+      }
+
+      // Mode 3: abbreviated, right-aligned
+      setTitleMode('abbreviated')
+    }
+
+    compute()
+
+    const ro = new ResizeObserver(compute)
+    ro.observe(header)
+    ro.observe(badge)
+    ro.observe(toggle)
+
+    // Re-measure after web fonts finish loading (fallback-metric guard)
+    let cancelled = false
+    document.fonts?.ready?.then(() => { if (!cancelled) compute() }).catch(() => {})
+    return () => { cancelled = true; ro.disconnect() }
+  }, [isInProgressColumn, tickets.length, showArchived, archivedTickets?.length])
 
   const handleToggleShowArchived = useCallback(
     (checked: boolean) => {
@@ -435,15 +507,27 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
       {/* Column header */}
       <ContextMenu>
         <ContextMenuTrigger asChild disabled={!isDoneColumn}>
-          <div className="relative flex items-center px-2 pb-3">
+          <div
+            ref={headerRef}
+            data-title-mode={isInProgressColumn ? titleMode : 'centered'}
+            className="relative flex items-center px-2 pb-3"
+          >
             {/* Left spacer — mirrors right toggle width to keep title centered.
-                Shrinks when the counter badge needs more room. */}
-            {(isDoneColumn || isInProgressColumn) && (
+                For In Progress, only rendered in 'centered' mode so that
+                'right'/'abbreviated' modes can reclaim that space. */}
+            {(isDoneColumn || (isInProgressColumn && titleMode === 'centered')) && (
               <div className="w-[50px] shrink" aria-hidden="true" />
             )}
 
-            {/* Title group — centered */}
-            <div className="flex flex-1 items-center justify-center gap-2">
+            {/* Title group — centered, or right-aligned when In Progress can't fit centered */}
+            <div
+              className={cn(
+                'flex flex-1 items-center gap-2',
+                isInProgressColumn && titleMode !== 'centered'
+                  ? 'justify-end'
+                  : 'justify-center'
+              )}
+            >
               {/* Collapse toggle for Done column */}
               {isDoneColumn && (
                 <button
@@ -459,11 +543,16 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                 </button>
               )}
 
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {COLUMN_TITLES[column]}
+              <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {isInProgressColumn && titleMode === 'abbreviated'
+                  ? 'In Prog'
+                  : COLUMN_TITLES[column]}
               </h3>
 
-              <span className="inline-flex h-5 min-w-[20px] items-center justify-center gap-0.5 rounded-full bg-muted/40 px-1.5 text-[11px] font-medium text-muted-foreground">
+              <span
+                ref={badgeRef}
+                className="inline-flex h-5 min-w-[20px] items-center justify-center gap-0.5 rounded-full bg-muted/40 px-1.5 text-[11px] font-medium text-muted-foreground"
+              >
                 {showArchived && archivedTickets && archivedTickets.length > 0
                   ? <>{tickets.length}+<span className="italic">{archivedTickets.length}</span></>
                   : tickets.length}
@@ -476,7 +565,7 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
             {isInProgressColumn && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="ml-2 flex shrink-0 items-center gap-1.5">
+                  <div ref={toggleRef} className="ml-2 flex shrink-0 items-center gap-1.5">
                     <Zap className={cn('h-3 w-3', !isSimpleMode ? 'text-amber-500' : 'text-muted-foreground/50')} />
                     <Switch
                       data-testid="simple-mode-toggle"
@@ -503,6 +592,28 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                   onCheckedChange={handleToggleShowArchived}
                 />
               </div>
+            )}
+
+            {/* Hidden measurement spans — inherit font styles via cascade; used
+                by useLayoutEffect to decide titleMode. Absolute-positioned off-screen. */}
+            {isInProgressColumn && (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none invisible absolute -left-[9999px] top-0 whitespace-nowrap"
+              >
+                <span
+                  ref={fullTextMeasureRef}
+                  className="text-xs font-semibold uppercase tracking-wider"
+                >
+                  In Progress
+                </span>
+                <span
+                  ref={shortTextMeasureRef}
+                  className="text-xs font-semibold uppercase tracking-wider"
+                >
+                  In Prog
+                </span>
+              </span>
             )}
           </div>
         </ContextMenuTrigger>
