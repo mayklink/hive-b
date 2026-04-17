@@ -3,6 +3,7 @@ import { revealLabel } from '@/lib/platform'
 import {
   AlertCircle,
   Archive,
+  CheckCircle2,
   Code,
   Copy,
   ExternalLink,
@@ -69,6 +70,7 @@ import { LanguageIcon } from '@/components/projects/LanguageIcon'
 import { ArchiveConfirmDialog } from '@/components/worktrees/ArchiveConfirmDialog'
 import { AddAttachmentDialog } from '@/components/worktrees/AddAttachmentDialog'
 import { ManageConnectionWorktreesDialog } from '@/components/connections/ManageConnectionWorktreesDialog'
+import { useSiblingAggregate, type SiblingBucket } from '@/hooks/useSiblingAggregate'
 
 type PinnedItem = { kind: 'worktree'; id: string } | { kind: 'connection'; id: string }
 
@@ -680,6 +682,9 @@ function PinnedWorktreeItem({ worktreeId }: { worktreeId: string }): React.JSX.E
               <span className={cn('text-[11px]', statusClass)} data-testid="pinned-status-text">
                 {displayStatus}
               </span>
+              {worktree.is_default && (
+                <SiblingCountChips projectId={project.id} excludeId={worktree.id} />
+              )}
               <span className="flex-1" />
               {lastMessageTime && (
                 <span
@@ -760,6 +765,75 @@ function PinnedWorktreeItem({ worktreeId }: { worktreeId: string }): React.JSX.E
         onAttachmentAdded={handleAttachmentAdded}
       />
     </ContextMenu>
+  )
+}
+
+// ── Sibling count chips (pinned main row only) ─────────────────
+
+function SiblingCountChips({
+  projectId,
+  excludeId
+}: {
+  projectId: string
+  excludeId: string
+}): React.JSX.Element | null {
+  const { working, ready, waiting } = useSiblingAggregate(projectId, excludeId)
+
+  if (working.count === 0 && ready.count === 0 && waiting.count === 0) return null
+
+  return (
+    <>
+      {working.count > 0 && (
+        <SiblingChip
+          bucket={working}
+          icon={<Loader2 className="h-2.5 w-2.5 text-primary animate-spin" />}
+          testId="pinned-sibling-working"
+        />
+      )}
+      {ready.count > 0 && (
+        <SiblingChip
+          bucket={ready}
+          icon={<CheckCircle2 className="h-2.5 w-2.5 text-green-400" />}
+          testId="pinned-sibling-ready"
+        />
+      )}
+      {waiting.count > 0 && (
+        <SiblingChip
+          bucket={waiting}
+          icon={<AlertCircle className="h-2.5 w-2.5 text-amber-500" />}
+          testId="pinned-sibling-waiting"
+        />
+      )}
+    </>
+  )
+}
+
+function SiblingChip({
+  bucket,
+  icon,
+  testId
+}: {
+  bucket: SiblingBucket
+  icon: React.ReactNode
+  testId: string
+}): React.JSX.Element {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className="ml-1.5 inline-flex items-center gap-0.5 text-[11px] tabular-nums text-muted-foreground shrink-0"
+          data-testid={testId}
+        >
+          {icon}
+          {bucket.count}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={4}>
+        {bucket.names.map((n) => (
+          <div key={n}>{n}</div>
+        ))}
+      </TooltipContent>
+    </Tooltip>
   )
 }
 
