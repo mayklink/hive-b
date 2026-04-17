@@ -89,6 +89,7 @@ import { buildSdkPlanImplementationPrompt, looksLikeCodexProposedPlan } from '@/
 // Stable empty array to avoid creating new references in selectors
 const EMPTY_FILE_INDEX: FlatFile[] = []
 const EMPTY_STRING_ARRAY: string[] = []
+const EMPTY_MESSAGE_ARRAY: OpenCodeMessage[] = []
 import { QuestionPrompt } from './QuestionPrompt'
 import { PermissionPrompt } from './PermissionPrompt'
 import { CommandApprovalPrompt } from './CommandApprovalPrompt'
@@ -5481,8 +5482,25 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
     }
   }, [hasStreamingContent, sessionRecord?.agent_sdk, streamingContent, streamingParts])
 
+  // Only consider the current turn when deciding whether to show the
+  // TaskListWidget. If the session is not actively streaming, fall back to an
+  // empty slice so the widget disappears on abort / idle. If streaming, walk
+  // backward from the latest message to the most recent user message and
+  // return everything after it — this ensures that once the user sends a
+  // follow-up, stale todos from previous turns are hidden until the new turn
+  // emits its own TodoWrite.
+  const currentTurnMessages = useMemo(() => {
+    if (!isStreaming) return EMPTY_MESSAGE_ARRAY
+    for (let i = visibleMessages.length - 1; i >= 0; i--) {
+      if (visibleMessages[i].role === 'user') {
+        return visibleMessages.slice(i + 1)
+      }
+    }
+    return visibleMessages
+  }, [isStreaming, visibleMessages])
+
   const { todos: latestTodos, isIncomplete: latestTodosIncomplete } =
-    useLatestTodoList(visibleMessages, streamingMessage)
+    useLatestTodoList(currentTurnMessages, streamingMessage)
   const taskListTopOffsetPx = usePRStackTopOffset()
 
   const handleRedoRevert = useCallback(() => {
