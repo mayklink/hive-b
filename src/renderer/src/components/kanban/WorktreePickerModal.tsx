@@ -407,6 +407,12 @@ export function WorktreePickerModal({
         // Trigger usage refresh so the board shows up-to-date usage (debounced in store)
         useUsageStore.getState().fetchUsageForProvider(resolveDefaultUsageProvider(agentSdk))
 
+        // In sticky-tab mode, stay on the board instead of switching to the new session
+        if (useSettingsStore.getState().boardMode === 'sticky-tab') {
+          const { BOARD_TAB_ID } = await import('@/stores/useSessionStore')
+          useSessionStore.getState().setActiveSession(BOARD_TAB_ID)
+        }
+
         // Close modal
         onSendComplete?.()
         onOpenChange(false)

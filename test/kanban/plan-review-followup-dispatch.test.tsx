@@ -51,7 +51,11 @@ const mockOpencodeOps = {
   reconnect: vi.fn().mockResolvedValue({ success: true }),
   getMessages: vi.fn().mockResolvedValue({ success: true, messages: [] }),
   planApprove: vi.fn().mockResolvedValue({ success: true }),
-  abort: vi.fn().mockResolvedValue({ success: true })
+  abort: vi.fn().mockResolvedValue({ success: true }),
+  commands: vi.fn().mockResolvedValue({
+    success: true,
+    commands: [{ name: 'using-superpowers' }]
+  })
 }
 
 const mockWorktreeOps = {
@@ -62,6 +66,23 @@ const mockWorktreeOps = {
 const mockGitOps = {
   listBranchesWithStatus: vi.fn().mockResolvedValue({ success: true, branches: [] })
 }
+
+const mockConnectionOps = {
+  get: vi.fn().mockResolvedValue({
+    success: true,
+    connection: {
+      id: 'conn-1',
+      path: '/test/conn-1',
+      members: [{ project_id: 'proj-1', worktree_id: 'wt-1' }]
+    }
+  })
+}
+
+Object.defineProperty(window, 'connectionOps', {
+  writable: true,
+  configurable: true,
+  value: mockConnectionOps
+})
 
 Object.defineProperty(window, 'kanban', {
   writable: true,
@@ -138,6 +159,8 @@ import { useSessionStore } from '@/stores/useSessionStore'
 import { useWorktreeStore } from '@/stores/useWorktreeStore'
 import { useWorktreeStatusStore } from '@/stores/useWorktreeStatusStore'
 import { useProjectStore } from '@/stores/useProjectStore'
+import { useConnectionStore } from '@/stores/useConnectionStore'
+import { useSettingsStore } from '@/stores/useSettingsStore'
 
 // ── Import components under test ────────────────────────────────────
 import { KanbanTicketModal } from '@/components/kanban/KanbanTicketModal'
@@ -498,8 +521,9 @@ describe('Plan review followup dispatch', () => {
 
     render(<KanbanTicketModal />)
 
+    const superchargeLocalBtn = await screen.findByTestId('plan-review-supercharge-local-btn')
     await act(async () => {
-      fireEvent.click(screen.getByTestId('plan-review-supercharge-local-btn'))
+      fireEvent.click(superchargeLocalBtn)
     })
 
     await waitFor(() => {
@@ -596,8 +620,9 @@ describe('Plan review followup dispatch', () => {
 
     render(<KanbanTicketModal />)
 
+    const superchargeLocalBtn = await screen.findByTestId('plan-review-supercharge-local-btn')
     await act(async () => {
-      fireEvent.click(screen.getByTestId('plan-review-supercharge-local-btn'))
+      fireEvent.click(superchargeLocalBtn)
     })
 
     // Wait for the background IIFE to reach connect (which we've forced to fail).
@@ -689,8 +714,9 @@ describe('Plan review followup dispatch', () => {
 
     render(<KanbanTicketModal />)
 
+    const superchargeLocalBtn = await screen.findByTestId('plan-review-supercharge-local-btn')
     await act(async () => {
-      fireEvent.click(screen.getByTestId('plan-review-supercharge-local-btn'))
+      fireEvent.click(superchargeLocalBtn)
     })
 
     // Wait for the background work to reach prompt (still pending).
@@ -710,5 +736,138 @@ describe('Plan review followup dispatch', () => {
     await waitFor(() => {
       expect(toast.success).toHaveBeenCalledWith(expect.stringContaining('upercharge'))
     })
+  })
+
+  // ════════════════════════════════════════════════════════════════════
+  // REGRESSION: Handoff for a connection ticket from the kanban board
+  // must actually switch to the new session in non-sticky-tab mode.
+  // setActiveConnectionSession short-circuits when activeConnectionId is
+  // null (the common state when the modal is opened from the board), so
+  // the handler must also set the active connection.
+  // ════════════════════════════════════════════════════════════════════
+
+  test('handoff on connection ticket (non-sticky-tab) switches to the new connection session', async () => {
+    const connTicket = makeTicket({
+      id: 'ticket-conn',
+      column: 'in_progress',
+      plan_ready: true,
+      current_session_id: 'session-conn-old',
+      worktree_id: null, // connection ticket has no worktree
+      mode: 'plan',
+      description: '## Plan\n\nStep 1: Implement auth'
+    })
+
+    mockDbSession.create.mockResolvedValueOnce(
+      makeSession({
+        id: 'session-conn-new',
+        worktree_id: null,
+        connection_id: 'conn-1',
+        agent_sdk: 'claude-code',
+        mode: 'build',
+        opencode_session_id: null
+      })
+    )
+
+    act(() => {
+      useKanbanStore.setState({
+        tickets: new Map([['proj-1', [connTicket]]]),
+        isBoardViewActive: true,
+        selectedTicketId: 'ticket-conn'
+      })
+      useSessionStore.setState({
+        activeSessionId: null,
+        activeConnectionId: null, // user is on the board, not in a connection
+        activeWorktreeId: null,
+        sessionsByWorktree: new Map(),
+        sessionsByConnection: new Map([
+          [
+            'conn-1',
+            [
+              makeSession({
+                id: 'session-conn-old',
+                worktree_id: null,
+                connection_id: 'conn-1',
+                agent_sdk: 'claude-code',
+                opencode_session_id: 'opc-session-1'
+              })
+            ]
+          ]
+        ]),
+        tabOrderByConnection: new Map([['conn-1', ['session-conn-old']]]),
+        activeSessionByConnection: {},
+        pendingPlans: new Map([
+          [
+            'session-conn-old',
+            {
+              requestId: 'req-conn',
+              planContent: '## Detailed Plan\n\nStep 1: Implement auth',
+              toolUseID: 'tool-conn'
+            }
+          ]
+        ]),
+        pendingMessages: new Map(),
+        pendingFollowUpMessages: new Map()
+      })
+      useWorktreeStatusStore.setState({ sessionStatuses: {} })
+      useConnectionStore.setState({
+        connections: [
+          {
+            id: 'conn-1',
+            name: 'Test Conn',
+            custom_name: null,
+            status: 'active',
+            path: '/test/conn-1',
+            color: null,
+            created_at: '2026-01-01T00:00:00Z',
+            updated_at: '2026-01-01T00:00:00Z',
+            members: [
+              {
+                id: 'mem-1',
+                connection_id: 'conn-1',
+                worktree_id: 'wt-1',
+                project_id: 'proj-1',
+                symlink_name: 'wt-1',
+                added_at: '2026-01-01T00:00:00Z',
+                worktree_name: 'feature-auth',
+                worktree_branch: 'feature-auth',
+                worktree_path: '/test/feature-auth',
+                project_name: 'My Project'
+              }
+            ]
+          }
+        ]
+      })
+      useSettingsStore.setState({ boardMode: 'toggle' })
+    })
+
+    render(<KanbanTicketModal />)
+
+    const handoffBtn = await screen.findByTestId('plan-review-handoff-btn')
+    await act(async () => {
+      fireEvent.click(handoffBtn)
+    })
+
+    // New session is created in the DB
+    await waitFor(() => {
+      expect(mockDbSession.create).toHaveBeenCalled()
+    })
+
+    // In non-sticky-tab mode, the user should be navigated to the new
+    // connection session — which requires activeConnectionId to be set so
+    // the shell can render the connection context (setActiveConnectionSession
+    // alone is a no-op when activeConnectionId is null).
+    await waitFor(() => {
+      expect(useSessionStore.getState().activeConnectionId).toBe('conn-1')
+    })
+    expect(useSessionStore.getState().activeSessionId).toBe('session-conn-new')
+
+    // Ticket is re-linked to the new session with plan_ready cleared.
+    const updatedTicket = useKanbanStore
+      .getState()
+      .tickets.get('proj-1')
+      ?.find((t) => t.id === 'ticket-conn')
+    expect(updatedTicket?.current_session_id).toBe('session-conn-new')
+    expect(updatedTicket?.plan_ready).toBe(false)
+    expect(updatedTicket?.mode).toBe('build')
   })
 })

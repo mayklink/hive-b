@@ -202,7 +202,8 @@ interface SessionState {
   createConnectionSession: (
     connectionId: string,
     agentSdkOverride?: 'opencode' | 'claude-code' | 'codex' | 'terminal',
-    initialMode?: SessionMode
+    initialMode?: SessionMode,
+    opts?: { autoFocus?: boolean }
   ) => Promise<{ success: boolean; session?: Session; error?: string }>
   setActiveConnectionSession: (sessionId: string | null) => void
   setActiveConnection: (connectionId: string | null) => void
@@ -1925,9 +1926,11 @@ export const useSessionStore = create<SessionState>()(
       createConnectionSession: async (
         connectionId: string,
         agentSdkOverride?: 'opencode' | 'claude-code' | 'codex' | 'terminal',
-        initialMode?: SessionMode
+        initialMode?: SessionMode,
+        opts?: { autoFocus?: boolean }
       ) => {
         try {
+          const autoFocus = opts?.autoFocus ?? true
           // Look up the connection to get the first member's project_id
           const result = await window.connectionOps.get(connectionId)
           if (!result.success || !result.connection || result.connection.members.length === 0) {
@@ -1982,6 +1985,7 @@ export const useSessionStore = create<SessionState>()(
             connection_id: connectionId,
             name: isTerminal ? `Terminal ${sessionNumber}` : `Session ${sessionNumber}`,
             agent_sdk: defaultAgentSdk,
+            mode: initialMode || 'build',
             ...(defaultModel
               ? {
                   model_provider_id: defaultModel.providerID,
@@ -2003,16 +2007,25 @@ export const useSessionStore = create<SessionState>()(
             const newModeMap = new Map(state.modeBySession)
             newModeMap.set(session.id, session.mode || 'build')
 
-            return {
+            const base = {
               sessionsByConnection: newSessionsMap,
               tabOrderByConnection: newTabOrderMap,
-              modeBySession: newModeMap,
-              activeSessionId: session.id,
-              activeSessionByConnection: {
-                ...state.activeSessionByConnection,
-                [connectionId]: session.id
+              modeBySession: newModeMap
+            }
+
+            // Focus state — only when autoFocus is true
+            if (autoFocus) {
+              return {
+                ...base,
+                activeSessionId: session.id,
+                activeSessionByConnection: {
+                  ...state.activeSessionByConnection,
+                  [connectionId]: session.id
+                }
               }
             }
+
+            return base
           })
 
           return { success: true, session }
