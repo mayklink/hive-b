@@ -391,6 +391,7 @@ export class DatabaseService {
     this.safeAddColumn('kanban_tickets', 'github_pr_number', 'INTEGER DEFAULT NULL')
     this.safeAddColumn('kanban_tickets', 'github_pr_url', 'TEXT DEFAULT NULL')
     this.safeAddColumn('kanban_tickets', 'mark', 'TEXT DEFAULT NULL')
+    this.safeAddColumn('kanban_tickets', 'note', 'TEXT DEFAULT NULL')
     this.safeAddColumn('sessions', 'session_type', "TEXT NOT NULL DEFAULT 'default'")
 
     db.exec(`
