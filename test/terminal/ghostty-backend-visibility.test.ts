@@ -113,6 +113,55 @@ describe('GhosttyBackend visibility', () => {
     backend.dispose()
   })
 
+  test('restores the surface frame without stealing focus from an active web input', async () => {
+    const backend = new GhosttyBackend()
+    const container = document.createElement('div')
+    container.getBoundingClientRect = vi.fn(() => ({
+      left: 100,
+      top: 80,
+      width: 640,
+      height: 360,
+      right: 740,
+      bottom: 440,
+      x: 100,
+      y: 80,
+      toJSON: () => ({})
+    }))
+
+    backend.mount(
+      container,
+      {
+        terminalId: 'wt-1',
+        cwd: '/tmp/wt-1'
+      },
+      {
+        onStatusChange: vi.fn()
+      }
+    )
+
+    await flushPromises()
+
+    const visibilityBackend = backend as unknown as { setVisible: (visible: boolean) => void }
+    visibilityBackend.setVisible(false)
+    mockTerminalOps.ghosttySetFocus.mockClear()
+    mockTerminalOps.ghosttySetFrame.mockClear()
+
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+    input.focus()
+    expect(document.activeElement).toBe(input)
+
+    visibilityBackend.setVisible(true)
+
+    const visibleFrame = mockTerminalOps.ghosttySetFrame.mock.calls.at(-1)?.[1]
+    expect(visibleFrame).toEqual({ x: 100, y: 80, w: 640, h: 360 })
+    expect(mockTerminalOps.ghosttySetFocus).not.toHaveBeenCalledWith('wt-1', true)
+    expect(document.activeElement).toBe(input)
+
+    input.remove()
+    backend.dispose()
+  })
+
   test('waits for a measurable container instead of failing on initial zero-size mount', async () => {
     const backend = new GhosttyBackend()
     const onStatusChange = vi.fn()

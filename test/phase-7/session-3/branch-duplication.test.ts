@@ -1,6 +1,7 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, cleanup, waitFor, within } from '@testing-library/react'
 import React from 'react'
+import { useLayoutStore } from '../../../src/renderer/src/stores/useLayoutStore'
 
 // ---------------------------------------------------------------------------
 // Version naming logic tests (unit tests for the naming algorithm)
@@ -165,6 +166,15 @@ describe('Session 3: Branch Duplication', () => {
     }
 
     beforeEach(() => {
+      vi.stubGlobal(
+        'requestAnimationFrame',
+        ((callback: FrameRequestCallback) => setTimeout(() => callback(0), 0)) as typeof requestAnimationFrame
+      )
+      vi.stubGlobal(
+        'cancelAnimationFrame',
+        ((id: number) => clearTimeout(id)) as typeof cancelAnimationFrame
+      )
+
       Object.defineProperty(window, 'worktreeOps', {
         writable: true,
         value: mockWorktreeOps
@@ -177,6 +187,8 @@ describe('Session 3: Branch Duplication', () => {
         writable: true,
         value: mockDb
       })
+
+      useLayoutStore.setState({ ghosttyOverlaySuppressed: false })
     })
 
     test('Duplicate shown in context menu for non-default worktree', async () => {
@@ -241,6 +253,90 @@ describe('Session 3: Branch Duplication', () => {
       // "Duplicate" should not appear for default worktree
       const duplicateItems = screen.queryAllByText('Duplicate')
       expect(duplicateItems.length).toBe(0)
+    })
+
+    test('Rename Branch from the context menu focuses the inline rename input', async () => {
+      const { WorktreeItem } =
+        await import('../../../src/renderer/src/components/worktrees/WorktreeItem')
+
+      const worktree = {
+        id: 'wt-1',
+        project_id: 'proj-1',
+        name: 'feature-auth',
+        branch_name: 'feature-auth',
+        path: '/path/to/worktree',
+        status: 'active' as const,
+        is_default: false,
+        created_at: new Date().toISOString(),
+        last_accessed_at: new Date().toISOString()
+      }
+
+      render(
+        React.createElement(WorktreeItem, {
+          worktree,
+          projectPath: '/path/to/project'
+        })
+      )
+
+      fireEvent.contextMenu(screen.getByTestId('worktree-item-wt-1'))
+      fireEvent.click(screen.getByText('Rename Branch'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('branch-rename-input')).toBeInTheDocument()
+        expect(screen.getByTestId('branch-rename-input')).toHaveFocus()
+        expect(useLayoutStore.getState().ghosttyOverlaySuppressed).toBe(true)
+      })
+
+      fireEvent.keyDown(screen.getByTestId('branch-rename-input'), { key: 'Escape' })
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('branch-rename-input')).not.toBeInTheDocument()
+        expect(useLayoutStore.getState().ghosttyOverlaySuppressed).toBe(false)
+      })
+    })
+
+    test('Rename Branch from the overflow dropdown focuses the inline rename input', async () => {
+      const { WorktreeItem } =
+        await import('../../../src/renderer/src/components/worktrees/WorktreeItem')
+
+      const worktree = {
+        id: 'wt-1',
+        project_id: 'proj-1',
+        name: 'feature-auth',
+        branch_name: 'feature-auth',
+        path: '/path/to/worktree',
+        status: 'active' as const,
+        is_default: false,
+        created_at: new Date().toISOString(),
+        last_accessed_at: new Date().toISOString()
+      }
+
+      render(
+        React.createElement(WorktreeItem, {
+          worktree,
+          projectPath: '/path/to/project'
+        })
+      )
+
+      const item = screen.getByTestId('worktree-item-wt-1')
+      fireEvent.pointerDown(within(item).getByRole('button'), { button: 0, ctrlKey: false })
+      await waitFor(() => {
+        expect(screen.getByText('Rename Branch')).toBeInTheDocument()
+      })
+      fireEvent.click(screen.getByText('Rename Branch'))
+
+      await waitFor(() => {
+        expect(screen.getByTestId('branch-rename-input')).toBeInTheDocument()
+        expect(screen.getByTestId('branch-rename-input')).toHaveFocus()
+        expect(useLayoutStore.getState().ghosttyOverlaySuppressed).toBe(true)
+      })
+
+      fireEvent.keyDown(screen.getByTestId('branch-rename-input'), { key: 'Escape' })
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('branch-rename-input')).not.toBeInTheDocument()
+        expect(useLayoutStore.getState().ghosttyOverlaySuppressed).toBe(false)
+      })
     })
   })
 

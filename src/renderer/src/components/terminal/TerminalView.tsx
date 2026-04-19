@@ -4,6 +4,7 @@ import { useTerminalTabStore } from '@/stores/useTerminalTabStore'
 import { useSettingsStore, type EmbeddedTerminalBackend } from '@/stores/useSettingsStore'
 import { useLayoutStore } from '@/stores/useLayoutStore'
 import { useThemeStore } from '@/stores/useThemeStore'
+import { hasFocusedEditableElement } from '@/lib/focus-utils'
 import { TerminalToolbar } from './TerminalToolbar'
 import { XtermBackend } from './backends/XtermBackend'
 import { GhosttyBackend } from './backends/GhosttyBackend'
@@ -95,8 +96,9 @@ export const TerminalView = forwardRef<TerminalViewHandle, TerminalViewProps>(fu
   // Re-fit and focus when becoming visible.
   // Note: GhosttyBackend.setVisible(true) already restores macOS first responder
   // directly; the focus() call below is a belt-and-suspenders backup for Ghostty
-  // and the primary focus path for xterm. The xterm fit() requires the delayed
-  // call because layout dimensions need a frame to settle.
+  // and the primary focus path for xterm. When a Chromium input already owns
+  // focus (for example inline rename immediately after a menu closes), Ghostty
+  // must not reclaim it during passive visibility restoration.
   useEffect(() => {
     if (!backendRef.current) return
 
@@ -108,6 +110,9 @@ export const TerminalView = forwardRef<TerminalViewHandle, TerminalViewProps>(fu
       const backend = backendRef.current
       if (backend && backend.type === 'xterm') {
         ;(backend as XtermBackend).fit()
+      }
+      if (backend?.type === 'ghostty' && hasFocusedEditableElement()) {
+        return
       }
       backend?.focus()
     }, 50)

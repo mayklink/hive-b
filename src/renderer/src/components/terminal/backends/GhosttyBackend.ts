@@ -1,5 +1,6 @@
 import type { TerminalBackend, TerminalOpts, TerminalBackendCallbacks } from './types'
 import { useSettingsStore } from '@/stores/useSettingsStore'
+import { hasFocusedEditableElement } from '@/lib/focus-utils'
 
 /**
  * Native Ghostty terminal backend (macOS only).
@@ -154,7 +155,9 @@ export class GhosttyBackend implements TerminalBackend {
 
         if (this.visible) {
           this.syncFrame()
-          await window.terminalOps.ghosttySetFocus(this.terminalId, true)
+          if (!hasFocusedEditableElement()) {
+            await window.terminalOps.ghosttySetFocus(this.terminalId, true)
+          }
         } else {
           this.hideSurface()
         }
@@ -206,9 +209,11 @@ export class GhosttyBackend implements TerminalBackend {
     // and the menu paste handler routes Cmd+V correctly. Without this, focus
     // restoration depends on a fragile setTimeout in TerminalView that can be
     // cancelled by rapid effectiveVisible changes (e.g. overlay suppression race).
-    window.terminalOps.ghosttySetFocus(this.terminalId, true).catch(() => {
-      // Ignore focus errors
-    })
+    if (!hasFocusedEditableElement()) {
+      window.terminalOps.ghosttySetFocus(this.terminalId, true).catch(() => {
+        // Ignore focus errors
+      })
+    }
   }
 
   /**

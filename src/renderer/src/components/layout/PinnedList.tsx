@@ -71,6 +71,7 @@ import { ArchiveConfirmDialog } from '@/components/worktrees/ArchiveConfirmDialo
 import { AddAttachmentDialog } from '@/components/worktrees/AddAttachmentDialog'
 import { ManageConnectionWorktreesDialog } from '@/components/connections/ManageConnectionWorktreesDialog'
 import { useSiblingAggregate, type SiblingBucket } from '@/hooks/useSiblingAggregate'
+import { useGhosttySuppression } from '@/hooks'
 
 type PinnedItem = { kind: 'worktree'; id: string } | { kind: 'connection'; id: string }
 
@@ -220,6 +221,8 @@ function PinnedWorktreeItem({ worktreeId }: { worktreeId: string }): React.JSX.E
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intentionalCloseRef = useRef(false)
   const renameStartTimeRef = useRef<number>(0)
+
+  useGhosttySuppression(`pinned-worktree-branch-rename:${worktreeId}`, isRenamingBranch)
 
   // Focus rename input when it appears (deferred to run after menu closes)
   useEffect(() => {

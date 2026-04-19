@@ -62,6 +62,7 @@ import { useScriptStore } from '@/stores/useScriptStore'
 import { useWorktreeStatusStore } from '@/stores/useWorktreeStatusStore'
 import { toast, gitToast, clipboardToast } from '@/lib/toast'
 import { formatRelativeTime } from '@/lib/format-utils'
+import { useGhosttySuppression } from '@/hooks'
 import { PulseAnimation } from './PulseAnimation'
 import { ModelIcon } from './ModelIcon'
 import { ArchiveConfirmDialog } from './ArchiveConfirmDialog'
@@ -247,6 +248,8 @@ export function WorktreeItem({
   const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const intentionalCloseRef = useRef(false)
   const renameStartTimeRef = useRef<number>(0)
+
+  useGhosttySuppression(`worktree-branch-rename:${worktree.id}`, isRenamingBranch)
 
   // Auto-focus the rename input when it appears (deferred to run after menu closes)
   useEffect(() => {
