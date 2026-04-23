@@ -473,6 +473,37 @@ describe('SessionView handoff ticket relinking', () => {
     )
   })
 
+  test('handoff uses pendingPlan.planContent instead of last assistant message content', async () => {
+    useSessionStore.setState({
+      pendingPlans: new Map([
+        [
+          'session-plan-old',
+          {
+            requestId: 'req-plan-1',
+            planContent: '# Real plan\n1. Step one\n2. Step two',
+            toolUseID: 'tool-plan-1'
+          }
+        ]
+      ])
+    })
+
+    render(<SessionView sessionId="session-plan-old" />)
+
+    await waitFor(() => {
+      expect(screen.getByTestId('plan-ready-handoff-fab')).toBeInTheDocument()
+    })
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('plan-ready-handoff-fab'))
+    })
+
+    await waitFor(() => {
+      expect(useSessionStore.getState().pendingMessages.get('session-build-new')).toBe(
+        'Implement the following plan\n# Real plan\n1. Step one\n2. Step two'
+      )
+    })
+  })
+
   test('supercharge derives a slug from the plan heading and passes it as nameHint', async () => {
     useSessionStore.setState({
       pendingPlans: new Map([

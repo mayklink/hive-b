@@ -4750,12 +4750,12 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
   )
 
   const handlePlanReadyHandoff = useCallback(async (override?: HandoffSelectionOverride) => {
-    const lastAssistantMessage = [...messages]
-      .reverse()
-      .find((message) => message.role === 'assistant' && message.content.trim().length > 0)
-
-    if (!lastAssistantMessage) {
-      toast.error('No assistant plan message to hand off')
+    const planContent =
+      pendingPlan?.planContent ??
+      [...messages].reverse().find((m) => m.role === 'assistant' && m.content.trim().length > 0)
+        ?.content
+    if (!planContent) {
+      toast.error('No plan content found to hand off')
       return
     }
 
@@ -4770,7 +4770,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
     }
 
     if (connectionId) {
-      const handoffPrompt = `Implement the following plan\n${lastAssistantMessage.content}`
+      const handoffPrompt = `Implement the following plan\n${planContent}`
       const sessionStore = useSessionStore.getState()
       const result = await sessionStore.createConnectionSession(
         connectionId,
@@ -4799,7 +4799,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
       return
     }
 
-    const handoffPrompt = `Implement the following plan\n${lastAssistantMessage.content}`
+    const handoffPrompt = `Implement the following plan\n${planContent}`
 
     const sessionStore = useSessionStore.getState()
     const result = await sessionStore.createSession(
@@ -4828,7 +4828,8 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
     connectionId,
     sessionId,
     worktreePath,
-    opencodeSessionId
+    opencodeSessionId,
+    pendingPlan
   ])
 
   const handlePlanReadySuperpowers = useCallback(async () => {
