@@ -34,7 +34,7 @@ const SDK_DISPLAY_NAMES: Record<HandoffAgentSdk, string> = {
 const FALLBACK_MODELS: Record<HandoffAgentSdk, SelectedModel> = {
   opencode: { providerID: 'anthropic', modelID: 'claude-opus-4-5-20251101' },
   'claude-code': { providerID: 'anthropic', modelID: 'claude-opus-4-5-20251101' },
-  codex: { providerID: 'codex', modelID: 'gpt-5.4' }
+  codex: { providerID: 'codex', modelID: 'gpt-5.5' }
 }
 
 const modelCatalogCache = new Map<HandoffAgentSdk, ProviderModels[]>()

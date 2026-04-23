@@ -126,6 +126,7 @@ const mockOpencodeOps = {
         id: 'openai',
         name: 'OpenAI',
         models: {
+          'gpt-5.5': { id: 'gpt-5.5', name: 'GPT-5.5' },
           'gpt-5.4': { id: 'gpt-5.4', name: 'GPT-5.4' },
           'gpt-5.4-mini': { id: 'gpt-5.4-mini', name: 'GPT-5.4 Mini' }
         }

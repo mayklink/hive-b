@@ -29,6 +29,14 @@ const codexProviders = [
     id: 'codex',
     name: 'Codex',
     models: {
+      'gpt-5.5': {
+        id: 'gpt-5.5',
+        name: 'GPT-5.5',
+        variants: {
+          high: {},
+          xhigh: {}
+        }
+      },
       'gpt-5.4': {
         id: 'gpt-5.4',
         name: 'GPT-5.4',
@@ -105,7 +113,7 @@ describe('handoff model picker', () => {
         },
         codex: {
           providerID: 'codex',
-          modelID: 'gpt-5.4',
+          modelID: 'gpt-5.5',
           variant: 'high'
         }
       },
@@ -137,7 +145,7 @@ describe('handoff model picker', () => {
       lastHandoffOverride: {
         agentSdk: 'codex',
         providerID: 'codex',
-        modelID: 'gpt-5.4',
+        modelID: 'gpt-5.5',
         variant: 'xhigh'
       }
     })
@@ -147,12 +155,12 @@ describe('handoff model picker', () => {
     expect(effective.agentSdk).toBe('codex')
     expect(effective.model).toEqual({
       providerID: 'codex',
-      modelID: 'gpt-5.4',
+      modelID: 'gpt-5.5',
       variant: 'xhigh'
     })
     expect(effective.display).toEqual({
       sdkName: 'Codex',
-      modelName: 'GPT-5.4',
+      modelName: 'GPT-5.5',
       variant: 'xhigh'
     })
   })
@@ -194,14 +202,14 @@ describe('handoff model picker', () => {
       useSettingsStore.getState().setLastHandoffOverride({
         agentSdk: 'codex',
         providerID: 'codex',
-        modelID: 'gpt-5.4',
+        modelID: 'gpt-5.5',
         variant: 'xhigh'
       })
     })
 
     await waitFor(() => {
       expect(handoffButton).toHaveTextContent('Codex /')
-      expect(handoffButton).toHaveTextContent('GPT-5.4')
+      expect(handoffButton).toHaveTextContent('GPT-5.5')
       expect(handoffButton).toHaveTextContent('xhigh')
     })
   })
@@ -241,7 +249,7 @@ describe('handoff model picker', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Select handoff model' })).toHaveTextContent(
-        'GPT-5.4'
+        'GPT-5.5'
       )
     })
 
@@ -260,7 +268,7 @@ describe('handoff model picker', () => {
     await user.click(await screen.findByText('Codex'))
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Select handoff model' })).toHaveTextContent(
-        'GPT-5.4'
+        'GPT-5.5'
       )
     })
 
@@ -270,7 +278,7 @@ describe('handoff model picker', () => {
       expect(useSettingsStore.getState().lastHandoffOverride).toEqual({
         agentSdk: 'codex',
         providerID: 'codex',
-        modelID: 'gpt-5.4',
+        modelID: 'gpt-5.5',
         variant: 'high'
       })
     })
@@ -278,7 +286,7 @@ describe('handoff model picker', () => {
       agentSdk: 'codex',
       model: {
         providerID: 'codex',
-        modelID: 'gpt-5.4',
+        modelID: 'gpt-5.5',
         variant: 'high'
       }
     })

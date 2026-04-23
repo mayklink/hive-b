@@ -59,15 +59,33 @@ describe('CodexImplementer skeleton', () => {
       expect(result[0].id).toBe('codex')
     })
 
-    it('provider contains all 4 models', async () => {
+    it('provider contains all 5 models', async () => {
       const result = (await impl.getAvailableModels()) as any[]
       const models = result[0].models
-      expect(Object.keys(models)).toHaveLength(4)
+      expect(Object.keys(models)).toHaveLength(5)
+      expect(models['gpt-5.5']).toMatchObject({
+        id: 'gpt-5.5',
+        name: 'GPT-5.5'
+      })
     })
   })
 
   describe('getModelInfo', () => {
     it('returns info for a known model', async () => {
+      const info = await impl.getModelInfo('/path', 'gpt-5.5')
+      expect(info).not.toBeNull()
+      expect(info!.id).toBe('gpt-5.5')
+      expect(info!.name).toBe('GPT-5.5')
+    })
+
+    it('resolves aliased model slugs', async () => {
+      const info = await impl.getModelInfo('/path', '5.5')
+      expect(info).not.toBeNull()
+      expect(info!.id).toBe('gpt-5.5')
+      expect(info!.name).toBe('GPT-5.5')
+    })
+
+    it('still returns info for legacy codex models', async () => {
       const info = await impl.getModelInfo('/path', 'gpt-5.4')
       expect(info).not.toBeNull()
       expect(info!.id).toBe('gpt-5.4')
@@ -93,7 +111,7 @@ describe('CodexImplementer skeleton', () => {
       expect(impl.getSelectedVariant()).toBe('xhigh')
     })
 
-    it('defaults to gpt-5.4 before any selection', () => {
+    it('defaults to gpt-5.5 before any selection', () => {
       expect(impl.getSelectedModel()).toBe(CODEX_DEFAULT_MODEL)
     })
   })

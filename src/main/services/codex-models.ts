@@ -18,6 +18,13 @@ const CODEX_EFFORT_VARIANTS: Record<string, Record<string, never>> = {
 
 export const CODEX_MODELS: CodexModelInfo[] = [
   {
+    id: 'gpt-5.5',
+    name: 'GPT-5.5',
+    limit: { context: 258400, output: 32000 },
+    variants: CODEX_EFFORT_VARIANTS,
+    defaultVariant: 'high'
+  },
+  {
     id: 'gpt-5.4',
     name: 'GPT-5.4',
     limit: { context: 258400, output: 32000 },
@@ -47,7 +54,7 @@ export const CODEX_MODELS: CodexModelInfo[] = [
   }
 ]
 
-export const CODEX_DEFAULT_MODEL = 'gpt-5.4'
+export const CODEX_DEFAULT_MODEL = 'gpt-5.5'
 
 /**
  * Returns all available Codex models in the format expected by the renderer.
@@ -96,6 +103,7 @@ export function getCodexModelInfo(
 // ── Model slug normalization ──────────────────────────────────────
 
 export const CODEX_MODEL_ALIASES: Record<string, string> = {
+  '5.5': 'gpt-5.5',
   '5.4': 'gpt-5.4',
   '5.3': 'gpt-5.3-codex',
   'gpt-5.3': 'gpt-5.3-codex',
