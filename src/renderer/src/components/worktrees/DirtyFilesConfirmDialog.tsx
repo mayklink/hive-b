@@ -87,30 +87,35 @@ export function DirtyFilesConfirmDialog({
   return (
     <AlertDialog open={open} onOpenChange={(isOpen) => !isOpen && onCancel()}>
       <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
+        <AlertDialogHeader className="min-w-0">
+          <AlertDialogTitle className="flex min-w-0 items-center gap-2 text-left">
+            <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
             Uncommitted Changes
           </AlertDialogTitle>
           <AlertDialogDescription asChild>
-            <div className="space-y-3">
-              <p>
+            <div className="min-w-0 space-y-3">
+              <p className="min-w-0 [overflow-wrap:anywhere]">
                 <span className="font-medium text-foreground">{worktreeName}</span> {description}
               </p>
 
-              <div className="rounded-md border bg-muted/50 overflow-hidden">
+              <div className="min-w-0 max-h-[40vh] overflow-y-auto overflow-x-hidden rounded-md border bg-muted/50">
                 <div className="divide-y divide-border">
                   {shownFiles.map((file) => (
                     <div
                       key={file.path}
-                      className="flex items-center gap-2 px-3 py-1.5 text-xs font-mono"
+                      className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-start gap-2 px-3 py-1.5 text-xs font-mono"
                     >
                       {getFileIcon(file)}
-                      <span className="truncate flex-1" title={file.path}>
+                      <span
+                        className="min-w-0 whitespace-normal leading-relaxed [overflow-wrap:anywhere]"
+                        title={file.path}
+                      >
                         <span className="text-muted-foreground">{fileDir(file.path)}</span>
                         <span className="text-foreground">{fileName(file.path)}</span>
                       </span>
-                      <span className="shrink-0 tabular-nums text-[11px]">{formatStat(file)}</span>
+                      <span className="mt-0.5 shrink-0 tabular-nums text-[11px]">
+                        {formatStat(file)}
+                      </span>
                     </div>
                   ))}
                 </div>
