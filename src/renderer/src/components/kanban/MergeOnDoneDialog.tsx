@@ -33,6 +33,7 @@ interface ResolvedState {
 export function MergeOnDoneDialog() {
   const pendingDoneMove = useKanbanStore((s) => s.pendingDoneMove)
   const completeDoneMove = useKanbanStore((s) => s.completeDoneMove)
+  const clearPendingDoneMove = useKanbanStore((s) => s.clearPendingDoneMove)
 
   const [step, setStep] = useState<Step>('loading')
   const [resolved, setResolved] = useState<ResolvedState | null>(null)
@@ -60,14 +61,15 @@ export function MergeOnDoneDialog() {
         const ticket = tickets.find((t) => t.id === pending.ticketId)
 
         if (!ticket || !ticket.worktree_id) {
-          await completeDoneMove()
+          clearPendingDoneMove()
           return
         }
 
         // Fetch feature worktree
         const featureWorktree = await window.db.worktree.get(ticket.worktree_id)
         if (!featureWorktree || featureWorktree.status !== 'active') {
-          await completeDoneMove()
+          toast.warning('Cannot merge — feature worktree is not active')
+          clearPendingDoneMove()
           return
         }
 
@@ -78,7 +80,7 @@ export function MergeOnDoneDialog() {
 
         if (!resolvedBaseBranch) {
           toast.warning('Cannot merge — no base branch resolved')
-          await completeDoneMove()
+          clearPendingDoneMove()
           return
         }
 
@@ -89,7 +91,7 @@ export function MergeOnDoneDialog() {
 
         if (!baseWorktree) {
           toast.warning(`Cannot merge — no worktree for ${resolvedBaseBranch}`)
-          await completeDoneMove()
+          clearPendingDoneMove()
           return
         }
 
@@ -132,14 +134,18 @@ export function MergeOnDoneDialog() {
 
         if (cancelled) return
 
-        const branchStats: BranchStats = branchStatResult.success
-          ? {
-              filesChanged: branchStatResult.filesChanged,
-              insertions: branchStatResult.insertions,
-              deletions: branchStatResult.deletions,
-              commitsAhead: branchStatResult.commitsAhead
-            }
-          : { filesChanged: 0, insertions: 0, deletions: 0, commitsAhead: 0 }
+        if (!branchStatResult.success) {
+          toast.warning(`Cannot verify merge status: ${branchStatResult.error ?? 'unknown error'}`)
+          clearPendingDoneMove()
+          return
+        }
+
+        const branchStats: BranchStats = {
+          filesChanged: branchStatResult.filesChanged,
+          insertions: branchStatResult.insertions,
+          deletions: branchStatResult.deletions,
+          commitsAhead: branchStatResult.commitsAhead
+        }
 
         // If no diffs at all, just move to done
         if (!hasUncommitted && branchStats.commitsAhead === 0) {
@@ -170,7 +176,7 @@ export function MergeOnDoneDialog() {
       } catch (err) {
         if (!cancelled) {
           toast.error(`Failed to check branch: ${err instanceof Error ? err.message : String(err)}`)
-          await completeDoneMove()
+          clearPendingDoneMove()
         }
       }
     }
@@ -179,7 +185,7 @@ export function MergeOnDoneDialog() {
     return () => {
       cancelled = true
     }
-  }, [pendingDoneMove, completeDoneMove])
+  }, [pendingDoneMove, completeDoneMove, clearPendingDoneMove])
 
   const handleCommit = useCallback(async () => {
     if (!resolved || !commitMessage.trim()) return
@@ -208,7 +214,13 @@ export function MergeOnDoneDialog() {
         resolved.baseBranch
       )
 
-      if (statResult.success && statResult.commitsAhead > 0) {
+      if (!statResult.success) {
+        toast.warning(`Cannot verify merge status: ${statResult.error ?? 'unknown error'}`)
+        clearPendingDoneMove()
+        return
+      }
+
+      if (statResult.commitsAhead > 0) {
         setResolved((prev) =>
           prev
             ? {
@@ -232,7 +244,7 @@ export function MergeOnDoneDialog() {
     } finally {
       setCommitting(false)
     }
-  }, [resolved, commitMessage, completeDoneMove])
+  }, [resolved, commitMessage, completeDoneMove, clearPendingDoneMove])
 
   const handleCommitBase = useCallback(async () => {
     if (!resolved || !baseCommitMessage.trim()) return
@@ -268,7 +280,13 @@ export function MergeOnDoneDialog() {
           resolved.featureWorktreePath,
           resolved.baseBranch
         )
-        if (statResult.success && statResult.commitsAhead > 0) {
+        if (!statResult.success) {
+          toast.warning(`Cannot verify merge status: ${statResult.error ?? 'unknown error'}`)
+          clearPendingDoneMove()
+          return
+        }
+
+        if (statResult.commitsAhead > 0) {
           setResolved((prev) =>
             prev
               ? {
@@ -292,7 +310,7 @@ export function MergeOnDoneDialog() {
     } finally {
       setCommittingBase(false)
     }
-  }, [resolved, baseCommitMessage, completeDoneMove])
+  }, [resolved, baseCommitMessage, completeDoneMove, clearPendingDoneMove])
 
   const handleMerge = useCallback(async () => {
     if (!resolved) return
@@ -323,7 +341,7 @@ export function MergeOnDoneDialog() {
         } else {
           toast.error(`Merge failed: ${mergeResult.error}`)
         }
-        await completeDoneMove()
+        clearPendingDoneMove()
         return
       }
 
@@ -331,11 +349,11 @@ export function MergeOnDoneDialog() {
       setStep('archive')
     } catch (err) {
       toast.error(`Merge failed: ${err instanceof Error ? err.message : String(err)}`)
-      await completeDoneMove()
+      clearPendingDoneMove()
     } finally {
       setMerging(false)
     }
-  }, [resolved, completeDoneMove])
+  }, [resolved, clearPendingDoneMove])
 
   const handleArchive = useCallback(async () => {
     if (!resolved) return
@@ -381,7 +399,7 @@ export function MergeOnDoneDialog() {
     <Dialog
       open={!!pendingDoneMove}
       onOpenChange={(open) => {
-        if (!open) completeDoneMove()
+        if (!open) clearPendingDoneMove()
       }}
     >
       <DialogContent className="max-w-md">
@@ -415,10 +433,10 @@ export function MergeOnDoneDialog() {
             />
             <div className="flex items-center justify-between">
               <button
-                onClick={() => completeDoneMove()}
+                onClick={() => clearPendingDoneMove()}
                 className="text-xs text-muted-foreground hover:text-foreground"
               >
-                Skip, just move to Done
+                Keep in Review
               </button>
               <Button
                 size="sm"
@@ -450,10 +468,10 @@ export function MergeOnDoneDialog() {
             />
             <div className="flex items-center justify-between">
               <button
-                onClick={() => completeDoneMove()}
+                onClick={() => clearPendingDoneMove()}
                 className="text-xs text-muted-foreground hover:text-foreground"
               >
-                Skip, just move to Done
+                Keep in Review
               </button>
               <Button
                 size="sm"
@@ -486,10 +504,10 @@ export function MergeOnDoneDialog() {
             </p>
             <div className="flex items-center justify-between">
               <button
-                onClick={() => completeDoneMove()}
+                onClick={() => clearPendingDoneMove()}
                 className="text-xs text-muted-foreground hover:text-foreground"
               >
-                Skip, just move to Done
+                Keep in Review
               </button>
               <Button size="sm" onClick={handleMerge} disabled={merging}>
                 {merging ? (
