@@ -137,13 +137,25 @@ export function resolveDefaultUsageProvider(
   return 'anthropic'
 }
 
+function hasUsageWindow(value: unknown): value is { utilization: number; resets_at: string } {
+  if (typeof value !== 'object' || value === null) return false
+  const record = value as Record<string, unknown>
+  return typeof record.utilization === 'number' && typeof record.resets_at === 'string'
+}
+
+function isAnthropicUsageData(value: unknown): value is UsageData {
+  if (typeof value !== 'object' || value === null) return false
+  const record = value as Record<string, unknown>
+  return hasUsageWindow(record.five_hour) && hasUsageWindow(record.seven_day)
+}
+
 export function normalizeUsage(
   provider: UsageProvider,
   anthropicUsage: UsageData | null | undefined,
   openaiUsage: OpenAIUsageData | null | undefined
 ): UsageData | null {
   if (provider === 'anthropic') {
-    return anthropicUsage ?? null
+    return isAnthropicUsageData(anthropicUsage) ? anthropicUsage : null
   }
 
   if (!openaiUsage) return null

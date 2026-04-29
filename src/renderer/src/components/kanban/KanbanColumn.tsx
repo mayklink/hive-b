@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useLayoutEffect, Fragment } from 'react'
+import { useState, useCallback, useRef, useLayoutEffect } from 'react'
 import { motion } from 'motion/react'
 import { ChevronRight, ChevronDown, Plus, Zap, Archive } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -386,6 +386,13 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                       ? branchStatResult.commitsAhead
                       : 0
 
+                    if (!branchStatResult.success) {
+                      toast.warning(
+                        `Could not verify merge status: ${branchStatResult.error ?? 'unknown error'}`
+                      )
+                      return
+                    }
+
                     if (hasUncommitted || commitsAhead > 0) {
                       const sortOrder = store.computeSortOrder(tickets, targetIndex)
                       store.setPendingDoneMove({ ticketId, projectId: ticketProjectId, sortOrder })
@@ -395,8 +402,11 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                   // No base worktree OR nothing to commit/merge — fall through to normal move
                 }
               }
-            } catch {
-              // Fall through to normal move on error
+            } catch (err) {
+              toast.warning(
+                `Could not verify merge status: ${err instanceof Error ? err.message : String(err)}`
+              )
+              return
             }
           }
         }
@@ -479,7 +489,7 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
     }
 
     setPendingBackwardDrag(null)
-  }, [pendingBackwardDrag, projectId, findTicketProjectId, findTicket])
+  }, [pendingBackwardDrag, findTicketProjectId, findTicket])
 
   // ── Drop indicator element ────────────────────────────────────────
   const dropIndicator = (
