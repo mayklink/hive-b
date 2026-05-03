@@ -36,6 +36,9 @@ const BEE_MANIFEST: PetManifest = {
     permission: 'assets/bee.png',
     plan_ready: 'assets/bee.png'
   },
+  lottieAssets: {
+    working: 'assets/honey-bee.lottie'
+  },
   defaultSize: 'M'
 }
 

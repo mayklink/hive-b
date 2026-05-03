@@ -20,6 +20,7 @@ export interface PetManifest {
   version: string
   author?: string
   assets: Record<PetState, string>
+  lottieAssets?: Partial<Record<PetState, string>>
   animations?: Partial<
     Record<
       PetState,
@@ -36,6 +37,7 @@ export interface PetManifest {
 
 export interface LoadedPet extends PetManifest {
   resolvedAssets: Record<PetState, string>
+  resolvedLottieAssets?: Partial<Record<PetState, string>>
 }
 
 export interface PetPosition {

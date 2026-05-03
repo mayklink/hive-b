@@ -71,6 +71,9 @@ importers:
       '@electron-toolkit/utils':
         specifier: ^4.0.0
         version: 4.0.0(electron@41.0.4)
+      '@lottiefiles/dotlottie-web':
+        specifier: ^0.71.0
+        version: 0.71.0
       '@monaco-editor/react':
         specifier: ^4.7.0
         version: 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1042,6 +1045,9 @@ packages:
 
   '@lezer/yaml@1.0.4':
     resolution: {integrity: sha512-2lrrHqxalACEbxIbsjhqGpSW8kWpUKuY6RHgnSAFZa6qK62wvnPxA8hGOwOoDbwHcOFs5M4o27mjGu+P7TvBmw==}
+
+  '@lottiefiles/dotlottie-web@0.71.0':
+    resolution: {integrity: sha512-CliQttL0Rk0or/aDQkqUJXnC9Cm5TxzNdOqy/YlzKlU6mu+XgTMwyt5/HpPiltlMeaqBmM9mOzfevpyP4QmudQ==}
 
   '@malept/cross-spawn-promise@2.0.0':
     resolution: {integrity: sha512-1DpKU0Z5ThltBwjNySMC14g0CkbyhCaz9FkhxqNsZI6uAPJXFS8cMXlBKo26FJ8ZuW6S9GCMcR9IO5k2X5/9Fg==}
@@ -7235,6 +7241,8 @@ snapshots:
       '@lezer/common': 1.5.1
       '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.8
+
+  '@lottiefiles/dotlottie-web@0.71.0': {}
 
   '@malept/cross-spawn-promise@2.0.0':
     dependencies:

@@ -22,6 +22,7 @@ export default defineConfig({
     }
   },
   renderer: {
+    assetsInclude: ['**/*.lottie'],
     resolve: {
       alias: {
         '@': resolve('src/renderer/src'),

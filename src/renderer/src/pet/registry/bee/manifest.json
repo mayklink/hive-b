@@ -10,6 +10,9 @@
     "permission": "assets/bee.png",
     "plan_ready": "assets/bee.png"
   },
+  "lottieAssets": {
+    "working": "assets/honey-bee.lottie"
+  },
   "animations": {
     "idle": {
       "type": "static",

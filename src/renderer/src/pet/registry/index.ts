@@ -7,7 +7,8 @@ const manifestModules = import.meta.glob('./*/manifest.json', {
 
 const assetModules = import.meta.glob('./*/assets/*', {
   eager: true,
-  import: 'default'
+  import: 'default',
+  query: '?url'
 }) as Record<string, string>
 
 const pets = new Map<string, LoadedPet>()
@@ -15,6 +16,7 @@ const pets = new Map<string, LoadedPet>()
 for (const [manifestPath, manifest] of Object.entries(manifestModules)) {
   const baseDir = manifestPath.replace(/\/manifest\.json$/, '')
   const resolvedAssets = {} as Record<PetState, string>
+  const resolvedLottieAssets: Partial<Record<PetState, string>> = {}
 
   for (const [state, relativePath] of Object.entries(manifest.assets) as Array<
     [PetState, string]
@@ -23,7 +25,20 @@ for (const [manifestPath, manifest] of Object.entries(manifestModules)) {
     resolvedAssets[state] = assetModules[assetPath] ?? relativePath
   }
 
-  pets.set(manifest.id, { ...manifest, resolvedAssets })
+  for (const [state, relativePath] of Object.entries(manifest.lottieAssets ?? {}) as Array<
+    [PetState, string]
+  >) {
+    const assetPath = `${baseDir}/${relativePath}`
+    resolvedLottieAssets[state] = assetModules[assetPath] ?? relativePath
+  }
+
+  pets.set(manifest.id, {
+    ...manifest,
+    resolvedAssets,
+    resolvedLottieAssets: Object.keys(resolvedLottieAssets).length
+      ? resolvedLottieAssets
+      : undefined
+  })
 }
 
 export function listPets(): LoadedPet[] {
