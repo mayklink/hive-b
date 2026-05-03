@@ -4,12 +4,12 @@ import { describe, test, expect, beforeAll } from 'vitest'
  * Session 7: Header Branding — Tests
  *
  * These tests verify:
- * 1. Logo image replaces the "Hive" text heading
+ * 1. OctoB mark (SVG) replaces raster logo in the header
  * 2. Project name displays when a project is selected
  * 3. Branch name displays in parentheses after the project name
- * 4. "Hive" fallback text when no project is selected
+ * 4. OctoB + Hive fallback when no project selected
  * 5. Default worktree (no-worktree) hides branch name
- * 6. Logo asset exists
+ * 6. Brand mark component exists
  */
 
 describe('Session 7: Header Branding', () => {
@@ -33,15 +33,13 @@ describe('Session 7: Header Branding', () => {
       expect(source).toContain("import { useWorktreeStore } from '@/stores/useWorktreeStore'")
     })
 
-    test('imports hiveLogo from assets', () => {
-      expect(source).toContain("import hiveLogo from '@/assets/icon.png'")
+    test('imports OctoBMark brand component', () => {
+      expect(source).toContain("import { OctoBMark } from '@/components/brand/OctoBMark'")
     })
 
-    test('renders logo image with correct attributes', () => {
-      expect(source).toContain('src={hiveLogo}')
-      expect(source).toContain('alt="Hive"')
-      expect(source).toContain('draggable={false}')
-      expect(source).toContain('rounded')
+    test('renders OctoB mark in header', () => {
+      expect(source).toContain('<OctoBMark')
+      expect(source).toContain('className="h-5 w-5 shrink-0"')
     })
 
     test('shows project name when project selected', () => {
@@ -54,10 +52,10 @@ describe('Session 7: Header Branding', () => {
       expect(source).toContain('text-primary')
     })
 
-    test('shows "Hive" fallback when no project selected', () => {
-      // There should be a fallback that renders "Hive" text
-      const fallbackMatch = source.match(/:\s*\(\s*<span[^>]*>Hive<\/span>/)
-      expect(fallbackMatch).not.toBeNull()
+    test('shows OctoB and Hive fallback when no project selected', () => {
+      expect(source).toContain('data-testid="header-brand-fallback"')
+      expect(source).toMatch(/<span[^>]*>\s*OctoB\s*<\/span>/)
+      expect(source).toMatch(/<span[^>]*>\s*Hive\s*<\/span>/)
     })
 
     test('does not show branch for default worktree (no-worktree)', () => {
@@ -95,12 +93,12 @@ describe('Session 7: Header Branding', () => {
     })
   })
 
-  describe('Logo asset exists', () => {
-    test('icon.png exists in assets directory', async () => {
+  describe('OctoB mark component exists', () => {
+    test('OctoBMark.tsx exists', async () => {
       const fs = await import('fs')
       const path = await import('path')
-      const assetPath = path.resolve(__dirname, '../../../src/renderer/src/assets/icon.png')
-      expect(fs.existsSync(assetPath)).toBe(true)
+      const p = path.resolve(__dirname, '../../../src/renderer/src/components/brand/OctoBMark.tsx')
+      expect(fs.existsSync(p)).toBe(true)
     })
   })
 

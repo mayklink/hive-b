@@ -452,7 +452,7 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
       await this.sendRequest(context, 'initialize', {
         clientInfo: {
           name: 'hive_desktop',
-          title: 'Hive Desktop',
+          title: 'OctoB Desktop',
           version: '1.0.0'
         },
         capabilities: {

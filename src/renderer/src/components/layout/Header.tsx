@@ -64,7 +64,7 @@ import { useFileViewerStore } from '@/stores/useFileViewerStore'
 import { QuickActions } from './QuickActions'
 import { useLifecycleActions } from '@/hooks/useLifecycleActions'
 import { usePinAndActivateSession } from '@/hooks/usePinAndActivateSession'
-import hiveLogo from '@/assets/icon.png'
+import { OctoBMark } from '@/components/brand/OctoBMark'
 
 type ConflictFixFlow =
   | {
@@ -348,7 +348,7 @@ export function Header(): React.JSX.Element {
       {/* Spacer for macOS traffic lights */}
       {isMac() && <div className="w-16 flex-shrink-0" />}
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        <img src={hiveLogo} alt="Hive" className="h-5 w-5 shrink-0 rounded" draggable={false} />
+        <OctoBMark className="h-5 w-5 shrink-0" />
         {isConnectionMode && selectedConnection ? (
           <span className="text-sm font-medium truncate" data-testid="header-connection-info">
             {selectedConnection.name}
@@ -365,7 +365,13 @@ export function Header(): React.JSX.Element {
             )}
           </span>
         ) : (
-          <span className="text-sm font-medium">Hive</span>
+          <span
+            className="text-sm font-medium flex items-baseline gap-1.5 min-w-0"
+            data-testid="header-brand-fallback"
+          >
+            <span>OctoB</span>
+            <span className="text-[10px] font-normal text-muted-foreground tracking-tight">Hive</span>
+          </span>
         )}
         {keepAwakeEnabled && (
           <Tooltip>

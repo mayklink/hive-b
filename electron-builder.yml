@@ -1,5 +1,5 @@
 appId: com.hive.app
-productName: Hive
+productName: OctoB
 directories:
   buildResources: resources
   output: dist

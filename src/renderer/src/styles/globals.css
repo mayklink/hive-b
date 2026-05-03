@@ -60,8 +60,9 @@
   --card-foreground: hsl(260 15% 12%);
   --popover: hsl(260 20% 99%);
   --popover-foreground: hsl(260 15% 12%);
-  --primary: oklch(0.488 0.217 270);
-  --primary-foreground: var(--color-white);
+  /* OctoB violet accent — #a855f7 */
+  --primary: #a855f7;
+  --primary-foreground: #fafafa;
   --secondary: hsl(260 15% 95%);
   --secondary-foreground: hsl(260 15% 20%);
   --muted: hsl(260 15% 95%);
@@ -90,38 +91,38 @@
 
 .dark {
   color-scheme: dark;
-  /* Dark theme — purple-tinted surfaces (HSL 260° purple) */
-  --background: hsl(260 15% 9%);
-  --foreground: hsl(260 10% 95%);
-  --card: hsl(260 15% 11%);
+  /* OctoB dark shell — #0f0f1a background, #1e1b2e elevated / sidebar */
+  --background: #0f0f1a;
+  --foreground: hsl(260 15% 93%);
+  --card: #161525;
   --card-foreground: hsl(260 10% 95%);
-  --popover: hsl(260 15% 11%);
+  --popover: #161525;
   --popover-foreground: hsl(260 10% 95%);
-  --primary: oklch(0.588 0.217 270);
-  --primary-foreground: var(--color-white);
-  --secondary: hsl(260 15% 14%);
+  --primary: #a855f7;
+  --primary-foreground: #fafafa;
+  --secondary: #1e1b2e;
   --secondary-foreground: hsl(260 10% 90%);
-  --muted: hsl(260 15% 14%);
-  --muted-foreground: hsl(260 10% 55%);
-  --accent: hsl(260 15% 14%);
+  --muted: #1e1b2e;
+  --muted-foreground: hsl(260 12% 58%);
+  --accent: #231f35;
   --accent-foreground: hsl(260 10% 90%);
   --destructive: var(--color-red-500);
   --destructive-foreground: var(--color-white);
-  --border: hsl(260 12% 16%);
-  --input: hsl(260 12% 17%);
+  --border: hsl(255 22% 22%);
+  --input: hsl(255 22% 24%);
   --ring: var(--primary);
   --chart-1: oklch(70.34% 0.127 227.39);
   --chart-2: oklch(69.26% 0.128 184.7);
   --chart-3: oklch(98.48% 0.001 285.98);
   --chart-4: oklch(74.11% 0.164 68.11);
   --chart-5: oklch(65.91% 0.204 41.12);
-  --sidebar: hsl(260 15% 7%);
-  --sidebar-foreground: hsl(260 10% 55%);
+  --sidebar: #1e1b2e;
+  --sidebar-foreground: hsl(260 12% 62%);
   --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: var(--color-white);
-  --sidebar-accent: hsl(260 15% 12%);
+  --sidebar-accent: #282344;
   --sidebar-accent-foreground: hsl(260 10% 90%);
-  --sidebar-border: hsl(260 12% 16%);
+  --sidebar-border: hsl(255 22% 22%);
   --sidebar-ring: var(--primary);
 }
 
