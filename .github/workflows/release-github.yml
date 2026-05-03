@@ -38,7 +38,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # @electron/rebuild >=4.0.x requires Node >=22.12
+          node-version: 22
           cache: yarn
       - name: Download libghostty
         run: |
@@ -92,7 +93,7 @@ jobs:
           python-version: '3.11'
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: yarn
       - run: yarn install:ci
       - run: yarn build
@@ -130,7 +131,7 @@ jobs:
           python-version: '3.11'
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: yarn
       - run: yarn install:ci
       - run: yarn build

@@ -24,7 +24,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # @electron/rebuild >=4.0.x requires Node >=22.12
+          node-version: 22
           cache: yarn
 
       - name: Install dependencies (compiles native modules for Windows)
