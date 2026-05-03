@@ -67,7 +67,7 @@ import { initTicketProviderManager, GitHubProvider, JiraProvider } from './servi
 import { APP_SETTINGS_DB_KEY } from '../shared/types/settings'
 import { openCodeService } from './services/opencode-service'
 import { setKeepAwake, cleanupPowerSaveBlocker } from './services/power-save-blocker'
-import { configurePetWindow, destroyPetWindow } from './services/pet-window'
+import { configurePetWindow, destroyPetWindow, getPetWindow } from './services/pet-window'
 
 const log = createLogger({ component: 'Main' })
 
@@ -144,6 +144,19 @@ function saveWindowBounds(window: BrowserWindow): void {
 
 let mainWindow: BrowserWindow | null = null
 
+function ensureDockVisible(reason: string): void {
+  if (process.platform !== 'darwin') return
+
+  try {
+    app.setActivationPolicy('regular')
+    void app.dock?.show().catch((error) => {
+      log.warn('Failed to show Dock icon', { reason, error })
+    })
+  } catch (error) {
+    log.warn('Failed to enforce regular Dock activation policy', { reason, error })
+  }
+}
+
 function createWindow(): void {
   const savedBounds = loadWindowBounds()
 
@@ -169,6 +182,8 @@ function createWindow(): void {
       sandbox: true
     }
   })
+
+  ensureDockVisible('create-main-window')
 
   // Restore maximized state
   if (savedBounds?.isMaximized) {
@@ -214,6 +229,9 @@ function createWindow(): void {
   mainWindow.on('resize', () => saveWindowBounds(mainWindow))
   mainWindow.on('move', () => saveWindowBounds(mainWindow))
   mainWindow.on('close', () => saveWindowBounds(mainWindow))
+  mainWindow.on('closed', () => {
+    mainWindow = null
+  })
 
   // Intercept Cmd+T (macOS) / Ctrl+T (Windows/Linux) before Chromium consumes it
   mainWindow.webContents.on('before-input-event', (event, input) => {
@@ -463,6 +481,7 @@ app.whenReady().then(async () => {
 
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.hive')
+  ensureDockVisible('startup')
 
   // Initialize database
   log.info('Initializing database')
@@ -676,9 +695,27 @@ app.whenReady().then(async () => {
   }
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    ensureDockVisible('activate')
+
+    // The pet overlay is an auxiliary window and should not count as a main app
+    // window for Dock activation. If only the pet exists, re-create Hive.
+    const petWindow = getPetWindow()
+    const hasMainAppWindow = BrowserWindow.getAllWindows().some(
+      (window) => window !== petWindow && !window.isDestroyed()
+    )
+
+    if (!hasMainAppWindow) {
+      createWindow()
+      return
+    }
+
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) {
+        mainWindow.restore()
+      }
+      mainWindow.show()
+      mainWindow.focus()
+    }
   })
 }).catch((error) => {
   log.error('Fatal error during app startup', error instanceof Error ? error : new Error(String(error)))

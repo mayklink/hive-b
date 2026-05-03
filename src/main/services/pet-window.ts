@@ -53,6 +53,13 @@ let getMainWindow: (() => BrowserWindow | null) | null = null
 let latestStatus: PetStatusPayload = { state: 'idle', sourceWorktreeId: null }
 let latestSettings: PetSettings = DEFAULT_PET_SETTINGS
 
+function ensureRegularMacAppActivation(): void {
+  if (process.platform !== 'darwin') return
+
+  app.setActivationPolicy('regular')
+  void app.dock?.show()
+}
+
 function petWindowSize(settings = latestSettings): number {
   return PET_SIZE_PX[settings.size] + PET_PADDING
 }
@@ -168,6 +175,7 @@ export function getPetConfig(): {
 
 export function createPetWindow(): BrowserWindow | null {
   if (process.platform !== 'darwin') return null
+  ensureRegularMacAppActivation()
   if (petWindow && !petWindow.isDestroyed()) return petWindow
 
   const size = petWindowSize()
@@ -227,6 +235,7 @@ export function destroyPetWindow(): void {
     petWindow.destroy()
   }
   petWindow = null
+  ensureRegularMacAppActivation()
 }
 
 export function movePetWindow(position: PetPosition): void {
@@ -283,6 +292,7 @@ export function persistPetSettings(partial: Partial<PetSettings>): void {
 }
 
 export function focusMainWindowFromPet(worktreeId: string | null): void {
+  ensureRegularMacAppActivation()
   const mainWindow = getMainWindow?.() ?? null
   if (!mainWindow || mainWindow.isDestroyed()) return
 
