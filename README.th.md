@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>ตัวจัดการ AI agent แบบโอเพนซอร์สสำหรับการเขียนโค้ดแบบขนานข้ามโปรเจกต์</strong></p>
   <p>รัน Claude Code, OpenCode และ Codex sessions แบบขนาน หน้าต่างเดียว แบรนช์แยกอิสระ ไม่มีแท็บรกรุงรัง</p>
   <p>

@@ -116,7 +116,7 @@ export function registerProjectHandlers(): void {
 
   // --- Custom Project Icon handlers ---
 
-  const iconDir = join(app.getPath('home'), '.hive', 'project-icons')
+  const iconDir = join(app.getPath('home'), '.octob', 'project-icons')
 
   /**
    * Ensure the project-icons directory exists
@@ -127,7 +127,7 @@ export function registerProjectHandlers(): void {
     }
   }
 
-  // Pick a custom project icon via native file dialog, copy to ~/.hive/project-icons/
+  // Pick a custom project icon via native file dialog, copy to ~/.octob/project-icons/
   ipcMain.handle(
     'project:pickIcon',
     async (

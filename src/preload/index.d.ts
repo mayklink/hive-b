@@ -679,13 +679,13 @@ declare global {
       // Connect to OpenCode for a worktree (lazy starts server if needed)
       connect: (
         worktreePath: string,
-        hiveSessionId: string
+        octobSessionId: string
       ) => Promise<{ success: boolean; sessionId?: string; error?: string }>
       // Reconnect to existing OpenCode session
       reconnect: (
         worktreePath: string,
         opencodeSessionId: string,
-        hiveSessionId: string
+        octobSessionId: string
       ) => Promise<{
         success: boolean
         sessionStatus?: 'idle' | 'busy' | 'retry'
@@ -766,13 +766,13 @@ declare global {
       // Approve a pending plan (ExitPlanMode) — unblocks the SDK to implement
       planApprove: (
         worktreePath: string,
-        hiveSessionId: string,
+        octobSessionId: string,
         requestId?: string
       ) => Promise<{ success: boolean; error?: string }>
       // Reject a pending plan with user feedback — Claude will revise
       planReject: (
         worktreePath: string,
-        hiveSessionId: string,
+        octobSessionId: string,
         feedback: string,
         requestId?: string
       ) => Promise<{ success: boolean; error?: string }>

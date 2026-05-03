@@ -58,7 +58,7 @@ function createMockDbService(worktreeOverrides: Record<string, any> = {}) {
 function createMockSession(overrides: Partial<ClaudeSessionState> = {}): ClaudeSessionState {
   return {
     claudeSessionId: 'sdk-session-123',
-    hiveSessionId: 'hive-session-456',
+    octobSessionId: 'hive-session-456',
     worktreePath: '/path/to/worktree',
     abortController: null,
     checkpointCounter: 0,

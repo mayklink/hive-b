@@ -175,7 +175,7 @@ export const useSpaceStore = create<SpaceState>()(
       }
     }),
     {
-      name: 'hive-spaces',
+      name: 'octob-spaces',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         activeSpaceId: state.activeSpaceId

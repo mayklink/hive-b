@@ -88,7 +88,7 @@ export interface PendingPlanApprovalState {
 
 export interface ClaudeSessionState {
   claudeSessionId: string
-  hiveSessionId: string
+  octobSessionId: string
   worktreePath: string
   abortController: AbortController | null
   checkpointCounter: number
@@ -104,7 +104,7 @@ export interface ClaudeSessionState {
   pendingQuestion: PendingQuestionState | null
   /** Pending ExitPlanMode awaiting user approval/rejection */
   pendingPlanApproval: PendingPlanApprovalState | null
-  /** Current revert boundary message ID (hive-side), set by undo */
+  /** Current revert boundary message ID (octob-side), set by undo */
   revertMessageID: string | null
   /** SDK UUID of the reverted checkpoint, used for boundary lookups in subsequent undos */
   revertCheckpointUuid: string | null
@@ -133,7 +133,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
   private selectedModel: string = 'sonnet'
   private selectedVariant: string | undefined
   /** Tracks in-flight tool_use content blocks for input_json_delta accumulation.
-   *  Keyed by hiveSessionId → Map<blockIndex, { id, name, inputJson }>. */
+   *  Keyed by octobSessionId → Map<blockIndex, { id, name, inputJson }>. */
   private activeToolBlocks = new Map<
     string,
     Map<number, { id: string; name: string; inputJson: string }>
@@ -162,7 +162,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       toolName: string
       input: Record<string, unknown>
       commandStr: string
-      hiveSessionId: string
+      octobSessionId: string
     }
   >()
 
@@ -182,13 +182,13 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
   // ── Lifecycle ────────────────────────────────────────────────────
 
-  async connect(worktreePath: string, hiveSessionId: string): Promise<{ sessionId: string }> {
+  async connect(worktreePath: string, octobSessionId: string): Promise<{ sessionId: string }> {
     const placeholderId = `pending::${randomUUID()}`
 
     const key = this.getSessionKey(worktreePath, placeholderId)
     const state: ClaudeSessionState = {
       claudeSessionId: placeholderId,
-      hiveSessionId,
+      octobSessionId,
       worktreePath,
       abortController: new AbortController(),
       checkpointCounter: 0,
@@ -210,14 +210,14 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     }
     this.sessions.set(key, state)
 
-    log.info('Connected (deferred)', { worktreePath, hiveSessionId, placeholderId })
+    log.info('Connected (deferred)', { worktreePath, octobSessionId, placeholderId })
     return { sessionId: placeholderId }
   }
 
   async reconnect(
     worktreePath: string,
     agentSessionId: string,
-    hiveSessionId: string
+    octobSessionId: string
   ): Promise<{
     success: boolean
     sessionStatus?: 'idle' | 'busy' | 'retry'
@@ -227,12 +227,12 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
     const existing = this.sessions.get(key)
     if (existing) {
-      existing.hiveSessionId = hiveSessionId
+      existing.octobSessionId = octobSessionId
       const sessionStatus = existing.query ? 'busy' : 'idle'
-      log.info('Reconnect: session already registered, updated hiveSessionId', {
+      log.info('Reconnect: session already registered, updated octobSessionId', {
         worktreePath,
         agentSessionId,
-        hiveSessionId,
+        octobSessionId,
         sessionStatus
       })
       return { success: true, sessionStatus, revertMessageID: existing.revertMessageID ?? null }
@@ -240,7 +240,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
     const state: ClaudeSessionState = {
       claudeSessionId: agentSessionId,
-      hiveSessionId,
+      octobSessionId,
       worktreePath,
       abortController: new AbortController(),
       checkpointCounter: 0,
@@ -262,7 +262,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     }
     this.sessions.set(key, state)
 
-    log.info('Reconnected (restored from DB)', { worktreePath, agentSessionId, hiveSessionId })
+    log.info('Reconnected (restored from DB)', { worktreePath, agentSessionId, octobSessionId })
     return { success: true, sessionStatus: 'idle', revertMessageID: null }
   }
 
@@ -342,11 +342,11 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     // Reset stderr buffer so it only captures output from this prompt
     session.stderrBuffer = []
 
-    this.emitStatus(session.hiveSessionId, 'busy')
+    this.emitStatus(session.octobSessionId, 'busy')
     log.info('Prompt: starting', {
       worktreePath,
       agentSessionId,
-      hiveSessionId: session.hiveSessionId,
+      octobSessionId: session.octobSessionId,
       materialized: session.materialized,
       claudeSessionId: session.claudeSessionId
     })
@@ -396,7 +396,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         session.titleDeferred = false
         this.handleTitleGeneration(session, prompt).catch(() => {})
         log.info('Prompt: firing deferred title generation', {
-          hiveSessionId: session.hiveSessionId,
+          octobSessionId: session.octobSessionId,
           promptPreview: prompt.slice(0, 80)
         })
       }
@@ -461,7 +461,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       let sdkPermissionMode: PermissionMode = 'default'
       if (this.dbService) {
         try {
-          const dbSession = this.dbService.getSession(session.hiveSessionId)
+          const dbSession = this.dbService.getSession(session.octobSessionId)
           if (dbSession?.mode === 'plan') {
             sdkPermissionMode = 'plan'
           }
@@ -491,7 +491,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         extraArgs: { 'replay-user-messages': null },
         thinking: { type: 'adaptive' },
         effort: effortLevel,
-        debugFile: join(app.getPath('home'), '.hive', 'logs', 'claude-debug.log'),
+        debugFile: join(app.getPath('home'), '.octob', 'logs', 'claude-debug.log'),
         env: {
           ...process.env,
           ...getUserEnvironmentVariables(this.dbService),
@@ -573,7 +573,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         // stream_event messages fire per-token — log at debug to avoid spam
         if (msgType === 'stream_event') {
           hasStreamedContent = true
-          this.emitSdkMessage(session.hiveSessionId, sdkMessage, messageIndex, session.toolNames)
+          this.emitSdkMessage(session.octobSessionId, sdkMessage, messageIndex, session.toolNames)
           continue // No materialization/accumulation needed for partials
         }
 
@@ -644,14 +644,14 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           // Notify renderer that commands are now available for fetching
           this.sendToRenderer('opencode:stream', {
             type: 'session.commands_available',
-            sessionId: session.hiveSessionId,
+            sessionId: session.octobSessionId,
             data: {}
           })
 
           // Send Claude model limits so the renderer can populate contextStore
           this.sendToRenderer('opencode:stream', {
             type: 'session.model_limits',
-            sessionId: session.hiveSessionId,
+            sessionId: session.octobSessionId,
             data: {
               models: CLAUDE_MODELS.map((m) => ({
                 modelID: m.id,
@@ -690,7 +690,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
             session.checkpoints = new Map()
             session.checkpointCounter = 0
             log.info('Reset checkpoints for forked session', {
-              hiveSessionId: session.hiveSessionId,
+              octobSessionId: session.octobSessionId,
               newSessionId: sdkSessionId
             })
           }
@@ -698,17 +698,17 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           // Update DB so future IPC calls with the new ID resolve correctly
           if (this.dbService) {
             try {
-              this.dbService.updateSession(session.hiveSessionId, {
+              this.dbService.updateSession(session.octobSessionId, {
                 opencode_session_id: sdkSessionId
               })
               log.info('Updated DB opencode_session_id', {
-                hiveSessionId: session.hiveSessionId,
+                octobSessionId: session.octobSessionId,
                 newAgentSessionId: sdkSessionId
               })
             } catch (err) {
               const error = err instanceof Error ? err : new Error(String(err))
               log.error('Failed to update opencode_session_id in DB', error, {
-                hiveSessionId: session.hiveSessionId
+                octobSessionId: session.octobSessionId
               })
             }
           }
@@ -720,7 +720,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           // for normal SDK session ID changes during resume.
           this.sendToRenderer('opencode:stream', {
             type: 'session.materialized',
-            sessionId: session.hiveSessionId,
+            sessionId: session.octobSessionId,
             data: { newSessionId: sdkSessionId, wasFork: !wasPending && wasForkRequest }
           })
 
@@ -730,7 +730,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
             if (prompt.trimStart().startsWith('/using-superpowers')) {
               session.titleDeferred = true
               log.info('Prompt: deferring title generation (superpowers hook)', {
-                hiveSessionId: session.hiveSessionId
+                octobSessionId: session.octobSessionId
               })
             } else {
               this.handleTitleGeneration(session, prompt).catch(() => {
@@ -779,7 +779,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           }
 
           log.info('TOOL_LIFECYCLE: accumulate message', {
-            hiveSessionId: session.hiveSessionId,
+            octobSessionId: session.octobSessionId,
             msgType,
             contentBlockTypes,
             isToolResultOnly,
@@ -890,7 +890,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         }
 
         // Emit normalized event
-        this.emitSdkMessage(session.hiveSessionId, sdkMessage, messageIndex, session.toolNames, hasStreamedContent)
+        this.emitSdkMessage(session.octobSessionId, sdkMessage, messageIndex, session.toolNames, hasStreamedContent)
         messageIndex++
 
         // Reset streaming flag after each result so the next message sequence
@@ -921,12 +921,12 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         })
         this.sendToRenderer('opencode:stream', {
           type: 'session.error',
-          sessionId: session.hiveSessionId,
+          sessionId: session.octobSessionId,
           data: { error: 'Claude exited unexpectedly', stderr: stderrAfterLoop }
         })
       }
 
-      this.emitStatus(session.hiveSessionId, 'idle')
+      this.emitStatus(session.octobSessionId, 'idle')
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       const stderrOutput = session.stderrBuffer.join('').trim() || undefined
@@ -955,10 +955,10 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
       this.sendToRenderer('opencode:stream', {
         type: 'session.error',
-        sessionId: session.hiveSessionId,
+        sessionId: session.octobSessionId,
         data: { error: errorMessage, stderr: stderrOutput }
       })
-      this.emitStatus(session.hiveSessionId, 'idle')
+      this.emitStatus(session.octobSessionId, 'idle')
     } finally {
       session.lastQuery = session.query
       session.query = null
@@ -985,7 +985,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     }
 
     session.query = null
-    this.emitStatus(session.hiveSessionId, 'idle')
+    this.emitStatus(session.octobSessionId, 'idle')
     return true
   }
 
@@ -1109,7 +1109,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
     log.info('questionReply: resolving pending question', {
       requestId,
-      hiveSessionId: session.hiveSessionId,
+      octobSessionId: session.octobSessionId,
       answerCount: answers.length
     })
 
@@ -1119,7 +1119,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     // Emit question.replied so the renderer removes the QuestionPrompt
     this.sendToRenderer('opencode:stream', {
       type: 'question.replied',
-      sessionId: session.hiveSessionId,
+      sessionId: session.octobSessionId,
       data: { requestId, id: requestId }
     })
   }
@@ -1137,7 +1137,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
     log.info('questionReject: rejecting pending question', {
       requestId,
-      hiveSessionId: session.hiveSessionId
+      octobSessionId: session.octobSessionId
     })
 
     // Resolve the blocked canUseTool Promise with rejection
@@ -1146,7 +1146,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     // Emit question.rejected so the renderer removes the QuestionPrompt
     this.sendToRenderer('opencode:stream', {
       type: 'question.rejected',
-      sessionId: session.hiveSessionId,
+      sessionId: session.octobSessionId,
       data: { requestId, id: requestId }
     })
   }
@@ -1182,20 +1182,20 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     return this.pendingPlanSessions.has(requestId)
   }
 
-  /** Check if a session (by hiveSessionId) has a pending plan */
-  hasPendingPlanForSession(hiveSessionId: string): boolean {
+  /** Check if a session (by octobSessionId) has a pending plan */
+  hasPendingPlanForSession(octobSessionId: string): boolean {
     for (const session of this.sessions.values()) {
-      if (session.hiveSessionId === hiveSessionId && session.pendingPlanApproval) {
+      if (session.octobSessionId === octobSessionId && session.pendingPlanApproval) {
         return true
       }
     }
     return false
   }
 
-  /** Find a session state by hiveSessionId */
-  findSessionByHiveId(hiveSessionId: string): ClaudeSessionState | undefined {
+  /** Find a session state by octobSessionId */
+  findSessionByOctobId(octobSessionId: string): ClaudeSessionState | undefined {
     for (const session of this.sessions.values()) {
-      if (session.hiveSessionId === hiveSessionId) {
+      if (session.octobSessionId === octobSessionId) {
         return session
       }
     }
@@ -1212,18 +1212,18 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
   /** Approve a pending plan — unblocks the SDK to continue implementation */
   async planApprove(
     _worktreePath: string,
-    hiveSessionId: string,
+    octobSessionId: string,
     requestId?: string
   ): Promise<void> {
     // Prefer requestId routing (stable and specific) when available.
-    // Fall back to hiveSessionId scan for compatibility.
+    // Fall back to octobSessionId scan for compatibility.
     let session: ClaudeSessionState | undefined = requestId
       ? this.findSessionByPendingPlanRequestId(requestId)
       : undefined
 
     if (!session) {
       for (const s of this.sessions.values()) {
-        if (s.hiveSessionId === hiveSessionId && s.pendingPlanApproval) {
+        if (s.octobSessionId === octobSessionId && s.pendingPlanApproval) {
           session = s
           break
         }
@@ -1231,11 +1231,11 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     }
 
     if (!session || !session.pendingPlanApproval) {
-      throw new Error(`planApprove: no pending plan for session: ${hiveSessionId}`)
+      throw new Error(`planApprove: no pending plan for session: ${octobSessionId}`)
     }
 
     log.info('planApprove: approving plan', {
-      hiveSessionId,
+      octobSessionId,
       requestId: session.pendingPlanApproval.requestId
     })
 
@@ -1249,7 +1249,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     // Emit plan.resolved so the renderer clears the plan UI
     this.sendToRenderer('opencode:stream', {
       type: 'plan.resolved',
-      sessionId: hiveSessionId,
+      sessionId: octobSessionId,
       data: { approved: true }
     })
   }
@@ -1257,7 +1257,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
   /** Reject a pending plan with user feedback — Claude will revise */
   async planReject(
     _worktreePath: string,
-    hiveSessionId: string,
+    octobSessionId: string,
     feedback?: string,
     requestId?: string
   ): Promise<void> {
@@ -1268,7 +1268,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
     if (!session) {
       for (const s of this.sessions.values()) {
-        if (s.hiveSessionId === hiveSessionId && s.pendingPlanApproval) {
+        if (s.octobSessionId === octobSessionId && s.pendingPlanApproval) {
           session = s
           break
         }
@@ -1276,11 +1276,11 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     }
 
     if (!session || !session.pendingPlanApproval) {
-      throw new Error(`planReject: no pending plan for session: ${hiveSessionId}`)
+      throw new Error(`planReject: no pending plan for session: ${octobSessionId}`)
     }
 
     log.info('planReject: rejecting plan with feedback', {
-      hiveSessionId,
+      octobSessionId,
       requestId: session.pendingPlanApproval.requestId,
       hasFeedback: !!feedback
     })
@@ -1295,7 +1295,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     // Emit plan.resolved so the renderer clears the plan UI
     this.sendToRenderer('opencode:stream', {
       type: 'plan.resolved',
-      sessionId: hiveSessionId,
+      sessionId: octobSessionId,
       data: { approved: false, feedback }
     })
   }
@@ -1305,7 +1305,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
   async undo(
     worktreePath: string,
     agentSessionId: string,
-    _hiveSessionId: string
+    _octobSessionId: string
   ): Promise<{ revertMessageID: string; restoredPrompt: string; revertDiff: string | null }> {
     const session = this.getSession(worktreePath, agentSessionId)
     if (!session) {
@@ -1318,7 +1318,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
     // Find the current revert boundary's checkpoint index (if any).
     // Use revertCheckpointUuid (SDK UUID) directly against checkpoints map
-    // to avoid roundabout hive-side ID lookups that can fail when IDs diverge.
+    // to avoid roundabout octob-side ID lookups that can fail when IDs diverge.
     const currentBoundaryCheckpointIdx = session.revertCheckpointUuid
       ? (session.checkpoints.get(session.revertCheckpointUuid) ?? null)
       : null
@@ -1420,7 +1420,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
     const restoredPrompt = this.extractPromptFromMessage(targetMessage)
 
-    // Use the hive-side message ID, or fall back to the SDK UUID
+    // Use the octob-side message ID, or fall back to the SDK UUID
     const revertMessageID = (targetMessage?.id as string) ?? targetUuid
 
     // Update session revert state
@@ -1507,14 +1507,14 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
   async redo(
     _worktreePath: string,
     _agentSessionId: string,
-    _hiveSessionId: string
+    _octobSessionId: string
   ): Promise<unknown> {
     throw new Error('Redo is not supported for Claude Code sessions')
   }
 
   // ── Commands ─────────────────────────────────────────────────────
 
-  private toHiveCommandFormat(cmd: { name: string; description: string; argumentHint: string }) {
+  private toOctobCommandFormat(cmd: { name: string; description: string; argumentHint: string }) {
     return {
       name: cmd.name,
       description: cmd.description || undefined,
@@ -1526,7 +1526,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     // 1. Check in-memory cache (populated after SDK init in current session)
     const cached = this.cachedSlashCommands.get(worktreePath)
     if (cached?.length) {
-      const commands = cached.map((cmd) => this.toHiveCommandFormat(cmd))
+      const commands = cached.map((cmd) => this.toOctobCommandFormat(cmd))
       // Sync DB so removed commands are pruned from the persisted cache
       this.persistCommandsToDb(worktreePath, commands)
       return commands
@@ -1565,7 +1565,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     if (!commands) {
       const cached = this.cachedSlashCommands.get(worktreePath)
       if (!cached?.length) return
-      commands = cached.map((cmd) => this.toHiveCommandFormat(cmd))
+      commands = cached.map((cmd) => this.toOctobCommandFormat(cmd))
     }
 
     try {
@@ -1604,32 +1604,32 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
   async renameSession(_worktreePath: string, agentSessionId: string, name: string): Promise<void> {
     // The Claude SDK has no session rename API. Session titles are stored
-    // in Hive's local DB only. Find the session and update via dbService.
+    // in Octob's local DB only. Find the session and update via dbService.
     if (!this.dbService) {
       log.warn('renameSession: no dbService available', { agentSessionId })
       return
     }
 
-    // Find the hive session ID from our session map
-    let hiveSessionId: string | null = null
+    // Find the Octob session ID from our session map
+    let octobSessionId: string | null = null
     for (const session of this.sessions.values()) {
       if (session.claudeSessionId === agentSessionId) {
-        hiveSessionId = session.hiveSessionId
+        octobSessionId = session.octobSessionId
         break
       }
     }
 
-    if (!hiveSessionId) {
+    if (!octobSessionId) {
       log.warn('renameSession: session not found in active map', { agentSessionId })
       return
     }
 
     try {
-      this.dbService.updateSession(hiveSessionId, { name })
-      log.info('renameSession: updated title in DB', { hiveSessionId, name })
+      this.dbService.updateSession(octobSessionId, { name })
+      log.info('renameSession: updated title in DB', { octobSessionId, name })
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err))
-      log.error('renameSession: failed to update title', error, { hiveSessionId })
+      log.error('renameSession: failed to update title', error, { octobSessionId })
     }
   }
 
@@ -1646,22 +1646,22 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
   ): Promise<void> {
     try {
       log.info('handleTitleGeneration: starting', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         claudeBinaryPath: this.claudeBinaryPath,
         messagePreview: userMessage.slice(0, 80)
       })
       const title = await generateSessionTitle(userMessage, this.claudeBinaryPath)
       log.info('handleTitleGeneration: generateSessionTitle returned', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         title
       })
       if (!title) return
 
       // 1. Update session name in DB
       if (this.dbService) {
-        this.dbService.updateSession(session.hiveSessionId, { name: title })
+        this.dbService.updateSession(session.octobSessionId, { name: title })
         log.info('handleTitleGeneration: updated DB', {
-          hiveSessionId: session.hiveSessionId,
+          octobSessionId: session.octobSessionId,
           title
         })
       }
@@ -1670,14 +1670,14 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       // The renderer's SessionView.tsx and useOpenCodeGlobalListener.ts both
       // read: event.data?.info?.title || event.data?.title
       log.info('handleTitleGeneration: sending session.updated to renderer', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         title,
         hasMainWindow: !!this.mainWindow,
         windowDestroyed: this.mainWindow ? this.mainWindow.isDestroyed() : 'n/a'
       })
       this.sendToRenderer('opencode:stream', {
         type: 'session.updated',
-        sessionId: session.hiveSessionId,
+        sessionId: session.octobSessionId,
         data: {
           title,
           info: { title }
@@ -1686,7 +1686,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
       // 3. Auto-rename branch for the session's direct worktree
       if (!this.dbService) return
-      const worktree = this.dbService.getWorktreeBySessionId(session.hiveSessionId)
+      const worktree = this.dbService.getWorktreeBySessionId(session.octobSessionId)
       if (worktree && !worktree.branch_renamed) {
         try {
           const result = await autoRenameWorktreeBranch({
@@ -1718,7 +1718,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
       // 4. Auto-rename branches for all connection member worktrees
       if (this.dbService) {
-        const dbSession = this.dbService.getSession(session.hiveSessionId)
+        const dbSession = this.dbService.getSession(session.octobSessionId)
         if (dbSession?.connection_id) {
           const connection = this.dbService.getConnection(dbSession.connection_id)
           if (connection) {
@@ -1791,7 +1791,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     const toolUseID = options.toolUseID
 
     log.info('canUseTool: ExitPlanMode intercepted', {
-      hiveSessionId: session.hiveSessionId,
+      octobSessionId: session.octobSessionId,
       requestId,
       toolUseID,
       inputKeys: Object.keys(input).join(',')
@@ -1816,7 +1816,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
       this.sendToRenderer('opencode:stream', {
         type: 'plan.ready',
-        sessionId: session.hiveSessionId,
+        sessionId: session.octobSessionId,
         data: {
           id: requestId,
           plan: planContent,
@@ -1826,10 +1826,10 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
       log.info('canUseTool: emitted plan.ready, waiting for approval', {
         requestId,
-        hiveSessionId: session.hiveSessionId
+        octobSessionId: session.octobSessionId
       })
 
-      this.maybeNotifyUserFeedbackNeeded(session.hiveSessionId, 'permission')
+      this.maybeNotifyUserFeedbackNeeded(session.octobSessionId, 'permission')
 
       // If the session is aborted while waiting, auto-reject and notify renderer
       const onAbort = (): void => {
@@ -1840,7 +1840,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           // Notify renderer to clear stale pending plan UI
           this.sendToRenderer('opencode:stream', {
             type: 'plan.resolved',
-            sessionId: session.hiveSessionId,
+            sessionId: session.octobSessionId,
             data: { approved: false, aborted: true }
           })
           resolve({ approved: false })
@@ -1871,7 +1871,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
   /**
    * Creates a canUseTool callback for the Claude Agent SDK.
    * Intercepts AskUserQuestion and ExitPlanMode to block execution and wait
-   * for user input, translating between the SDK format and Hive's event format.
+   * for user input, translating between the SDK format and Octob's event format.
    */
   private createCanUseToolCallback(
     session: ClaudeSessionState
@@ -1898,7 +1898,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         log.info('SECURITY CHECK: Evaluating tool use', {
           toolName,
           commandStr,
-          sessionId: session.hiveSessionId
+          sessionId: session.octobSessionId
         })
 
         const settings = await this.getCommandFilterSettings()
@@ -1910,7 +1910,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           action,
           enabled: settings.enabled,
           defaultBehavior: settings.defaultBehavior,
-          sessionId: session.hiveSessionId
+          sessionId: session.octobSessionId
         })
 
         if (action === 'allow') {
@@ -1922,7 +1922,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           log.info('SECURITY CHECK: Tool blocked by command filter', {
             toolName,
             commandStr,
-            sessionId: session.hiveSessionId
+            sessionId: session.octobSessionId
           })
           return {
             behavior: 'deny' as const,
@@ -1934,7 +1934,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         log.info('SECURITY CHECK: Requesting user approval', {
           toolName,
           commandStr,
-          sessionId: session.hiveSessionId
+          sessionId: session.octobSessionId
         })
         return this.handleCommandApproval(session, toolName, input, options)
       }
@@ -1945,13 +1945,13 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       const toolUseID = options.toolUseID
 
       log.info('canUseTool: AskUserQuestion intercepted', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         requestId,
         toolUseID,
         questionCount: (input.questions as unknown[])?.length ?? 0
       })
 
-      // Translate SDK AskUserQuestionInput to Hive QuestionRequest format
+      // Translate SDK AskUserQuestionInput to Octob QuestionRequest format
       const sdkQuestions = input.questions as Array<{
         question: string
         header: string
@@ -1961,7 +1961,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
       const questionRequest = {
         id: requestId,
-        sessionID: session.hiveSessionId,
+        sessionID: session.octobSessionId,
         questions: sdkQuestions.map((q) => ({
           question: q.question,
           header: q.header,
@@ -1988,16 +1988,16 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           // Emit question.asked event to renderer (matches OpenCode event format)
           this.sendToRenderer('opencode:stream', {
             type: 'question.asked',
-            sessionId: session.hiveSessionId,
+            sessionId: session.octobSessionId,
             data: questionRequest
           })
 
           log.info('canUseTool: emitted question.asked, waiting for response', {
             requestId,
-            hiveSessionId: session.hiveSessionId
+            octobSessionId: session.octobSessionId
           })
 
-          this.maybeNotifyUserFeedbackNeeded(session.hiveSessionId, 'question')
+          this.maybeNotifyUserFeedbackNeeded(session.octobSessionId, 'question')
 
           // If the session is aborted while waiting, auto-reject
           const onAbort = (): void => {
@@ -2026,7 +2026,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         }
       }
 
-      // Translate Hive string[][] answers back to SDK Record<string, string> format
+      // Translate Octob string[][] answers back to SDK Record<string, string> format
       // The SDK expects { answers: { "question text": "selected label(s)" } }
       const sdkAnswers: Record<string, string> = {}
       sdkQuestions.forEach((q, i) => {
@@ -2143,7 +2143,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       requestId,
       toolName,
       commandStr,
-      hiveSessionId: session.hiveSessionId
+      octobSessionId: session.octobSessionId
     })
 
     const patternSuggestions = this.commandFilterService.generatePatternSuggestions(toolName, input)
@@ -2154,7 +2154,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
     const approvalRequest = {
       id: requestId,
-      sessionID: session.hiveSessionId,
+      sessionID: session.octobSessionId,
       toolName,
       commandStr,
       input,
@@ -2164,10 +2164,10 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     }
 
     // Emit command.approval_needed event to renderer
-    log.info('APPROVAL FLOW: Sending event to renderer', { requestId, sessionId: session.hiveSessionId })
+    log.info('APPROVAL FLOW: Sending event to renderer', { requestId, sessionId: session.octobSessionId })
     this.sendToRenderer('opencode:stream', {
       type: 'command.approval_needed',
-      sessionId: session.hiveSessionId,
+      sessionId: session.octobSessionId,
       data: approvalRequest
     })
 
@@ -2178,7 +2178,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       waitStartTime: new Date().toISOString()
     })
 
-    this.maybeNotifyUserFeedbackNeeded(session.hiveSessionId, 'permission')
+    this.maybeNotifyUserFeedbackNeeded(session.octobSessionId, 'permission')
 
     // Block execution with a Promise that waits for user response (no timeout, like questions)
     const userResponse = await new Promise<{
@@ -2195,7 +2195,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         toolName,
         input,
         commandStr,
-        hiveSessionId: session.hiveSessionId
+        octobSessionId: session.octobSessionId
       })
 
       // If the session is aborted while waiting, auto-deny
@@ -2209,7 +2209,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           // Send command.approval_replied event to clear the UI state
           this.sendToRenderer('opencode:stream', {
             type: 'command.approval_replied',
-            sessionId: pending.hiveSessionId,
+            sessionId: pending.octobSessionId,
             data: { requestId, id: requestId, approved: false }
           })
 
@@ -2388,7 +2388,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     // We know which session this approval belongs to from the stored data
     this.sendToRenderer('opencode:stream', {
       type: 'command.approval_replied',
-      sessionId: pendingApproval.hiveSessionId,
+      sessionId: pendingApproval.octobSessionId,
       data: { requestId, id: requestId, approved }
     })
 
@@ -2396,27 +2396,27 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
   }
 
   private emitStatus(
-    hiveSessionId: string,
+    octobSessionId: string,
     status: 'idle' | 'busy' | 'retry',
     extra?: { attempt?: number; message?: string; next?: number }
   ): void {
     const statusPayload = { type: status, ...extra }
     this.sendToRenderer('opencode:stream', {
       type: 'session.status',
-      sessionId: hiveSessionId,
+      sessionId: octobSessionId,
       data: { status: statusPayload },
       statusPayload
     })
 
     if (status === 'idle') {
-      this.maybeNotifySessionComplete(hiveSessionId)
+      this.maybeNotifySessionComplete(octobSessionId)
     }
   }
 
   /**
    * Show a native notification when a session completes while the app window is unfocused
    */
-  private maybeNotifySessionComplete(hiveSessionId: string): void {
+  private maybeNotifySessionComplete(octobSessionId: string): void {
     try {
       if (!this.mainWindow || this.mainWindow.isDestroyed() || this.mainWindow.isFocused()) {
         return
@@ -2424,9 +2424,9 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
       if (!this.dbService) return
 
-      const session = this.dbService.getSession(hiveSessionId)
+      const session = this.dbService.getSession(octobSessionId)
       if (!session) {
-        log.warn('Cannot notify: session not found', { hiveSessionId })
+        log.warn('Cannot notify: session not found', { octobSessionId })
         return
       }
 
@@ -2441,10 +2441,10 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         sessionName: session.name || 'Untitled',
         projectId: session.project_id,
         worktreeId: session.worktree_id || '',
-        sessionId: hiveSessionId
+        sessionId: octobSessionId
       })
     } catch (error) {
-      log.warn('Failed to show session completion notification', { hiveSessionId, error })
+      log.warn('Failed to show session completion notification', { octobSessionId, error })
     }
   }
 
@@ -2454,7 +2454,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
    * window is unfocused. Mirrors maybeNotifySessionComplete.
    */
   private maybeNotifyUserFeedbackNeeded(
-    hiveSessionId: string,
+    octobSessionId: string,
     kind: 'question' | 'permission'
   ): void {
     try {
@@ -2464,9 +2464,9 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
       if (!this.dbService) return
 
-      const session = this.dbService.getSession(hiveSessionId)
+      const session = this.dbService.getSession(octobSessionId)
       if (!session) {
-        log.warn('Cannot notify: session not found', { hiveSessionId })
+        log.warn('Cannot notify: session not found', { octobSessionId })
         return
       }
 
@@ -2482,17 +2482,17 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           sessionName: session.name || 'Untitled',
           projectId: session.project_id,
           worktreeId: session.worktree_id || '',
-          sessionId: hiveSessionId
+          sessionId: octobSessionId
         },
         kind
       )
     } catch (error) {
-      log.warn('Failed to show pending user feedback notification', { hiveSessionId, error, kind })
+      log.warn('Failed to show pending user feedback notification', { octobSessionId, error, kind })
     }
   }
 
   private emitSdkMessage(
-    hiveSessionId: string,
+    octobSessionId: string,
     msg: Record<string, unknown>,
     messageIndex: number,
     toolNames?: Map<string, string>,
@@ -2524,7 +2524,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
               const text = delta.text as string
               this.sendToRenderer('opencode:stream', {
                 type: 'message.part.updated',
-                sessionId: hiveSessionId,
+                sessionId: octobSessionId,
                 childSessionId,
                 data: {
                   part: { type: 'text', text },
@@ -2535,7 +2535,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
               const thinking = delta.thinking as string
               this.sendToRenderer('opencode:stream', {
                 type: 'message.part.updated',
-                sessionId: hiveSessionId,
+                sessionId: octobSessionId,
                 childSessionId,
                 data: {
                   part: { type: 'reasoning', text: thinking },
@@ -2547,8 +2547,8 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
               // Accumulate in the active tool block tracker so we can
               // emit a tool update with input once the block stops.
               const partialJson = delta.partial_json as string
-              if (partialJson && this.activeToolBlocks.has(hiveSessionId)) {
-                const tools = this.activeToolBlocks.get(hiveSessionId)!
+              if (partialJson && this.activeToolBlocks.has(octobSessionId)) {
+                const tools = this.activeToolBlocks.get(octobSessionId)!
                 const blockIdx = rawEvent.index as number | undefined
                 if (blockIdx !== undefined && tools.has(blockIdx)) {
                   const tool = tools.get(blockIdx)!
@@ -2568,7 +2568,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
               const toolId = contentBlock.id as string
               const toolName = contentBlock.name as string
               log.info('TOOL_LIFECYCLE: content_block_start', {
-                hiveSessionId,
+                octobSessionId,
                 toolId,
                 toolName,
                 blockIdx
@@ -2578,11 +2578,11 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
                 toolNames.set(toolId, toolName)
               }
               // Track active tool block for input_json_delta accumulation
-              if (!this.activeToolBlocks.has(hiveSessionId)) {
-                this.activeToolBlocks.set(hiveSessionId, new Map())
+              if (!this.activeToolBlocks.has(octobSessionId)) {
+                this.activeToolBlocks.set(octobSessionId, new Map())
               }
               if (blockIdx !== undefined) {
-                this.activeToolBlocks.get(hiveSessionId)!.set(blockIdx, {
+                this.activeToolBlocks.get(octobSessionId)!.set(blockIdx, {
                   id: toolId,
                   name: toolName,
                   inputJson: ''
@@ -2590,7 +2590,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
               }
               this.sendToRenderer('opencode:stream', {
                 type: 'message.part.updated',
-                sessionId: hiveSessionId,
+                sessionId: octobSessionId,
                 childSessionId,
                 data: {
                   part: {
@@ -2610,12 +2610,12 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           }
           case 'content_block_stop': {
             const blockIdx = rawEvent.index as number | undefined
-            if (blockIdx !== undefined && this.activeToolBlocks.has(hiveSessionId)) {
-              const tools = this.activeToolBlocks.get(hiveSessionId)!
+            if (blockIdx !== undefined && this.activeToolBlocks.has(octobSessionId)) {
+              const tools = this.activeToolBlocks.get(octobSessionId)!
               const tool = tools.get(blockIdx)
               if (tool) {
                 log.info('TOOL_LIFECYCLE: content_block_stop', {
-                  hiveSessionId,
+                  octobSessionId,
                   toolId: tool.id,
                   toolName: tool.name,
                   hasInput: !!tool.inputJson,
@@ -2632,7 +2632,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
                 }
                 this.sendToRenderer('opencode:stream', {
                   type: 'message.part.updated',
-                  sessionId: hiveSessionId,
+                  sessionId: octobSessionId,
                   childSessionId,
                   data: {
                     part: {
@@ -2646,7 +2646,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
                 tools.delete(blockIdx)
               }
               if (tools.size === 0) {
-                this.activeToolBlocks.delete(hiveSessionId)
+                this.activeToolBlocks.delete(octobSessionId)
               }
             }
             break
@@ -2665,14 +2665,14 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       case 'assistant': {
         const usage = innerMessage?.usage as Record<string, unknown> | undefined
         log.info('emitSdkMessage: assistant (complete)', {
-          hiveSessionId,
+          octobSessionId,
           messageIndex,
           contentBlocks: Array.isArray(innerContent) ? innerContent.length : 0,
           hasUsage: !!usage
         })
         this.sendToRenderer('opencode:stream', {
           type: 'message.updated',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           childSessionId,
           data: {
             role: 'assistant',
@@ -2702,7 +2702,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
             if (b.type === 'text' && typeof b.text === 'string' && (b.text as string).length > 0) {
               this.sendToRenderer('opencode:stream', {
                 type: 'message.part.updated',
-                sessionId: hiveSessionId,
+                sessionId: octobSessionId,
                 childSessionId,
                 data: {
                   part: { type: 'text', text: b.text as string },
@@ -2725,7 +2725,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
             if (b.type === 'tool_use') {
               this.sendToRenderer('opencode:stream', {
                 type: 'message.part.updated',
-                sessionId: hiveSessionId,
+                sessionId: octobSessionId,
                 childSessionId,
                 data: {
                   part: {
@@ -2747,7 +2747,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         const resultContent = msg.result as unknown[] | unknown
         const resultArray = Array.isArray(resultContent) ? resultContent : undefined
         log.info('emitSdkMessage: result', {
-          hiveSessionId,
+          octobSessionId,
           messageIndex,
           isError: msg.is_error,
           resultType: typeof resultContent,
@@ -2777,7 +2777,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           for (const text of textParts) {
             this.sendToRenderer('opencode:stream', {
               type: 'message.part.updated',
-              sessionId: hiveSessionId,
+              sessionId: octobSessionId,
               childSessionId,
               data: {
                 part: { type: 'text', text },
@@ -2791,7 +2791,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
         this.sendToRenderer('opencode:stream', {
           type: 'message.updated',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           childSessionId,
           data: {
             role: 'assistant',
@@ -2829,7 +2829,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
               const toolId = b.tool_use_id as string
               const isError = b.is_error as boolean | undefined
               log.info('TOOL_LIFECYCLE: tool_result received', {
-                hiveSessionId,
+                octobSessionId,
                 toolId,
                 isError: !!isError
               })
@@ -2844,7 +2844,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
                   .join('\n')
               }
               log.info('TOOL_LIFECYCLE: emitting tool_result to renderer', {
-                hiveSessionId,
+                octobSessionId,
                 toolId,
                 isError: !!isError,
                 hasOutput: !!output,
@@ -2852,7 +2852,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
               })
               this.sendToRenderer('opencode:stream', {
                 type: 'message.part.updated',
-                sessionId: hiveSessionId,
+                sessionId: octobSessionId,
                 childSessionId,
                 data: {
                   part: {
@@ -2880,7 +2880,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           const meta = msg.compact_metadata as Record<string, unknown> | undefined
           this.sendToRenderer('opencode:stream', {
             type: 'message.part.updated',
-            sessionId: hiveSessionId,
+            sessionId: octobSessionId,
             childSessionId,
             data: {
               part: {
@@ -2894,7 +2894,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
           if (status === 'compacting') {
             this.sendToRenderer('opencode:stream', {
               type: 'message.part.updated',
-              sessionId: hiveSessionId,
+              sessionId: octobSessionId,
               childSessionId,
               data: {
                 part: {
@@ -2913,7 +2913,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
         const toolName = msg.tool_name as string
         this.sendToRenderer('opencode:stream', {
           type: 'message.part.updated',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           childSessionId,
           data: {
             part: {
@@ -2928,10 +2928,10 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
       }
 
       case 'tool_use': {
-        log.info('emitSdkMessage: tool_use', { hiveSessionId, messageIndex })
+        log.info('emitSdkMessage: tool_use', { octobSessionId, messageIndex })
         this.sendToRenderer('opencode:stream', {
           type: 'message.part.updated',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           childSessionId,
           data: {
             part: {
@@ -3130,7 +3130,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
   }
 
   /**
-   * Convert Hive message parts into Anthropic API content blocks.
+   * Convert Octob message parts into Anthropic API content blocks.
    * - Text parts → { type: 'text', text }
    * - Image files (image/*) → { type: 'image', source: { type: 'base64', media_type, data } }
    * - PDF files (application/pdf) → { type: 'document', source: { type: 'base64', media_type, data } }

@@ -1323,7 +1323,7 @@ In `src/preload/index.d.ts`, add `custom_icon: string | null` to the `Project` i
 
 #### 3. Add IPC handlers in `project-handlers.ts`
 
-Add three handlers: `project:pickIcon` (opens file dialog, copies to `~/.hive/project-icons/`), `project:removeIcon` (deletes icon file), and `project:getIconPath` (resolves filename to full path).
+Add three handlers: `project:pickIcon` (opens file dialog, copies to `~/.octob/project-icons/`), `project:removeIcon` (deletes icon file), and `project:getIconPath` (resolves filename to full path).
 
 #### 4. Expose in preload
 
@@ -1356,7 +1356,7 @@ Add an icon picker section at the top with "Change" (opens file picker) and "Cle
 
 - [ ] Database migration adds `custom_icon` column to projects table
 - [ ] "Change" button in Project Settings opens a native file picker filtered to SVG/PNG/JPG
-- [ ] Selected image is copied to `~/.hive/project-icons/{projectId}.{ext}`
+- [ ] Selected image is copied to `~/.octob/project-icons/{projectId}.{ext}`
 - [ ] Previous icon for the same project is deleted when a new one is picked
 - [ ] "Clear" button removes the icon file and resets to language-based icon
 - [ ] Custom icon renders as `<img>` in the sidebar project list

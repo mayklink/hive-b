@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>Bộ điều phối AI agent mã nguồn mở cho lập trình song song trên nhiều dự án.</strong></p>
   <p>Chạy các phiên Claude Code, OpenCode và Codex song song. Một cửa sổ. Nhánh cô lập. Không hỗn loạn tab.</p>
   <p>

@@ -285,7 +285,7 @@ import fs from 'fs'
 import path from 'path'
 import { app } from 'electron'
 
-const CONNECTIONS_BASE_DIR = path.join(app.getPath('home'), '.hive', 'connections')
+const CONNECTIONS_BASE_DIR = path.join(app.getPath('home'), '.octob', 'connections')
 
 export function getConnectionsBaseDir(): string {
   return CONNECTIONS_BASE_DIR
@@ -379,7 +379,7 @@ export function deriveSymlinkName(projectName: string, existingNames: string[]):
 
 ### Definition of Done
 
-- [ ] `createConnectionDir` creates `~/.hive/connections/{name}/` recursively
+- [ ] `createConnectionDir` creates `~/.octob/connections/{name}/` recursively
 - [ ] `deleteConnectionDir` removes the entire connection folder
 - [ ] `createSymlink` creates a directory symlink from target to link path
 - [ ] `removeSymlink` safely removes a symlink (handles broken symlinks)
@@ -1325,7 +1325,7 @@ Fix any failures.
 **Connection creation:**
 
 - Right-click worktree -> "Connect to..." -> select worktree from another project -> Connect
-- Verify folder created at `~/.hive/connections/{breedName}/` with symlinks
+- Verify folder created at `~/.octob/connections/{breedName}/` with symlinks
 - Verify `AGENTS.md` is generated with correct content
 - Verify connection appears in sidebar
 
@@ -1356,7 +1356,7 @@ Fix any failures.
 
 **Edge cases:**
 
-- Create connection when `~/.hive/connections/` doesn't exist -> verify it's created
+- Create connection when `~/.octob/connections/` doesn't exist -> verify it's created
 - Two connections referencing the same worktree -> both work
 - Broken symlink (worktree deleted outside Hive) -> connection still loads, warning shown
 

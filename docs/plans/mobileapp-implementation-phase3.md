@@ -37,7 +37,7 @@ Both modes share the same services (Database, Git, OpenCode, Scripts, Terminal).
 
 **Auth model:** 256-bit random API key with `hive_` prefix. SHA-256 hash stored in SQLite `settings` table. Timing-safe comparison. Brute force protection: 5 failures per IP per 60s → 300s block. Authenticated users are NEVER rate-limited.
 
-**TLS:** Self-signed ECDSA P-256 cert, auto-generated on first headless run. Stored at `~/.hive/tls/`. Fingerprint stored in settings for QR pairing.
+**TLS:** Self-signed ECDSA P-256 cert, auto-generated on first headless run. Stored at `~/.octob/tls/`. Fingerprint stored in settings for QR pairing.
 
 ---
 
@@ -126,7 +126,7 @@ pnpm build
 **Tasks:**
 
 1. `[server]` Create `src/server/headless-bootstrap.ts` with `headlessBootstrap(opts)` function:
-   - Load config from `~/.hive/headless.json` (Session 28)
+   - Load config from `~/.octob/headless.json` (Session 28)
    - Initialize database: call `getDatabase()` (same as GUI mode uses in `src/main/index.ts` line 338)
    - Run `fixPath()` (same as GUI mode, line 318)
    - Resolve Claude binary path: `resolveClaudeBinaryPath()`
@@ -353,13 +353,13 @@ pnpm vitest run test/server/auth-ws.test.ts
    - Create a yoga plugin that inspects GraphQL variables for known path argument names: `worktreePath`, `filePath`, `dirPath`, `cwd`, `path`, `projectPath`
    - For each found path, calls `pathGuard.validatePath()`
    - If invalid: throws GraphQL error "Path not allowed"
-   - Allowed roots populated from: all project paths in DB, `~/.hive/`
+   - Allowed roots populated from: all project paths in DB, `~/.octob/`
 
 2. `[server]` Write tests in `test/server/path-guard.test.ts`:
    - Valid path under allowed root → accepted
    - Path with `../` escaping root → rejected
    - Absolute path outside all roots → rejected
-   - Path to `~/.hive/` → accepted (always allowed)
+   - Path to `~/.octob/` → accepted (always allowed)
    - Empty path → rejected
    - Null/undefined → rejected
    - Path exactly matching root → accepted
@@ -378,13 +378,13 @@ pnpm vitest run test/server/path-guard.test.ts
 
 **Goal:** Auto-generate self-signed ECDSA P-256 TLS certificates on first headless run.
 
-**Definition of Done:** Certs generated to `~/.hive/tls/`, fingerprint stored in settings, idempotent.
+**Definition of Done:** Certs generated to `~/.octob/tls/`, fingerprint stored in settings, idempotent.
 
 **Tasks:**
 
 1. `[server]` Create `src/server/tls.ts`:
    - `generateTlsCerts(outputDir: string)`:
-     - Creates `~/.hive/tls/` directory if not existing
+     - Creates `~/.octob/tls/` directory if not existing
      - Uses Node.js `crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' })` to generate ECDSA P-256 key pair
      - Creates self-signed X.509 certificate (10-year validity)
      - NOTE: Node.js doesn't have built-in X.509 cert creation. Use `crypto.X509Certificate` for reading, but for creation either use a small library or shell out to `openssl` (preferred for simplicity):
@@ -419,7 +419,7 @@ pnpm vitest run test/server/tls.test.ts
 
 ## Session 28: Config Loader
 
-**Goal:** Load `~/.hive/headless.json` with sensible defaults.
+**Goal:** Load `~/.octob/headless.json` with sensible defaults.
 
 **Definition of Done:** Config merges user settings with defaults, handles missing file, handles invalid JSON.
 
@@ -451,8 +451,8 @@ pnpm vitest run test/server/tls.test.ts
      port: 8443,
      bindAddress: '0.0.0.0',
      tls: {
-       certPath: join(homedir(), '.hive', 'tls', 'server.crt'),
-       keyPath: join(homedir(), '.hive', 'tls', 'server.key')
+       certPath: join(homedir(), '.octob', 'tls', 'server.crt'),
+       keyPath: join(homedir(), '.octob', 'tls', 'server.key')
      },
      security: {
        bruteForceMaxAttempts: 5,
@@ -464,7 +464,7 @@ pnpm vitest run test/server/tls.test.ts
    }
 
    export function loadHeadlessConfig(): HeadlessConfig {
-     const configPath = join(homedir(), '.hive', 'headless.json')
+     const configPath = join(homedir(), '.octob', 'headless.json')
      if (!existsSync(configPath)) return { ...DEFAULTS }
 
      try {
@@ -473,7 +473,7 @@ pnpm vitest run test/server/tls.test.ts
        return deepMerge(DEFAULTS, parsed)
      } catch {
        // Invalid JSON — log warning, return defaults
-       console.warn('Failed to parse ~/.hive/headless.json, using defaults')
+       console.warn('Failed to parse ~/.octob/headless.json, using defaults')
        return { ...DEFAULTS }
      }
    }
@@ -603,9 +603,9 @@ pnpm build && pnpm test
 
 2. `[server]` Implement `handleManagementCommand(opts)` in `src/server/headless-bootstrap.ts`:
    - `--rotate-key`: Initialize DB, generate new API key, store hash, display new key + QR code, log rotation
-   - `--regen-certs`: Delete old certs from `~/.hive/tls/`, regenerate new certs, update fingerprint in DB
-   - `--show-status`: Read `~/.hive/hive-headless.status.json`, pretty-print to stdout (uptime, connections, request count, locked state)
-   - `--kill`: Read PID file `~/.hive/hive-headless.pid`, send SIGTERM to running process
+   - `--regen-certs`: Delete old certs from `~/.octob/tls/`, regenerate new certs, update fingerprint in DB
+   - `--show-status`: Read `~/.octob/hive-headless.status.json`, pretty-print to stdout (uptime, connections, request count, locked state)
+   - `--kill`: Read PID file `~/.octob/hive-headless.pid`, send SIGTERM to running process
    - `--unlock`: Initialize DB, delete auto-lock state from settings table
 
 3. `[server]` Each command calls `app.quit()` after completing (they don't start the server).

@@ -148,7 +148,7 @@ src/
       audit.ts                         # Yoga plugin: request audit logging
     event-bus.ts                       # Typed EventEmitter bridge
     headless-bootstrap.ts              # Headless mode startup sequence
-    config.ts                          # ~/.hive/headless.json loader
+    config.ts                          # ~/.octob/headless.json loader
   shared/                              ← NEW directory
     types/                             # Extracted from index.d.ts (shared TS types)
       index.ts
@@ -308,7 +308,7 @@ type Mutation {
   deleteSetting(key: String!): Boolean!
 
   # --- AI Operations ---
-  opencodeConnect(worktreePath: String!, hiveSessionId: ID!): OpenCodeConnectResult!
+  opencodeConnect(worktreePath: String!, octobSessionId: ID!): OpenCodeConnectResult!
   opencodeReconnect(input: OpenCodeReconnectInput!): OpenCodeReconnectResult!
   opencodeDisconnect(worktreePath: String!, sessionId: String!): SuccessResult!
   opencodePrompt(input: OpenCodePromptInput!): SuccessResult!
@@ -736,7 +736,7 @@ Format: `hive_Ks7dF2mPq9xR4wN8vT3jL6hB0yU5cA1eG7iO2sD4fH`
 
 ### 3.3 TLS
 
-**Self-signed certificate** with certificate pinning on mobile. Auto-generated on first headless run using ECDSA P-256 (10-year validity). Stored at `~/.hive/tls/`.
+**Self-signed certificate** with certificate pinning on mobile. Auto-generated on first headless run using ECDSA P-256 (10-year validity). Stored at `~/.octob/tls/`.
 
 Certificate fingerprint included in QR code pairing payload. React Native app pins the fingerprint via `react-native-ssl-pinning`.
 
@@ -748,7 +748,7 @@ Certificate fingerprint included in QR code pairing payload. React Native app pi
 
 ### 3.5 Request Security
 
-- **Path traversal prevention**: `PathGuard` validates every file path against allowed roots (project paths, worktree paths, `~/.hive/`).
+- **Path traversal prevention**: `PathGuard` validates every file path against allowed roots (project paths, worktree paths, `~/.octob/`).
 - **Command injection prevention**: Script endpoints accept worktree IDs only, resolve commands from DB. Terminal is intentionally a shell (like SSH).
 - **Input validation**: GraphQL schema enforces types. Custom validators for paths, UUIDs, string lengths.
 - **Payload limits**: 10MB HTTP body, 1MB WebSocket message.
@@ -759,7 +759,7 @@ Certificate fingerprint included in QR code pairing payload. React Native app pi
 - **Failed auth alerting**: 3+ failures → ERROR log + system notification (if GUI active).
 - **Kill switch**: `systemKillSwitch` mutation invalidates key, closes all connections. Also via CLI: `hive --headless --kill`.
 - **Auto-lock**: 30 min inactivity → locked mode (all API calls return errors). Unlock via `hive --headless --unlock`.
-- **Status file**: `~/.hive/hive-headless.status.json` updated every 30s with uptime, connections, request count.
+- **Status file**: `~/.octob/hive-headless.status.json` updated every 30s with uptime, connections, request count.
 
 ### 3.7 CLI Interface
 
@@ -776,12 +776,12 @@ hive --headless --unlock          # Unlock after inactivity timeout
 
 ### 3.8 Configuration
 
-`~/.hive/headless.json`:
+`~/.octob/headless.json`:
 ```json
 {
   "port": 8443,
   "bindAddress": "0.0.0.0",
-  "tls": { "certPath": "~/.hive/tls/server.crt", "keyPath": "~/.hive/tls/server.key" },
+  "tls": { "certPath": "~/.octob/tls/server.crt", "keyPath": "~/.octob/tls/server.key" },
   "security": {
     "bruteForceMaxAttempts": 5,
     "bruteForceWindowSec": 60,
@@ -1160,7 +1160,7 @@ react-native-camera       # QR scanning
 27. API key generation + QR code display
 28. Audit logging plugin
 29. Auto-lock, kill switch
-30. `~/.hive/headless.json` config loading
+30. `~/.octob/headless.json` config loading
 31. CLI commands (rotate-key, regen-certs, show-status, kill, unlock)
 32. PID file + status file
 

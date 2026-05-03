@@ -82,7 +82,7 @@ export const settings = {
     claudeUnavailable: 'Claude Code não está disponível no momento',
     codexUnavailable: 'Codex não está disponível no momento',
     providersDisabledHint:
-      'Provedores indisponíveis ficam desativados até a CLI estar instalada e o Hive conseguir abri-la.',
+      'Provedores indisponíveis ficam desativados até a CLI estar instalada e o Octob conseguir abri-la.',
     terminalManualHint:
       'Abre uma janela de terminal. Execute qualquer ferramenta de IA manualmente (claude, aider, cursor, etc.)',
     stripAtMentions: 'Remover @ das menções de arquivo',
@@ -179,9 +179,9 @@ export const settings = {
   },
   privacy: {
     heading: 'Privacidade',
-    description: 'Como o Hive coleta dados anônimos de uso',
+    description: 'Como o Octob coleta dados anônimos de uso',
     analytics: 'Enviar análises de uso anônimas',
-    analyticsHint: 'Ajude a melhorar o Hive com dados anônimos de uso de recursos',
+    analyticsHint: 'Ajude a melhorar o Octob com dados anônimos de uso de recursos',
     collectTitle: 'O que coletamos:',
     collectBody:
       'Contagens de uso de recursos, versão do app, plataforma (macOS/Windows/Linux).',
@@ -191,7 +191,7 @@ export const settings = {
   },
   updates: {
     heading: 'Atualizações',
-    description: 'Como o Hive se atualiza',
+    description: 'Como o Octob se atualiza',
     currentVersion: 'Versão atual:',
     channel: 'Canal de atualização',
     channelHint: 'Qual canal de releases receber',
@@ -251,10 +251,10 @@ export const settings = {
     description: 'Opções avançadas',
     perfDiag: 'Diagnóstico de desempenho',
     perfDiagHint:
-      'Registrar CPU, memória, processos e métricas de handles a cada 30s em ~/.hive/logs/perf-diagnostics.jsonl',
+      'Registrar CPU, memória, processos e métricas de handles a cada 30s em ~/.octob/logs/perf-diagnostics.jsonl',
     codexLog: 'Log JSONL do Codex',
     codexLogHint:
-      'Registrar todas as mensagens JSON-RPC do Codex em ~/.hive/logs/codex.jsonl',
+      'Registrar todas as mensagens JSON-RPC do Codex em ~/.octob/logs/codex.jsonl',
     resetLog: 'Reiniciar log a cada sessão',
     resetLogHint:
       'Truncar o arquivo de log ao iniciar nova sessão Codex. Desligado: logs são anexados entre sessões.',
@@ -297,7 +297,7 @@ export const settings = {
   taskPrompts: {
     heading: 'Prompts de sessão (tarefas)',
     description:
-      'Instruções reutilizáveis no fluxo \"Iniciar sessão\" quando você move um ticket para Em progresso.',
+      'Instruções reutilizáveis no fluxo "Iniciar sessão" quando você move um ticket para Em progresso.',
     structureHint:
       'O texto é combinado com o bloco estruturado do ticket (XML com título e descrição). Use um modelo por fluxo, ou os presets padrão ao alternar Build ↔ Plan.',
     empty: 'Nenhum modelo ainda.',
@@ -320,7 +320,7 @@ export const settings = {
     description:
       'Instruções para o botão Review do cabeçalho (revisão de branch com IA). Os presets embutidos continuam disponíveis junto aos seus modelos.',
     structureHint:
-      'O Hive acrescenta o branch de comparação e um comando git diff sugerido depois do seu texto.',
+      'O Octob acrescenta o branch de comparação e um comando git diff sugerido depois do seu texto.',
     empty: 'Nenhum modelo de review personalizado ainda.',
     nameLabel: 'Nome',
     bodyLabel: 'Instrução',

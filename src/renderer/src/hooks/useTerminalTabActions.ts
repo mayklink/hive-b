@@ -136,8 +136,8 @@ export function useTerminalTabActions(worktreeId: string): UseTerminalTabActions
       const { tabId, tabName } = e.detail
       setCloseConfirmTab({ id: tabId, name: tabName, mode: 'single' })
     }
-    window.addEventListener('hive:close-terminal-tab', handler as EventListener)
-    return () => window.removeEventListener('hive:close-terminal-tab', handler as EventListener)
+    window.addEventListener('octob:close-terminal-tab', handler as EventListener)
+    return () => window.removeEventListener('octob:close-terminal-tab', handler as EventListener)
   }, [])
 
   return {

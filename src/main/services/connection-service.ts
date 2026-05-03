@@ -18,7 +18,7 @@ const CONNECTIONS_DIR_NAME = 'connections'
 
 export function getConnectionsBaseDir(): string {
   const homeDir = app.getPath('home')
-  return join(homeDir, '.hive', CONNECTIONS_DIR_NAME)
+  return join(homeDir, '.octob', CONNECTIONS_DIR_NAME)
 }
 
 export function ensureConnectionsDir(): void {

@@ -328,7 +328,7 @@ import { writeFileSync, appendFileSync, mkdirSync, existsSync } from 'fs'
 import { join } from 'path'
 import { app } from 'electron'
 
-const LOG_DIR = join(app.getPath('home'), '.hive', 'logs', 'responses')
+const LOG_DIR = join(app.getPath('home'), '.octob', 'logs', 'responses')
 
 export function createResponseLog(sessionId: string): string {
   if (!existsSync(LOG_DIR)) {
@@ -368,7 +368,7 @@ The log file is JSONL format (one JSON object per line) for easy inspection with
 
 #### 5.5 Log File Location
 ```
-~/.hive/logs/responses/
+~/.octob/logs/responses/
 ├── {sessionId}-2024-01-15T10-30-00-000Z.jsonl
 ├── {sessionId}-2024-01-15T11-45-00-000Z.jsonl
 └── ...

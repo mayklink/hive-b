@@ -120,8 +120,8 @@ describe('Session 2: Server Title Events', () => {
       const content = fs.readFileSync(servicePath, 'utf-8')
       // Verify the session.updated handler block exists
       expect(content).toContain("eventType === 'session.updated'")
-      // Verify it persists the title via DB (uses hiveSessionId and extracts title from info)
-      expect(content).toContain('db.updateSession(hiveSessionId, { name: sessionTitle })')
+      // Verify it persists the title via DB (uses octobSessionId and extracts title from info)
+      expect(content).toContain('db.updateSession(octobSessionId, { name: sessionTitle })')
     })
   })
 

@@ -86,8 +86,8 @@ export function SettingsModal(): React.JSX.Element {
     const handleOpenSettings = (): void => {
       openSettings()
     }
-    window.addEventListener('hive:open-settings', handleOpenSettings)
-    return () => window.removeEventListener('hive:open-settings', handleOpenSettings)
+    window.addEventListener('octob:open-settings', handleOpenSettings)
+    return () => window.removeEventListener('octob:open-settings', handleOpenSettings)
   }, [openSettings])
 
   return (

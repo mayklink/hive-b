@@ -82,7 +82,7 @@ const mockWorktree = {
   project_id: 'project-1',
   name: 'tokyo',
   branch_name: 'tokyo',
-  path: '/home/user/.hive-worktrees/my-project/tokyo',
+  path: '/home/user/.octob-worktrees/my-project/tokyo',
   status: 'active' as const,
   created_at: '2024-01-01T00:00:00Z',
   last_accessed_at: '2024-01-01T00:00:00Z'
@@ -93,7 +93,7 @@ const mockArchivedWorktree = {
   project_id: 'project-1',
   name: 'paris',
   branch_name: 'paris',
-  path: '/home/user/.hive-worktrees/my-project/paris',
+  path: '/home/user/.octob-worktrees/my-project/paris',
   status: 'archived' as const,
   created_at: '2023-12-01T00:00:00Z',
   last_accessed_at: '2023-12-01T00:00:00Z'

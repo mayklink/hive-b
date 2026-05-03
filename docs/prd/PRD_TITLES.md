@@ -8,7 +8,7 @@ The current CLI-based approach (`claude -p "..." --model haiku`) spawns a fresh 
 
 Use the **already-imported `@anthropic-ai/claude-agent-sdk`** directly via `loadClaudeSDK()` → `sdk.query()` to run a lightweight Haiku query. The SDK is already loaded in memory — no cold start, no CLI process spawn.
 
-To avoid polluting real project directories with SDK session artifacts (`.claude/` folders, JSONL transcripts), we run the query with `cwd` set to `~/.hive/titles/`.
+To avoid polluting real project directories with SDK session artifacts (`.claude/` folders, JSONL transcripts), we run the query with `cwd` set to `~/.octob/titles/`.
 
 ## Implementation Steps
 
@@ -32,7 +32,7 @@ export async function generateSessionTitle(
 **Implementation:**
 
 1. `import { mkdirSync, existsSync } from 'node:fs'` and `import { join } from 'node:path'` and `import { homedir } from 'node:os'`
-2. Ensure `~/.hive/titles/` exists: `mkdirSync(titlesDir, { recursive: true })`
+2. Ensure `~/.octob/titles/` exists: `mkdirSync(titlesDir, { recursive: true })`
 3. Load SDK: `const sdk = await loadClaudeSDK()`
 4. Build the title prompt (same `TITLE_PROMPT + truncatedMessage` as today)
 5. Call `sdk.query()` with minimal options:
@@ -61,7 +61,7 @@ export async function generateSessionTitle(
 8. Wrap everything in try/catch — never throws
 
 **Key options:**
-- `cwd: ~/.hive/titles/` — isolates SDK session artifacts from real projects
+- `cwd: ~/.octob/titles/` — isolates SDK session artifacts from real projects
 - `model: 'haiku'` — fast and cheap
 - `maxTurns: 1` — one prompt, one response, done
 - `pathToClaudeCodeExecutable` — still needed for ASAR compatibility, passed through from `ClaudeCodeImplementer`
@@ -124,7 +124,7 @@ Mock `sdk.query()` to return an async generator yielding `{ type: 'result', resu
 4. Returns `null` when SDK query throws
 5. Truncates messages >2000 chars in the prompt
 6. Uses `model: 'haiku'` in query options
-7. Uses `~/.hive/titles/` as cwd
+7. Uses `~/.octob/titles/` as cwd
 8. Passes `maxTurns: 1`
 9. Never throws — always returns string or `null`
 10. Passes `pathToClaudeCodeExecutable` when provided

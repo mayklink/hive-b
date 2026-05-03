@@ -254,16 +254,16 @@ pnpm build
 **Tasks:**
 
 1. `[server]` The `--unlock` CLI command (in `src/main/index.ts`) needs to communicate with the running server process. Two approaches:
-   - **Option A (recommended):** Write a signal file (`~/.hive/hive-headless.unlock`) that the running server watches.
+   - **Option A (recommended):** Write a signal file (`~/.octob/hive-headless.unlock`) that the running server watches.
    - **Option B:** Send a SIGUSR1 signal to the PID from the PID file.
 
 2. `[server]` Implement Option A:
-   - `--unlock` command writes `~/.hive/hive-headless.unlock` file and exits.
+   - `--unlock` command writes `~/.octob/hive-headless.unlock` file and exits.
    - Running server watches for this file (via `fs.watch` or periodic check).
    - When detected, calls `unlock()` and deletes the file.
    ```typescript
    // In headless bootstrap:
-   const unlockPath = path.join(hiveDir, 'hive-headless.unlock')
+   const unlockPath = path.join(octobDir, 'hive-headless.unlock')
    setInterval(() => {
      if (fs.existsSync(unlockPath)) {
        fs.unlinkSync(unlockPath)
@@ -275,7 +275,7 @@ pnpm build
 3. `[server]` In `src/main/index.ts` headless one-shot commands:
    ```typescript
    if (isUnlock) {
-     const unlockPath = path.join(hiveDir, 'hive-headless.unlock')
+     const unlockPath = path.join(octobDir, 'hive-headless.unlock')
      fs.writeFileSync(unlockPath, Date.now().toString())
      console.log('Unlock signal sent. Server will resume within 5 seconds.')
      app.quit()
@@ -333,7 +333,7 @@ pnpm build
 3. `[server]` Implement `--kill` CLI command in `src/main/index.ts`:
    ```typescript
    if (isKill) {
-     const pidPath = path.join(hiveDir, 'hive-headless.pid')
+     const pidPath = path.join(octobDir, 'hive-headless.pid')
      if (fs.existsSync(pidPath)) {
        const pid = parseInt(fs.readFileSync(pidPath, 'utf-8').trim())
        try {
@@ -488,7 +488,7 @@ pnpm build
 1. `[server]` In `src/main/index.ts` headless one-shot commands:
    ```typescript
    if (isRegenCerts) {
-     const tlsDir = path.join(hiveDir, 'tls')
+     const tlsDir = path.join(octobDir, 'tls')
 
      // Delete old certs
      const certPath = path.join(tlsDir, 'server.crt')
@@ -524,7 +524,7 @@ pnpm build
 
 ## Session 97: PID File
 
-**Goal:** Write and manage `~/.hive/hive-headless.pid` for the running headless server.
+**Goal:** Write and manage `~/.octob/hive-headless.pid` for the running headless server.
 
 **Definition of Done:** PID file created on startup, deleted on shutdown, stale PID files detected.
 
@@ -532,7 +532,7 @@ pnpm build
 
 1. `[server]` In `src/server/headless-bootstrap.ts`, after server starts:
    ```typescript
-   const pidPath = path.join(hiveDir, 'hive-headless.pid')
+   const pidPath = path.join(octobDir, 'hive-headless.pid')
 
    // Check for stale PID file
    if (fs.existsSync(pidPath)) {
@@ -571,7 +571,7 @@ pnpm build
 
 ## Session 98: Status File
 
-**Goal:** Write `~/.hive/hive-headless.status.json` every 30 seconds with server status.
+**Goal:** Write `~/.octob/hive-headless.status.json` every 30 seconds with server status.
 
 **Definition of Done:** Status file updated periodically with uptime, connections, request count, lock state.
 
@@ -579,7 +579,7 @@ pnpm build
 
 1. `[server]` In `src/server/headless-bootstrap.ts`, set up status file writer:
    ```typescript
-   const statusPath = path.join(hiveDir, 'hive-headless.status.json')
+   const statusPath = path.join(octobDir, 'hive-headless.status.json')
    const startTime = Date.now()
    let requestCount = 0
 
@@ -616,7 +616,7 @@ pnpm build
 2. `[server]` Implement `--show-status` CLI command in `src/main/index.ts`:
    ```typescript
    if (isShowStatus) {
-     const statusPath = path.join(hiveDir, 'hive-headless.status.json')
+     const statusPath = path.join(octobDir, 'hive-headless.status.json')
      if (fs.existsSync(statusPath)) {
        const status = JSON.parse(fs.readFileSync(statusPath, 'utf-8'))
        console.log('\n=== Hive Headless Server Status ===\n')

@@ -485,7 +485,7 @@ app.whenReady().then(async () => {
   }
 
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.hive')
+  electronApp.setAppUserModelId('com.octob')
   ensureDockVisible('startup')
 
   // Initialize database
@@ -707,7 +707,7 @@ app.whenReady().then(async () => {
     ensureDockVisible('activate')
 
     // The pet overlay is an auxiliary window and should not count as a main app
-    // window for Dock activation. If only the pet exists, re-create Hive.
+    // window for Dock activation. If only the pet exists, re-create Octob.
     const petWindow = getPetWindow()
     const hasMainAppWindow = BrowserWindow.getAllWindows().some(
       (window) => window !== petWindow && !window.isDestroyed()

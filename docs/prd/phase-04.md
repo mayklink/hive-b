@@ -582,7 +582,7 @@ Store open file tabs in the session store or a new store alongside session tabs.
 ### 9. Header Quick Actions — Last Operation + Open Dropdown
 
 #### 9.1 Current State
-The header has: "Hive" title, session history button, theme dropdown, sidebar toggle.
+The header has: "Octob" title, session history button, theme dropdown, sidebar toggle.
 
 #### 9.2 New Design
 

@@ -78,7 +78,7 @@ export const settings = {
     claudeUnavailable: 'Claude Code is not currently available',
     codexUnavailable: 'Codex is not currently available',
     providersDisabledHint:
-      'Unavailable providers are disabled until their CLI is installed and launchable from Hive.',
+      'Unavailable providers are disabled until their CLI is installed and launchable from Octob.',
     terminalManualHint:
       'Opens a terminal window. Run any AI tool manually (claude, aider, cursor, etc.)',
     stripAtMentions: 'Strip @ from file mentions',
@@ -172,9 +172,9 @@ export const settings = {
   },
   privacy: {
     heading: 'Privacy',
-    description: 'Control how Hive collects anonymous usage data',
+    description: 'Control how Octob collects anonymous usage data',
     analytics: 'Send anonymous usage analytics',
-    analyticsHint: 'Help improve Hive by sharing anonymous feature usage data',
+    analyticsHint: 'Help improve Octob by sharing anonymous feature usage data',
     collectTitle: 'What we collect:',
     collectBody:
       'Feature usage counts, app version, platform (macOS/Windows/Linux).',
@@ -184,7 +184,7 @@ export const settings = {
   },
   updates: {
     heading: 'Updates',
-    description: 'Manage how Hive updates itself',
+    description: 'Manage how Octob updates itself',
     currentVersion: 'Current version:',
     channel: 'Update Channel',
     channelHint: 'Choose which release channel to receive updates from',
@@ -246,9 +246,9 @@ export const settings = {
     description: 'Advanced configuration options',
     perfDiag: 'Performance Diagnostics',
     perfDiagHint:
-      'Log CPU, memory, process, and handle metrics every 30s to ~/.hive/logs/perf-diagnostics.jsonl',
+      'Log CPU, memory, process, and handle metrics every 30s to ~/.octob/logs/perf-diagnostics.jsonl',
     codexLog: 'Codex JSONL Logging',
-    codexLogHint: 'Log all Codex JSON-RPC messages to ~/.hive/logs/codex.jsonl',
+    codexLogHint: 'Log all Codex JSON-RPC messages to ~/.octob/logs/codex.jsonl',
     resetLog: 'Reset log each session',
     resetLogHint:
       'Truncate the log file when a new Codex session starts. When off, logs append across sessions.',
@@ -292,7 +292,7 @@ export const settings = {
     description:
       'Reusable instructions for the Start Session flow when you move a ticket into In Progress.',
     structureHint:
-      'Your text is combined with Hive’s structured ticket block (XML with title and description). Use one template per workflow, or the default presets if you toggle Build ↔ Plan.',
+      'Your text is combined with Octob’s structured ticket block (XML with title and description). Use one template per workflow, or the default presets if you toggle Build ↔ Plan.',
     empty: 'No templates yet.',
     nameLabel: 'Name',
     bodyLabel: 'Instruction',
@@ -313,7 +313,7 @@ export const settings = {
     description:
       'Instructions for the header Review action (AI branch review). Built-in presets remain available next to your own templates.',
     structureHint:
-      'Hive appends the comparison branch and a suggested git diff command after your text.',
+      'Octob appends the comparison branch and a suggested git diff command after your text.',
     empty: 'No custom review templates yet.',
     nameLabel: 'Name',
     bodyLabel: 'Instruction',

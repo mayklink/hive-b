@@ -515,7 +515,7 @@ detox test --configuration ios.sim.debug
    ```json
    {
      "expo": {
-       "name": "Hive",
+       "name": "Octob",
        "slug": "hive-mobile",
        "version": "1.0.0",
        "ios": {

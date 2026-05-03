@@ -144,8 +144,8 @@ export function registerKanbanHandlers(): void {
         }
 
         const { canceled, filePath } = await dialog.showSaveDialog({
-          defaultPath: `board-${projectName}.hive.json`,
-          filters: [{ name: 'Hive Board', extensions: ['hive.json'] }]
+          defaultPath: `board-${projectName}.octob.json`,
+          filters: [{ name: 'Octob Board', extensions: ['octob.json'] }]
         })
 
         if (canceled || !filePath) {
@@ -164,7 +164,7 @@ export function registerKanbanHandlers(): void {
   ipcMain.handle('kanban:board:openImportFile', async () => {
     try {
       const { canceled, filePaths } = await dialog.showOpenDialog({
-        filters: [{ name: 'Hive Board', extensions: ['json'] }],
+        filters: [{ name: 'Octob Board', extensions: ['json'] }],
         properties: ['openFile']
       })
 
@@ -186,7 +186,7 @@ export function registerKanbanHandlers(): void {
             'title' in t
         )
       ) {
-        throw new Error('Invalid Hive board file: missing tickets array or tickets lack id/title')
+        throw new Error('Invalid Octob board file: missing tickets array or tickets lack id/title')
       }
 
       return {

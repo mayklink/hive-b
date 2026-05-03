@@ -76,7 +76,7 @@ new PostHog(POSTHOG_API_KEY, {
 
 - Generated via `crypto.randomUUID()` on first app launch
 - Stored in SQLite `settings` table with key `telemetry_distinct_id`
-- Persists across app sessions but is per-machine (tied to `~/.hive/hive.db`)
+- Persists across app sessions but is per-machine (tied to `~/.octob/octob.db`)
 - Never linked to any PII
 - If user deletes DB, a new ID is generated (privacy-preserving)
 
@@ -160,7 +160,7 @@ new PostHog(POSTHOG_API_KEY, {
 
 Follow the same component pattern as `SettingsSecurity.tsx`:
 
-- **Section header**: "Privacy" / "Control how Hive collects anonymous usage data"
+- **Section header**: "Privacy" / "Control how Octob collects anonymous usage data"
 - **Toggle switch**: "Send anonymous usage analytics" — bound to `window.analyticsOps.isEnabled()` / `window.analyticsOps.setEnabled()`
 - **Info box**: Brief explanation of what is and isn't collected (feature usage counts, app version, platform — NOT project names, file contents, prompts, git data, or PII)
 

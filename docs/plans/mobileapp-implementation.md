@@ -44,7 +44,7 @@ Each task is prefixed with `[server]` or `[app]` to indicate which project it be
 | 25 | Auth — WebSocket Auth | connectionParams verification during WS handshake |
 | 26 | Path Guard Plugin | Path traversal prevention for file arguments |
 | 27 | TLS Certificate Generation | ECDSA P-256 self-signed cert, fingerprint storage |
-| 28 | Config Loader | ~/.hive/headless.json loading with defaults |
+| 28 | Config Loader | ~/.octob/headless.json loading with defaults |
 | 29 | Headless CLI — Flag Parsing | --headless, --port, --bind flag parsing in main/index.ts |
 | 30 | Headless CLI — Startup Branch | Skip createWindow, call headlessBootstrap instead |
 | 31 | Headless CLI — Management Commands | --rotate-key, --regen-certs, --show-status, --kill, --unlock |
@@ -119,8 +119,8 @@ Each task is prefixed with `[server]` or `[app]` to indicate which project it be
 | 94 | QR Code Pairing | Display API key + QR code on first headless start |
 | 95 | Key Rotation | --rotate-key generates new key, invalidates old, displays new QR |
 | 96 | Cert Regeneration | --regen-certs deletes and recreates TLS certs |
-| 97 | PID File | Write ~/.hive/hive-headless.pid on startup, delete on shutdown |
-| 98 | Status File | Write ~/.hive/hive-headless.status.json every 30s |
+| 97 | PID File | Write ~/.octob/hive-headless.pid on startup, delete on shutdown |
+| 98 | Status File | Write ~/.octob/hive-headless.status.json every 30s |
 | 99 | Security Test Suite | Auth, brute force, path guard, kill switch, auto-lock tests |
 | **Phase 10 — Server Testing & Regression** | | |
 | 100 | Integration Test Infrastructure | Mock database, mock services, yoga test helper |
@@ -548,7 +548,7 @@ pnpm test && pnpm lint && pnpm build
    - `input CreateSpaceInput` — name!, iconType, iconValue
    - `input UpdateSpaceInput` — name, iconType, iconValue, sortOrder
 5. `[server]` Add opencode inputs:
-   - `input OpenCodeReconnectInput` — worktreePath!, opencodeSessionId!, hiveSessionId!
+   - `input OpenCodeReconnectInput` — worktreePath!, opencodeSessionId!, octobSessionId!
    - `input OpenCodePromptInput` — worktreePath!, opencodeSessionId!, message, parts ([MessagePartInput]), model (ModelInput)
    - `input MessagePartInput` — type!, text, mime, url, filename
    - `input ModelInput` — providerID!, modelID!, variant
@@ -557,8 +557,8 @@ pnpm test && pnpm lint && pnpm build
    - `input RenameSessionInput` — opencodeSessionId!, title!, worktreePath
    - `input ForkSessionInput` — worktreePath!, opencodeSessionId!, messageId
    - `input QuestionReplyInput` — requestId!, answers!, worktreePath
-   - `input PlanApproveInput` — worktreePath!, hiveSessionId!, requestId
-   - `input PlanRejectInput` — worktreePath!, hiveSessionId!, feedback!, requestId
+   - `input PlanApproveInput` — worktreePath!, octobSessionId!, requestId
+   - `input PlanRejectInput` — worktreePath!, octobSessionId!, feedback!, requestId
    - `input PermissionReplyInput` — requestId!, reply! (String: 'once'|'always'|'reject'), worktreePath, message
 6. `[server]` Add git inputs:
    - `input GitDiffInput` — worktreePath!, filePath!, staged!, isUntracked!, contextLines
@@ -765,7 +765,7 @@ Sessions 19-31 build the GraphQL server infrastructure. Each session is detailed
 **Tasks:**
 
 1. `[server]` Create `src/server/headless-bootstrap.ts` with `headlessBootstrap(opts)` function:
-   - Loads config from `~/.hive/headless.json`
+   - Loads config from `~/.octob/headless.json`
    - Initializes database (same `getDatabase()` as GUI mode)
    - Creates AgentSdkManager (same pattern as `src/main/index.ts` lines 372-409)
    - Gets or creates EventBus singleton
@@ -883,7 +883,7 @@ pnpm vitest run test/server/auth-key.test.ts
 **Tasks:**
 
 1. `[server]` Create `src/server/plugins/path-guard.ts`:
-   - `PathGuard` class with `allowedRoots: string[]` (project paths, worktree paths, ~/.hive/)
+   - `PathGuard` class with `allowedRoots: string[]` (project paths, worktree paths, ~/.octob/)
    - `validatePath(inputPath: string)` → resolves path, checks it's under an allowed root
    - Rejects paths containing `..` after resolution, symlink escapes
    - Yoga plugin that inspects GraphQL variables for known path-like argument names (worktreePath, filePath, dirPath, cwd, path) and validates each
@@ -891,7 +891,7 @@ pnpm vitest run test/server/auth-key.test.ts
    - Valid path under allowed root → accepted
    - Path with `../` escaping root → rejected
    - Absolute path outside all roots → rejected
-   - Path to ~/.hive/ → accepted
+   - Path to ~/.octob/ → accepted
    - Empty path → rejected
 3. `[server]` Run tests: `pnpm vitest run test/server/path-guard.test.ts`
 
@@ -901,13 +901,13 @@ pnpm vitest run test/server/auth-key.test.ts
 
 **Goal:** Auto-generate self-signed ECDSA P-256 TLS certificates on first headless run.
 
-**Definition of Done:** Certs generated to `~/.hive/tls/`, fingerprint stored in DB.
+**Definition of Done:** Certs generated to `~/.octob/tls/`, fingerprint stored in DB.
 
 **Tasks:**
 
 1. `[server]` Create TLS utilities in `src/server/config.ts` or `src/server/tls.ts`:
    - `generateTlsCerts(outputDir: string)` → uses `crypto.generateKeyPairSync('ec', { namedCurve: 'prime256v1' })` + self-signed X.509 cert (10-year validity)
-   - Writes `server.crt` and `server.key` to `~/.hive/tls/`
+   - Writes `server.crt` and `server.key` to `~/.octob/tls/`
    - `getCertFingerprint(certPath: string)` → SHA-256 fingerprint of DER-encoded cert
    - Stores fingerprint in settings table as `headless_cert_fingerprint`
 2. `[server]` Write tests in `test/server/tls.test.ts`:
@@ -920,15 +920,15 @@ pnpm vitest run test/server/auth-key.test.ts
 
 ### Session 28: Config Loader
 
-**Goal:** Load `~/.hive/headless.json` with sensible defaults.
+**Goal:** Load `~/.octob/headless.json` with sensible defaults.
 
 **Definition of Done:** Config merges user settings with defaults, handles missing file.
 
 **Tasks:**
 
 1. `[server]` Create `src/server/config.ts`:
-   - `loadHeadlessConfig()` → reads `~/.hive/headless.json`, merges with defaults
-   - Defaults: `{ port: 8443, bindAddress: '0.0.0.0', tls: { certPath: '~/.hive/tls/server.crt', keyPath: '~/.hive/tls/server.key' }, security: { bruteForceMaxAttempts: 5, bruteForceWindowSec: 60, bruteForceBlockSec: 300, inactivityTimeoutMin: 30, allowedIps: [] } }`
+   - `loadHeadlessConfig()` → reads `~/.octob/headless.json`, merges with defaults
+   - Defaults: `{ port: 8443, bindAddress: '0.0.0.0', tls: { certPath: '~/.octob/tls/server.crt', keyPath: '~/.octob/tls/server.key' }, security: { bruteForceMaxAttempts: 5, bruteForceWindowSec: 60, bruteForceBlockSec: 300, inactivityTimeoutMin: 30, allowedIps: [] } }`
    - If file doesn't exist → returns defaults silently
    - If file has invalid JSON → logs warning, returns defaults
 2. `[server]` Write tests in `test/server/config.test.ts`:
@@ -1003,7 +1003,7 @@ pnpm build && pnpm test
 1. `[server]` In `src/main/index.ts` headless branch, BEFORE calling `headlessBootstrap()`, handle one-shot commands:
    - `--rotate-key`: generate new key, store hash, display new key + QR code, exit
    - `--regen-certs`: delete old certs, regenerate, update fingerprint, exit
-   - `--show-status`: read `~/.hive/hive-headless.status.json`, print to stdout, exit
+   - `--show-status`: read `~/.octob/hive-headless.status.json`, print to stdout, exit
    - `--kill`: read PID file, send SIGTERM to running process, exit
    - `--unlock`: clear auto-lock state (via settings table or signal), exit
 2. `[server]` Each command calls `app.quit()` after completing (they don't start the server).

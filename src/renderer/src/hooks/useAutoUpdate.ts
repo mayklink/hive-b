@@ -80,7 +80,7 @@ export function useAutoUpdate(): void {
       window.updaterOps.onUpdateNotAvailable((data) => {
         if (data.isManualCheck) {
           toast.info('You\u2019re up to date', {
-            description: `Hive v${data.version} is the latest version`
+            description: `Octob v${data.version} is the latest version`
           })
         }
       })

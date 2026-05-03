@@ -14,44 +14,44 @@ import type { StreamEvent } from '../../../src/main/services/opencode-service'
 describe('Session 5: Subagent Event Tagging', () => {
   // Helper: simulate the child detection logic from handleEvent
   function detectChildEvent(
-    directHiveId: string | undefined,
-    resolvedHiveId: string | undefined
-  ): { hiveSessionId: string | undefined; isChildEvent: boolean } {
-    let hiveSessionId = directHiveId
-    if (!hiveSessionId && resolvedHiveId) {
-      hiveSessionId = resolvedHiveId
+    directOctobId: string | undefined,
+    resolvedOctobId: string | undefined
+  ): { octobSessionId: string | undefined; isChildEvent: boolean } {
+    let octobSessionId = directOctobId
+    if (!octobSessionId && resolvedOctobId) {
+      octobSessionId = resolvedOctobId
     }
-    const isChildEvent = !directHiveId && !!hiveSessionId
-    return { hiveSessionId, isChildEvent }
+    const isChildEvent = !directOctobId && !!octobSessionId
+    return { octobSessionId, isChildEvent }
   }
 
   describe('Child event detection', () => {
-    test('child event detected when getMappedHiveSessionId returns null but resolveParentSession succeeds', () => {
-      // getMappedHiveSessionId returns undefined for the child session ID
-      // but resolveParentSession resolved through the parent to get a hiveSessionId
-      const { hiveSessionId, isChildEvent } = detectChildEvent(undefined, 'hive-session-1')
+    test('child event detected when getMappedOctobSessionId returns null but resolveParentSession succeeds', () => {
+      // getMappedOctobSessionId returns undefined for the child session ID
+      // but resolveParentSession resolved through the parent to get a octobSessionId
+      const { octobSessionId, isChildEvent } = detectChildEvent(undefined, 'hive-session-1')
       expect(isChildEvent).toBe(true)
-      expect(hiveSessionId).toBe('hive-session-1')
+      expect(octobSessionId).toBe('hive-session-1')
     })
 
     test('parent event detected when direct mapping exists', () => {
-      // getMappedHiveSessionId returns hive ID directly
-      const { hiveSessionId, isChildEvent } = detectChildEvent('hive-session-1', undefined)
+      // getMappedOctobSessionId returns hive ID directly
+      const { octobSessionId, isChildEvent } = detectChildEvent('hive-session-1', undefined)
       expect(isChildEvent).toBe(false)
-      expect(hiveSessionId).toBe('hive-session-1')
+      expect(octobSessionId).toBe('hive-session-1')
     })
 
     test('no hive session found when both return undefined', () => {
-      const { hiveSessionId, isChildEvent } = detectChildEvent(undefined, undefined)
-      expect(hiveSessionId).toBeUndefined()
+      const { octobSessionId, isChildEvent } = detectChildEvent(undefined, undefined)
+      expect(octobSessionId).toBeUndefined()
       expect(isChildEvent).toBe(false)
     })
 
     test('parent event when direct mapping exists even if resolve would also succeed', () => {
       // Direct mapping takes priority — isChildEvent should be false
-      const { hiveSessionId, isChildEvent } = detectChildEvent('hive-session-1', 'hive-session-1')
+      const { octobSessionId, isChildEvent } = detectChildEvent('hive-session-1', 'hive-session-1')
       expect(isChildEvent).toBe(false)
-      expect(hiveSessionId).toBe('hive-session-1')
+      expect(octobSessionId).toBe('hive-session-1')
     })
   })
 
@@ -83,12 +83,12 @@ describe('Session 5: Subagent Event Tagging', () => {
   describe('StreamEvent tagging with childSessionId', () => {
     test('child events tagged with childSessionId', () => {
       const sessionId = 'child-opencode-session'
-      const hiveSessionId = 'hive-session-1'
+      const octobSessionId = 'hive-session-1'
       const isChildEvent = true
 
       const streamEvent: StreamEvent = {
         type: 'message.part.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: { part: { type: 'text', text: 'hello' } },
         ...(isChildEvent ? { childSessionId: sessionId } : {})
       }
@@ -99,12 +99,12 @@ describe('Session 5: Subagent Event Tagging', () => {
 
     test('parent events do not have childSessionId', () => {
       const sessionId = 'parent-opencode-session'
-      const hiveSessionId = 'hive-session-1'
+      const octobSessionId = 'hive-session-1'
       const isChildEvent = false
 
       const streamEvent: StreamEvent = {
         type: 'message.part.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: { part: { type: 'text', text: 'hello' } },
         ...(isChildEvent ? { childSessionId: sessionId } : {})
       }
@@ -118,26 +118,26 @@ describe('Session 5: Subagent Event Tagging', () => {
     test('parent events are persisted', () => {
       const persistStreamEvent = vi.fn()
       const isChildEvent = false
-      const hiveSessionId = 'hive-1'
+      const octobSessionId = 'hive-1'
       const eventType = 'message.part.updated'
       const data = { part: { type: 'text' } }
 
       if (!isChildEvent) {
-        persistStreamEvent(hiveSessionId, eventType, data)
+        persistStreamEvent(octobSessionId, eventType, data)
       }
 
-      expect(persistStreamEvent).toHaveBeenCalledWith(hiveSessionId, eventType, data)
+      expect(persistStreamEvent).toHaveBeenCalledWith(octobSessionId, eventType, data)
     })
 
     test('child events are NOT persisted as top-level messages', () => {
       const persistStreamEvent = vi.fn()
       const isChildEvent = true
-      const hiveSessionId = 'hive-1'
+      const octobSessionId = 'hive-1'
       const eventType = 'message.part.updated'
       const data = { part: { type: 'text' } }
 
       if (!isChildEvent) {
-        persistStreamEvent(hiveSessionId, eventType, data)
+        persistStreamEvent(octobSessionId, eventType, data)
       }
 
       expect(persistStreamEvent).not.toHaveBeenCalled()
@@ -177,39 +177,39 @@ describe('Session 5: Subagent Event Tagging', () => {
     })
 
     function simulateHandleEvent(params: {
-      directHiveId: string | undefined
-      resolvedHiveId: string | undefined
+      directOctobId: string | undefined
+      resolvedOctobId: string | undefined
       sessionId: string
       eventType: string
       eventData: unknown
     }) {
-      const { directHiveId, resolvedHiveId, sessionId, eventType, eventData } = params
+      const { directOctobId, resolvedOctobId, sessionId, eventType, eventData } = params
 
       // Detection logic from handleEvent
-      let hiveSessionId = directHiveId
-      if (!hiveSessionId && resolvedHiveId) {
-        hiveSessionId = resolvedHiveId
+      let octobSessionId = directOctobId
+      if (!octobSessionId && resolvedOctobId) {
+        octobSessionId = resolvedOctobId
       }
-      if (!hiveSessionId) return undefined
+      if (!octobSessionId) return undefined
 
-      const isChildEvent = !directHiveId && !!hiveSessionId
+      const isChildEvent = !directOctobId && !!octobSessionId
 
       // Notification guard
       if (eventType === 'session.idle') {
         if (!isChildEvent) {
-          maybeNotifySessionComplete(hiveSessionId)
+          maybeNotifySessionComplete(octobSessionId)
         }
       }
 
       // Persistence guard
       if (!isChildEvent) {
-        persistStreamEvent(hiveSessionId, eventType, eventData)
+        persistStreamEvent(octobSessionId, eventType, eventData)
       }
 
       // Build StreamEvent
       const streamEvent: StreamEvent = {
         type: eventType,
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: eventData,
         ...(isChildEvent ? { childSessionId: sessionId } : {})
       }
@@ -220,8 +220,8 @@ describe('Session 5: Subagent Event Tagging', () => {
 
     test('parent message.part.updated: persisted, sent without childSessionId', () => {
       const result = simulateHandleEvent({
-        directHiveId: 'hive-1',
-        resolvedHiveId: undefined,
+        directOctobId: 'hive-1',
+        resolvedOctobId: undefined,
         sessionId: 'oc-parent',
         eventType: 'message.part.updated',
         eventData: { part: { type: 'text', text: 'hello' } }
@@ -236,8 +236,8 @@ describe('Session 5: Subagent Event Tagging', () => {
 
     test('child message.part.updated: NOT persisted, sent WITH childSessionId', () => {
       const result = simulateHandleEvent({
-        directHiveId: undefined,
-        resolvedHiveId: 'hive-1',
+        directOctobId: undefined,
+        resolvedOctobId: 'hive-1',
         sessionId: 'oc-child',
         eventType: 'message.part.updated',
         eventData: { part: { type: 'text', text: 'child text' } }
@@ -252,8 +252,8 @@ describe('Session 5: Subagent Event Tagging', () => {
 
     test('parent session.idle: persisted, notification fired, no childSessionId', () => {
       const result = simulateHandleEvent({
-        directHiveId: 'hive-1',
-        resolvedHiveId: undefined,
+        directOctobId: 'hive-1',
+        resolvedOctobId: undefined,
         sessionId: 'oc-parent',
         eventType: 'session.idle',
         eventData: {}
@@ -268,8 +268,8 @@ describe('Session 5: Subagent Event Tagging', () => {
 
     test('child session.idle: NOT persisted, NO notification, WITH childSessionId', () => {
       const result = simulateHandleEvent({
-        directHiveId: undefined,
-        resolvedHiveId: 'hive-1',
+        directOctobId: undefined,
+        resolvedOctobId: 'hive-1',
         sessionId: 'oc-child',
         eventType: 'session.idle',
         eventData: {}
@@ -284,8 +284,8 @@ describe('Session 5: Subagent Event Tagging', () => {
 
     test('unresolvable session returns undefined', () => {
       const result = simulateHandleEvent({
-        directHiveId: undefined,
-        resolvedHiveId: undefined,
+        directOctobId: undefined,
+        resolvedOctobId: undefined,
         sessionId: 'oc-unknown',
         eventType: 'message.part.updated',
         eventData: {}

@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>Projeler arası paralel kodlama için açık kaynaklı bir AI ajan orkestratörü.</strong></p>
   <p>Claude Code, OpenCode ve Codex oturumlarını paralel çalıştırın. Tek pencere. İzole dallar. Sıfır sekme kaosu.</p>
   <p>

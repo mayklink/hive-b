@@ -49,7 +49,7 @@ import { TicketCreateModal } from '@/components/kanban/TicketCreateModal'
 import { ImportTicketsModal } from '@/components/kanban/ImportTicketsModal'
 import { JiraImportModal } from '@/components/kanban/JiraImportModal'
 import { AzureDevOpsImportModal } from '@/components/kanban/AzureDevOpsImportModal'
-import { HiveImportModal } from '@/components/kanban/HiveImportModal'
+import { OctobImportModal } from '@/components/kanban/OctobImportModal'
 import { useVimModeStore } from '@/stores/useVimModeStore'
 import { useHintStore } from '@/stores/useHintStore'
 import { cn, parseColorQuad } from '@/lib/utils'
@@ -535,9 +535,9 @@ export function SessionTabs(): React.JSX.Element | null {
   const [showImport, setShowImport] = useState(false)
   const [showJiraImport, setShowJiraImport] = useState(false)
   const [showAzureDevOpsImport, setShowAzureDevOpsImport] = useState(false)
-  const [showHiveImport, setShowHiveImport] = useState(false)
-  const [hiveImportTickets, setHiveImportTickets] = useState<Array<{ id: string; title: string; description?: string | null; attachments?: unknown[]; column?: string }>>([])
-  const [hiveImportDependencies, setHiveImportDependencies] = useState<Array<{ dependentId: string; blockerId: string }>>([])
+  const [showOctobImport, setShowOctobImport] = useState(false)
+  const [octobImportTickets, setOctobImportTickets] = useState<Array<{ id: string; title: string; description?: string | null; attachments?: unknown[]; column?: string }>>([])
+  const [octobImportDependencies, setOctobImportDependencies] = useState<Array<{ dependentId: string; blockerId: string }>>([])
 
   // Individual selectors for state values
   const activeWorktreeId = useSessionStore((s) => s.activeWorktreeId)
@@ -1521,14 +1521,14 @@ export function SessionTabs(): React.JSX.Element | null {
               onClick={async () => {
                 const result = await window.kanban.board.openImportFile()
                 if (result) {
-                  setHiveImportTickets(result.tickets)
-                  setHiveImportDependencies(result.dependencies ?? [])
-                  setShowHiveImport(true)
+                  setOctobImportTickets(result.tickets)
+                  setOctobImportDependencies(result.dependencies ?? [])
+                  setShowOctobImport(true)
                 }
               }}
             >
               <FileJson className="h-4 w-4 mr-2" />
-              Import from Hive JSON
+              Import from Octob JSON
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
@@ -1573,18 +1573,18 @@ export function SessionTabs(): React.JSX.Element | null {
             onOpenChange={setShowAzureDevOpsImport}
             projectId={project.id}
           />
-          <HiveImportModal
-            open={showHiveImport}
+          <OctobImportModal
+            open={showOctobImport}
             onOpenChange={(open) => {
-              setShowHiveImport(open)
+              setShowOctobImport(open)
               if (!open) {
-                setHiveImportTickets([])
-                setHiveImportDependencies([])
+                setOctobImportTickets([])
+                setOctobImportDependencies([])
               }
             }}
             projectId={project.id}
-            tickets={hiveImportTickets}
-            dependencies={hiveImportDependencies}
+            tickets={octobImportTickets}
+            dependencies={octobImportDependencies}
           />
         </>
       )}

@@ -79,7 +79,7 @@ export function PetSprite({
       onMouseLeave={onMouseLeave}
       onClick={onClick}
       onContextMenu={onContextMenu}
-      aria-label="Hive pet"
+      aria-label="Octob pet"
     >
       <motion.span
         className={`pet-sprite pet-sprite-${state}`}

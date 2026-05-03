@@ -148,11 +148,11 @@ if (eventType === 'session.updated') {
   const sessionData = event.properties
   const opencodeSessionId = sessionData?.id || sessionData?.sessionID
   if (opencodeSessionId) {
-    const hiveSessionId = this.getMappedHiveSessionId(opencodeSessionId)
-    if (hiveSessionId && sessionData?.title) {
+    const octobSessionId = this.getMappedOctobSessionId(opencodeSessionId)
+    if (octobSessionId && sessionData?.title) {
       // Persist title to DB directly for resilience
       try {
-        db.updateSession(hiveSessionId, { name: sessionData.title })
+        db.updateSession(octobSessionId, { name: sessionData.title })
       } catch (err) {
         log.warn('Failed to persist session title from server', { err })
       }
@@ -456,12 +456,12 @@ Move the auto-rename logic to the main process where it has direct access to git
 
 ```typescript
 // In handleEvent(), in the session.updated branch, after persisting the title:
-if (hiveSessionId && sessionData?.title) {
+if (octobSessionId && sessionData?.title) {
   try {
-    db.updateSession(hiveSessionId, { name: sessionData.title })
+    db.updateSession(octobSessionId, { name: sessionData.title })
 
     // Auto-rename branch if still a city name
-    const worktree = db.getWorktreeBySessionId(hiveSessionId)
+    const worktree = db.getWorktreeBySessionId(octobSessionId)
     if (worktree && !worktree.branch_renamed) {
       const isCityName = CITY_NAMES.some(
         (city) => city.toLowerCase() === worktree.branch.toLowerCase()
@@ -750,7 +750,7 @@ UI Flow:
      └──────────────────────────────────┘
 
   Click "feature/auth-tokens" →
-    Creates worktree at ~/.hive-worktrees/<project>/feature-auth-tokens
+    Creates worktree at ~/.octob-worktrees/<project>/feature-auth-tokens
     Branch: feature/auth-tokens (existing)
 
   Click "main" (already checked out) →
@@ -798,7 +798,7 @@ async createWorktreeFromBranch(
     .replace(/[^a-zA-Z0-9-]/g, '')
     .toLowerCase()
 
-  const worktreeBase = path.join(os.homedir(), '.hive-worktrees', projectName)
+  const worktreeBase = path.join(os.homedir(), '.octob-worktrees', projectName)
   const worktreePath = path.join(worktreeBase, dirName)
 
   await fs.mkdir(worktreeBase, { recursive: true })

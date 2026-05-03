@@ -97,8 +97,8 @@ class CodexProbeClient {
   async initialize(): Promise<void> {
     await this.request('initialize', {
       clientInfo: {
-        name: 'hive_codex_probe',
-        title: 'Hive Codex Probe',
+        name: 'octob_codex_probe',
+        title: 'Octob Codex Probe',
         version: '1.0.0'
       },
       capabilities: {

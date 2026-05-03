@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>一个开源的 AI Agent 编排器，用来在多个项目和多个分支之间并行编码。</strong></p>
   <p>在一个窗口里同时运行 Claude Code、OpenCode 和 Codex。每个会话都绑定独立的 git worktree，减少分支切换和上下文混乱。</p>
   <p><a href="README.md"><strong>English</strong></a> | <a href="README.zh-CN.md"><strong>简体中文</strong></a></p>

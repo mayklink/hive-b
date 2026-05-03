@@ -1,8 +1,8 @@
 import type { SVGProps } from 'react'
 import { cn } from '@/lib/utils'
 
-/** In-app OctoB mark — robotic octopus in brand violets (reads well at header sizes). */
-export function OctoBMark({ className, ...props }: SVGProps<SVGSVGElement>): JSX.Element {
+/** In-app Octob mark — robotic octopus in brand violets (reads well at header sizes). */
+export function OctobMark({ className, ...props }: SVGProps<SVGSVGElement>): JSX.Element {
   return (
     <svg
       viewBox="0 0 24 24"

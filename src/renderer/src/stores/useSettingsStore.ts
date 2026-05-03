@@ -702,7 +702,7 @@ export const useSettingsStore = create<SettingsState>()(
       }
     }),
     {
-      name: 'hive-settings',
+      name: 'octob-settings',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         uiLocale: state.uiLocale,

@@ -9,7 +9,7 @@ import {
 import type { ThemePreset } from '@/lib/themes'
 
 const THEME_SETTING_KEY = 'selected_theme'
-const STORAGE_KEY = 'hive-theme'
+const STORAGE_KEY = 'octob-theme'
 
 // ---------------------------------------------------------------------------
 // Two-path CSS dispatcher

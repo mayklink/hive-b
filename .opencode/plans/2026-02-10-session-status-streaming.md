@@ -99,7 +99,7 @@ In `src/main/services/opencode-service.ts` at lines 1042-1050, the event constru
 // Send event to renderer
 const streamEvent: StreamEvent = {
   type: eventType,
-  sessionId: hiveSessionId,
+  sessionId: octobSessionId,
   data: event.properties || event,
   ...(isChildEvent ? { childSessionId: sessionId } : {}),
   ...(eventType === 'session.status' && event.properties?.status

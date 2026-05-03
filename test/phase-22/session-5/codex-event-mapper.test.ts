@@ -20,7 +20,7 @@ function makeEvent(overrides: Partial<CodexManagerEvent>): CodexManagerEvent {
   }
 }
 
-const HIVE_SESSION = 'hive-session-abc'
+const OCTOB_SESSION = 'hive-session-abc'
 
 describe('mapCodexEventToStreamEvents', () => {
   // ── Content deltas ──────────────────────────────────────────
@@ -67,12 +67,12 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { delta: 'Hello world' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0]).toMatchObject({
         type: 'message.part.updated',
-        sessionId: HIVE_SESSION,
+        sessionId: OCTOB_SESSION,
         data: {
           part: { type: 'text', text: 'Hello world' },
           delta: 'Hello world'
@@ -86,7 +86,7 @@ describe('mapCodexEventToStreamEvents', () => {
         textDelta: 'direct text'
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].data).toMatchObject({
@@ -101,12 +101,12 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { text: 'Let me think...' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0]).toMatchObject({
         type: 'message.part.updated',
-        sessionId: HIVE_SESSION,
+        sessionId: OCTOB_SESSION,
         data: {
           part: { type: 'reasoning', text: 'Let me think...' },
           delta: 'Let me think...'
@@ -120,7 +120,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { text: 'Summary of reasoning' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].data).toMatchObject({
@@ -135,7 +135,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { text: 'command output line' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].data).toMatchObject({
@@ -151,11 +151,11 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { text: 'command output line' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('message.part.updated')
-      expect(result[0].sessionId).toBe(HIVE_SESSION)
+      expect(result[0].sessionId).toBe(OCTOB_SESSION)
       const part = (result[0].data as any).part
       expect(part.type).toBe('tool')
       expect(part.callID).toBe('tool-42')
@@ -169,7 +169,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { text: 'file change diff' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].data).toMatchObject({
@@ -185,11 +185,11 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { text: 'file change diff' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('message.part.updated')
-      expect(result[0].sessionId).toBe(HIVE_SESSION)
+      expect(result[0].sessionId).toBe(OCTOB_SESSION)
       const part = (result[0].data as any).part
       expect(part.type).toBe('tool')
       expect(part.callID).toBe('tool-fc-7')
@@ -203,7 +203,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { text: 'plan step 1' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].data).toMatchObject({
@@ -218,7 +218,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: {}
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(0)
     })
@@ -231,7 +231,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].data).toMatchObject({
@@ -246,7 +246,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { assistantText: 'payload assistant text' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].data).toMatchObject({
@@ -261,7 +261,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { reasoningText: 'payload reasoning text' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].data).toMatchObject({
@@ -277,12 +277,12 @@ describe('mapCodexEventToStreamEvents', () => {
     it('maps to session.status busy', () => {
       const event = makeEvent({ method: 'turn/started' })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0]).toMatchObject({
         type: 'session.status',
-        sessionId: HIVE_SESSION,
+        sessionId: OCTOB_SESSION,
         data: { status: { type: 'busy' } },
         statusPayload: { type: 'busy' }
       })
@@ -298,7 +298,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { turn: { status: 'completed' } }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       // Should have at least the idle status event
       const statusEvents = result.filter((e) => e.type === 'session.status')
@@ -312,7 +312,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { turn: { status: 'failed', error: 'Rate limit exceeded' } }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       const errorEvents = result.filter((e) => e.type === 'session.error')
       expect(errorEvents).toHaveLength(1)
@@ -335,7 +335,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       const usageEvents = result.filter((e) => e.type === 'message.updated')
       expect(usageEvents).toHaveLength(1)
@@ -352,7 +352,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: {}
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       // Defaults to 'completed' status → just idle
       const statusEvents = result.filter((e) => e.type === 'session.status')
@@ -376,12 +376,12 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0]).toMatchObject({
         type: 'message.part.updated',
-        sessionId: HIVE_SESSION,
+        sessionId: OCTOB_SESSION,
         data: {
           part: {
             type: 'tool',
@@ -401,7 +401,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect((result[0].data as any).part.tool).toBe('file_edit')
@@ -435,7 +435,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('Read')
       expect(part.state.input).toEqual({
@@ -465,7 +465,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('Read')
       expect(part.state.input).toEqual({
@@ -491,7 +491,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect((result[0].data as any).part.type).toBe('tool')
@@ -517,12 +517,12 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0]).toMatchObject({
         type: 'message.part.updated',
-        sessionId: HIVE_SESSION,
+        sessionId: OCTOB_SESSION,
         data: {
           part: {
             type: 'tool',
@@ -546,7 +546,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect((result[0].data as any).part.state.status).toBe('completed')
     })
@@ -566,7 +566,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const state = (result[0].data as any).part.state
@@ -593,11 +593,11 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('message.part.updated')
-      expect(result[0].sessionId).toBe(HIVE_SESSION)
+      expect(result[0].sessionId).toBe(OCTOB_SESSION)
       const part = (result[0].data as any).part
       expect(part.type).toBe('tool')
       expect(part.tool).toBe('Bash')
@@ -620,7 +620,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
@@ -651,7 +651,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('Grep')
       expect(part.state.input).toEqual({ pattern: 'needle', path: 'src' })
@@ -670,7 +670,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
@@ -688,7 +688,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(0)
     })
@@ -700,7 +700,7 @@ describe('mapCodexEventToStreamEvents', () => {
         itemId: 'call-x-1'
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(0)
     })
@@ -719,7 +719,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
@@ -738,7 +738,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('message.part.updated')
@@ -761,7 +761,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect((result[0].data as any).part).toMatchObject({
@@ -780,7 +780,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect((result[0].data as any).part).toMatchObject({
@@ -800,12 +800,12 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { state: 'error', reason: 'API key invalid' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0]).toEqual({
         type: 'session.error',
-        sessionId: HIVE_SESSION,
+        sessionId: OCTOB_SESSION,
         data: { error: 'API key invalid' }
       })
     })
@@ -816,7 +816,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { state: 'running' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].statusPayload).toEqual({ type: 'busy' })
@@ -828,7 +828,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { state: 'ready' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].statusPayload).toEqual({ type: 'idle' })
@@ -840,7 +840,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { state: 'connecting' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(0)
     })
@@ -851,7 +851,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { state: 'error', error: 'Connection lost' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('session.error')
@@ -868,12 +868,12 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { message: 'OOM killed' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0]).toEqual({
         type: 'session.error',
-        sessionId: HIVE_SESSION,
+        sessionId: OCTOB_SESSION,
         data: { error: 'OOM killed' }
       })
     })
@@ -884,7 +884,7 @@ describe('mapCodexEventToStreamEvents', () => {
         payload: { error: 'Sandbox violation' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect((result[0].data as any).error).toBe('Sandbox violation')
@@ -896,7 +896,7 @@ describe('mapCodexEventToStreamEvents', () => {
         message: 'fallback error message'
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect((result[0].data as any).error).toBe('fallback error message')
@@ -913,7 +913,7 @@ describe('mapCodexEventToStreamEvents', () => {
         message: 'codex process crashed'
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('session.error')
@@ -926,7 +926,7 @@ describe('mapCodexEventToStreamEvents', () => {
         method: 'process/error'
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect((result[0].data as any).error).toBe('Unknown error')
@@ -939,7 +939,7 @@ describe('mapCodexEventToStreamEvents', () => {
         message: 'Received invalid JSON'
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(0)
     })
@@ -955,7 +955,7 @@ describe('mapCodexEventToStreamEvents', () => {
         message: 'codex stderr output'
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(0)
     })
@@ -970,7 +970,7 @@ describe('mapCodexEventToStreamEvents', () => {
         method: 'some.unknown.event'
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(0)
     })
@@ -981,7 +981,7 @@ describe('mapCodexEventToStreamEvents', () => {
         method: 'session/ready'
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(0)
     })
@@ -990,7 +990,7 @@ describe('mapCodexEventToStreamEvents', () => {
   // ── Session ID passthrough ──────────────────────────────────
 
   describe('session ID passthrough', () => {
-    it('uses the provided hiveSessionId in all events', () => {
+    it('uses the provided octobSessionId in all events', () => {
       const event = makeEvent({
         method: 'item/agentMessage/delta',
         payload: { delta: 'x' }
@@ -1015,7 +1015,7 @@ describe('mapCodexEventToStreamEvents', () => {
       }
     })
 
-    const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+    const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
     expect((result[0].data as any).part.state.input).toEqual({ command: 'pnpm test' })
   })
@@ -1031,7 +1031,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('message.part.updated')
@@ -1049,7 +1049,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('message.part.updated')
@@ -1067,7 +1067,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('message.part.updated')
@@ -1101,11 +1101,11 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('message.part.updated')
-      expect(result[0].sessionId).toBe(HIVE_SESSION)
+      expect(result[0].sessionId).toBe(OCTOB_SESSION)
       const part = (result[0].data as any).part
       expect(part.type).toBe('tool')
       expect(part.callID).toBe('item-ti-1')
@@ -1122,7 +1122,7 @@ describe('mapCodexEventToStreamEvents', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(0)
     })

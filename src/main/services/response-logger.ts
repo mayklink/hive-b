@@ -9,7 +9,7 @@ const RESPONSE_LOG_DIR = 'responses'
 
 function getResponseLogDir(): string {
   const homeDir = app.getPath('home')
-  return join(homeDir, '.hive', 'logs', RESPONSE_LOG_DIR)
+  return join(homeDir, '.octob', 'logs', RESPONSE_LOG_DIR)
 }
 
 function ensureLogDir(): void {

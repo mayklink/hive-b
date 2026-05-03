@@ -43,17 +43,17 @@ export async function withSdkDispatch<T>(
 }
 
 /**
- * SDK dispatch by Hive session ID (used for connect, where agent session
+ * SDK dispatch by Octob session ID (used for connect, where agent session
  * doesn't exist yet). Looks up session.agent_sdk from the DB.
  */
-export async function withSdkDispatchByHiveSession<T>(
+export async function withSdkDispatchByOctobSession<T>(
   ctx: GraphQLContext,
-  hiveSessionId: string,
+  octobSessionId: string,
   opencodeFn: () => Promise<T>,
   claudeFn: (impl: AgentSdkImplementer) => Promise<T>
 ): Promise<T> {
   if (ctx.sdkManager && ctx.db) {
-    const session = ctx.db.getSession(hiveSessionId)
+    const session = ctx.db.getSession(octobSessionId)
     if (session?.agent_sdk === 'claude-code') {
       return claudeFn(ctx.sdkManager.getImplementer('claude-code'))
     }
@@ -88,17 +88,17 @@ git commit -m "feat(server): add SDK dispatch helpers for OpenCode resolvers"
 // src/server/resolvers/mutation/opencode.resolvers.ts
 import type { Resolvers } from '../../__generated__/resolvers-types'
 import { openCodeService } from '../../../main/services/opencode-service'
-import { withSdkDispatch, withSdkDispatchByHiveSession } from '../helpers/sdk-dispatch'
+import { withSdkDispatch, withSdkDispatchByOctobSession } from '../helpers/sdk-dispatch'
 
 export const opencodeMutationResolvers: Resolvers = {
   Mutation: {
-    opencodeConnect: async (_parent, { worktreePath, hiveSessionId }, ctx) => {
+    opencodeConnect: async (_parent, { worktreePath, octobSessionId }, ctx) => {
       try {
-        const result = await withSdkDispatchByHiveSession(
+        const result = await withSdkDispatchByOctobSession(
           ctx,
-          hiveSessionId,
-          () => openCodeService.connect(worktreePath, hiveSessionId),
-          (impl) => impl.connect(worktreePath, hiveSessionId)
+          octobSessionId,
+          () => openCodeService.connect(worktreePath, octobSessionId),
+          (impl) => impl.connect(worktreePath, octobSessionId)
         )
         return { success: true, sessionId: result.sessionId }
       } catch (error) {
@@ -111,12 +111,12 @@ export const opencodeMutationResolvers: Resolvers = {
 
     opencodeReconnect: async (_parent, { input }, ctx) => {
       try {
-        const { worktreePath, opencodeSessionId, hiveSessionId } = input
+        const { worktreePath, opencodeSessionId, octobSessionId } = input
         const result = await withSdkDispatch(
           ctx,
           opencodeSessionId,
-          () => openCodeService.reconnect(worktreePath, opencodeSessionId, hiveSessionId),
-          (impl) => impl.reconnect(worktreePath, opencodeSessionId, hiveSessionId)
+          () => openCodeService.reconnect(worktreePath, opencodeSessionId, octobSessionId),
+          (impl) => impl.reconnect(worktreePath, opencodeSessionId, octobSessionId)
         )
         return {
           success: result.success ?? true,
@@ -755,16 +755,16 @@ Add to the `Mutation` object:
 ```typescript
     opencodePlanApprove: async (_parent, { input }, ctx) => {
       try {
-        const { worktreePath, hiveSessionId, requestId } = input
+        const { worktreePath, octobSessionId, requestId } = input
         if (ctx.sdkManager) {
           const claudeImpl = ctx.sdkManager.getImplementer('claude-code')
           if ('hasPendingPlan' in claudeImpl) {
             const typedImpl = claudeImpl as any
             if (
               (requestId && typedImpl.hasPendingPlan(requestId)) ||
-              typedImpl.hasPendingPlanForSession(hiveSessionId)
+              typedImpl.hasPendingPlanForSession(octobSessionId)
             ) {
-              await typedImpl.planApprove(worktreePath, hiveSessionId, requestId ?? undefined)
+              await typedImpl.planApprove(worktreePath, octobSessionId, requestId ?? undefined)
               return { success: true }
             }
           }
@@ -780,16 +780,16 @@ Add to the `Mutation` object:
 
     opencodePlanReject: async (_parent, { input }, ctx) => {
       try {
-        const { worktreePath, hiveSessionId, feedback, requestId } = input
+        const { worktreePath, octobSessionId, feedback, requestId } = input
         if (ctx.sdkManager) {
           const claudeImpl = ctx.sdkManager.getImplementer('claude-code')
           if ('hasPendingPlan' in claudeImpl) {
             const typedImpl = claudeImpl as any
             if (
               (requestId && typedImpl.hasPendingPlan(requestId)) ||
-              typedImpl.hasPendingPlanForSession(hiveSessionId)
+              typedImpl.hasPendingPlanForSession(octobSessionId)
             ) {
-              await typedImpl.planReject(worktreePath, hiveSessionId, feedback, requestId ?? undefined)
+              await typedImpl.planReject(worktreePath, octobSessionId, feedback, requestId ?? undefined)
               return { success: true }
             }
           }
@@ -899,7 +899,7 @@ Check each resolver against its IPC handler counterpart in `src/main/ipc/opencod
 
 | Resolver | IPC handler line | Dispatch method | Verified |
 |----------|-----------------|-----------------|----------|
-| `opencodeConnect` | L19-44 | `withSdkDispatchByHiveSession` (checks `session.agent_sdk`) | |
+| `opencodeConnect` | L19-44 | `withSdkDispatchByOctobSession` (checks `session.agent_sdk`) | |
 | `opencodeReconnect` | L47-73 | `withSdkDispatch` (checks `getAgentSdkForSession`) | |
 | `opencodeDisconnect` | L154-179 | `withSdkDispatch` | |
 | `opencodePrompt` | L77-151 | `withSdkDispatch` | |
@@ -1117,8 +1117,8 @@ vi.mock('electron', () => ({
   app: {
     getPath: (name: string) => {
       if (name === 'home') return homedir()
-      if (name === 'userData') return join(homedir(), '.hive')
-      if (name === 'logs') return join(homedir(), '.hive', 'logs')
+      if (name === 'userData') return join(homedir(), '.octob')
+      if (name === 'logs') return join(homedir(), '.octob', 'logs')
       return '/tmp'
     },
     getVersion: () => '0.0.0-test',
@@ -1236,7 +1236,7 @@ describe('OpenCode Resolvers — Integration Tests', () => {
       })
 
       const result = await execute(`
-        mutation { opencodeConnect(worktreePath: "/tmp/test", hiveSessionId: "${session.id}") {
+        mutation { opencodeConnect(worktreePath: "/tmp/test", octobSessionId: "${session.id}") {
           success sessionId
         }}
       `)
@@ -1254,7 +1254,7 @@ describe('OpenCode Resolvers — Integration Tests', () => {
       })
 
       const result = await execute(`
-        mutation { opencodeConnect(worktreePath: "/tmp/test", hiveSessionId: "${session.id}") {
+        mutation { opencodeConnect(worktreePath: "/tmp/test", octobSessionId: "${session.id}") {
           success sessionId
         }}
       `)
@@ -1543,7 +1543,7 @@ describe('OpenCode Resolvers — Integration Tests', () => {
         mutation { opencodeReconnect(input: {
           worktreePath: "/tmp/test"
           opencodeSessionId: "oc-session-1"
-          hiveSessionId: "${db.sessions[0].id}"
+          octobSessionId: "${db.sessions[0].id}"
         }) { success sessionStatus revertMessageID }}
       `)
       expect(result.data.opencodeReconnect.success).toBe(true)

@@ -172,7 +172,7 @@ If no defects survive validation, state: "This code survived adversarial review.
 Focus on: bugs, logic errors, and code quality.`,
 }
 
-/** Persisted preset id prefix for Hive's three built-in review templates. */
+/** Persisted preset id prefix for Octob's three built-in review templates. */
 export const BUILTIN_REVIEW_PROMPT_PREFIX = 'builtin:'
 
 /** Default persisted selection (= built-in Standard). */

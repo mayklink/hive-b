@@ -976,7 +976,7 @@ describe('Session 6: Quick Action Buttons', () => {
 
 ### Objectives
 
-- Replace the "Hive" text title with the app logo
+- Replace the "Octob" text title with the app logo
 - Display the active project name and branch name in parentheses
 - Ensure the display updates reactively when switching projects, worktrees, or renaming branches
 
@@ -998,7 +998,7 @@ Copy `resources/icon.png` to `src/renderer/src/assets/` and import it:
 
 ```tsx
 import hiveLogo from '@/assets/icon.png'
-// <img src={hiveLogo} alt="Hive" className="h-5 w-5" />
+// <img src={hiveLogo} alt="Octob" className="h-5 w-5" />
 ```
 
 #### 2. Add store selectors to `Header.tsx`
@@ -1025,13 +1025,13 @@ const selectedWorktree = (() => {
 })()
 ```
 
-#### 3. Replace the `<h1>Hive</h1>` section
+#### 3. Replace the `<h1>Octob</h1>` section
 
 Replace lines 21-23:
 
 ```tsx
 <div className="flex items-center gap-2 flex-1">
-  <h1 className="text-lg font-semibold">Hive</h1>
+  <h1 className="text-lg font-semibold">Octob</h1>
 </div>
 ```
 
@@ -1039,7 +1039,7 @@ With:
 
 ```tsx
 <div className="flex items-center gap-2 flex-1 min-w-0">
-  <img src={hiveLogo} alt="Hive" className="h-5 w-5 shrink-0" draggable={false} />
+  <img src={hiveLogo} alt="Octob" className="h-5 w-5 shrink-0" draggable={false} />
   {selectedProject ? (
     <span className="text-sm font-medium truncate">
       {selectedProject.name}
@@ -1048,7 +1048,7 @@ With:
       )}
     </span>
   ) : (
-    <span className="text-sm font-medium">Hive</span>
+    <span className="text-sm font-medium">Octob</span>
   )}
 </div>
 ```
@@ -1058,7 +1058,7 @@ Key details:
 - `min-w-0` on the container enables `truncate` to work in flex layout
 - `shrink-0` on the logo prevents it from shrinking
 - `truncate` on the text prevents long project/branch names from overflowing
-- Falls back to "Hive" text when no project is selected
+- Falls back to "Octob" text when no project is selected
 - Branch name only shown if the worktree has a `branch_name`
 - `draggable={false}` on the img prevents drag interference with the titlebar
 
@@ -1081,7 +1081,7 @@ Worktrees with `name === '(no-worktree)'` represent the project root without git
 
 ### Definition of Done
 
-- [ ] App logo appears on the left side of the header (replacing "Hive" text)
+- [ ] App logo appears on the left side of the header (replacing "Octob" text)
 - [ ] Active project name displays next to the logo
 - [ ] Active branch name displays in parentheses after the project name
 - [ ] Format: `ProjectName (branchName)`
@@ -1089,7 +1089,7 @@ Worktrees with `name === '(no-worktree)'` represent the project root without git
 - [ ] Switching worktrees updates the branch name immediately
 - [ ] Branch rename (auto or manual) updates the display
 - [ ] Long project/branch names truncate with ellipsis instead of overflowing
-- [ ] When no project is selected, shows "Hive" text as fallback
+- [ ] When no project is selected, shows "Octob" text as fallback
 - [ ] When a worktree has no branch (default worktree), shows just the project name
 - [ ] `pnpm lint` passes
 - [ ] `pnpm test` passes
@@ -1101,7 +1101,7 @@ Worktrees with `name === '(no-worktree)'` represent the project root without git
 3. Switch to a different project — verify project name changes
 4. Rename a branch — verify header updates
 5. Create a new worktree — select it — verify header shows new branch
-6. Close/deselect all projects — verify "Hive" fallback text appears
+6. Close/deselect all projects — verify "Octob" fallback text appears
 7. Add a project with a very long name — verify text truncates
 
 ### Testing Criteria
@@ -1121,10 +1121,10 @@ describe('Session 7: Header Branding', () => {
     expect(screen.getByText(/\(lisbon\)/)).toBeInTheDocument()
   })
 
-  test('shows "Hive" fallback when no project selected', () => {
+  test('shows "Octob" fallback when no project selected', () => {
     // Mock: no selectedProjectId
     render(<Header />)
-    expect(screen.getByText('Hive')).toBeInTheDocument()
+    expect(screen.getByText('Octob')).toBeInTheDocument()
   })
 
   test('does not show branch for default worktree', () => {
@@ -1135,7 +1135,7 @@ describe('Session 7: Header Branding', () => {
 
   test('logo image is rendered', () => {
     render(<Header />)
-    const logo = screen.getByAltText('Hive')
+    const logo = screen.getByAltText('Octob')
     expect(logo).toBeInTheDocument()
     expect(logo.tagName).toBe('IMG')
   })
@@ -1481,7 +1481,7 @@ describe('Session 8: Git Init Dialog', () => {
 - Switch to a worktree in Project B — verify:
   - Project B is now highlighted (not Project A)
   - Header updates to `ProjectB (newBranch)`
-- Deselect everything — verify header shows "Hive"
+- Deselect everything — verify header shows "Octob"
 
 #### 4. Quick actions with header
 
@@ -1515,7 +1515,7 @@ describe('Session 8: Git Init Dialog', () => {
 
 Walk through the complete flow:
 
-1. Open app → verify logo in header with "Hive" fallback
+1. Open app → verify logo in header with "Octob" fallback
 2. Add a non-git directory → dialog → initialize → project added → header updates
 3. Create a worktree → verify parent project highlights → header shows project (branch)
 4. Click Cursor button → opens Cursor (one click)

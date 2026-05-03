@@ -195,10 +195,10 @@ if (eventType === 'session.updated') {
   const sessionData = event.properties
   const opencodeSessionId = sessionData?.id || sessionData?.sessionID
   if (opencodeSessionId) {
-    const hiveSessionId = this.getMappedHiveSessionId(opencodeSessionId)
-    if (hiveSessionId && sessionData?.title) {
+    const octobSessionId = this.getMappedOctobSessionId(opencodeSessionId)
+    if (octobSessionId && sessionData?.title) {
       try {
-        db.updateSession(hiveSessionId, { name: sessionData.title })
+        db.updateSession(octobSessionId, { name: sessionData.title })
       } catch (err) {
         log.warn('Failed to persist session title from server', { err })
       }
@@ -610,10 +610,10 @@ describe('Session 3: Branch Rename Infrastructure', () => {
 In `src/main/services/opencode-service.ts`, extend the `session.updated` handler from Session 2. After persisting the title, check if the branch should be auto-renamed:
 
 ```typescript
-// After: db.updateSession(hiveSessionId, { name: sessionData.title })
+// After: db.updateSession(octobSessionId, { name: sessionData.title })
 
 // Auto-rename branch if still a city name
-const worktree = db.getWorktreeBySessionId(hiveSessionId)
+const worktree = db.getWorktreeBySessionId(octobSessionId)
 if (worktree && !worktree.branch_renamed) {
   const isCityName = CITY_NAMES.some((city) => city.toLowerCase() === worktree.branch.toLowerCase())
   if (isCityName) {
@@ -1083,7 +1083,7 @@ async createWorktreeFromBranch(
     .replace(/[^a-zA-Z0-9-]/g, '')
     .toLowerCase()
 
-  const worktreeBase = path.join(os.homedir(), '.hive-worktrees', projectName)
+  const worktreeBase = path.join(os.homedir(), '.octob-worktrees', projectName)
   const worktreePath = path.join(worktreeBase, dirName)
 
   await fs.mkdir(worktreeBase, { recursive: true })

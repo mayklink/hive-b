@@ -141,9 +141,9 @@ export function ProjectFilter({ value, onChange }: ProjectFilterProps): React.JS
       inputRef.current?.focus()
       inputRef.current?.select()
     }
-    window.addEventListener('hive:focus-project-filter', handleFocus)
+    window.addEventListener('octob:focus-project-filter', handleFocus)
     return () => {
-      window.removeEventListener('hive:focus-project-filter', handleFocus)
+      window.removeEventListener('octob:focus-project-filter', handleFocus)
     }
   }, [])
 

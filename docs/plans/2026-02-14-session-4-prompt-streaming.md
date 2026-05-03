@@ -610,7 +610,7 @@ async prompt(
   }
 
   // Emit busy status
-  this.emitStatus(session.hiveSessionId, 'busy')
+  this.emitStatus(session.octobSessionId, 'busy')
 
   try {
     const sdk = await loadClaudeSDK()
@@ -678,13 +678,13 @@ async prompt(
       }
 
       // Map SDK message to normalized stream events
-      this.emitSdkMessage(session.hiveSessionId, msg, messageIndex)
+      this.emitSdkMessage(session.octobSessionId, msg, messageIndex)
 
       messageIndex++
     }
 
     // Emit idle when streaming completes
-    this.emitStatus(session.hiveSessionId, 'idle')
+    this.emitStatus(session.octobSessionId, 'idle')
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error)
     log.error('Prompt streaming failed', { worktreePath, agentSessionId, error: errorMessage })
@@ -692,12 +692,12 @@ async prompt(
     // Emit error event
     this.sendToRenderer('opencode:stream', {
       type: 'session.error',
-      sessionId: session.hiveSessionId,
+      sessionId: session.octobSessionId,
       data: { error: errorMessage }
     })
 
     // Always return to idle
-    this.emitStatus(session.hiveSessionId, 'idle')
+    this.emitStatus(session.octobSessionId, 'idle')
   } finally {
     session.query = null
   }
@@ -706,14 +706,14 @@ async prompt(
 // ── Event emission helpers ──────────────────────────────────────
 
 private emitStatus(
-  hiveSessionId: string,
+  octobSessionId: string,
   status: 'idle' | 'busy' | 'retry',
   extra?: { attempt?: number; message?: string; next?: number }
 ): void {
   const statusPayload = { type: status, ...extra }
   const event: StreamEvent = {
     type: 'session.status',
-    sessionId: hiveSessionId,
+    sessionId: octobSessionId,
     data: { status: statusPayload },
     statusPayload
   }
@@ -721,7 +721,7 @@ private emitStatus(
 }
 
 private emitSdkMessage(
-  hiveSessionId: string,
+  octobSessionId: string,
   msg: Record<string, unknown>,
   messageIndex: number
 ): void {
@@ -735,12 +735,12 @@ private emitSdkMessage(
         for (const part of content) {
           this.sendToRenderer('opencode:stream', {
             type: 'message.part.updated',
-            sessionId: hiveSessionId,
+            sessionId: octobSessionId,
             data: {
               part: {
                 type: part.type || 'text',
                 text: part.text || '',
-                sessionID: hiveSessionId,
+                sessionID: octobSessionId,
                 messageIndex
               }
             }
@@ -754,7 +754,7 @@ private emitSdkMessage(
       // Emit as message.updated (signals turn complete)
       this.sendToRenderer('opencode:stream', {
         type: 'message.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: {
           message: msg,
           messageIndex,
@@ -769,12 +769,12 @@ private emitSdkMessage(
       // Renderer generally skips these but they're needed for transcript completeness
       this.sendToRenderer('opencode:stream', {
         type: 'message.part.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: {
           part: {
             type: 'user',
             role: 'user',
-            sessionID: hiveSessionId,
+            sessionID: octobSessionId,
             messageIndex
           }
         }
@@ -786,13 +786,13 @@ private emitSdkMessage(
       // Tool usage events — emit as message.part.updated with tool type
       this.sendToRenderer('opencode:stream', {
         type: 'message.part.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: {
           part: {
             type: 'tool-use',
             toolName: msg.subtype || 'unknown',
             input: msg.content,
-            sessionID: hiveSessionId,
+            sessionID: octobSessionId,
             messageIndex
           }
         }
@@ -974,7 +974,7 @@ async abort(worktreePath: string, agentSessionId: string): Promise<boolean> {
   }
 
   // Emit idle status
-  this.emitStatus(session.hiveSessionId, 'idle')
+  this.emitStatus(session.octobSessionId, 'idle')
 
   log.info('Aborted', { worktreePath, agentSessionId })
   return true
@@ -1159,13 +1159,13 @@ if (sdkSessionId && session.claudeSessionId.startsWith('pending::')) {
 
   // Update DB so future IPC calls with the new ID resolve correctly
   if (this.dbService) {
-    const hiveSession = this.dbService.getSession(session.hiveSessionId)
+    const hiveSession = this.dbService.getSession(session.octobSessionId)
     if (hiveSession) {
-      this.dbService.updateSession(session.hiveSessionId, {
+      this.dbService.updateSession(session.octobSessionId, {
         opencode_session_id: sdkSessionId
       })
       log.info('Updated DB opencode_session_id', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         newAgentSessionId: sdkSessionId
       })
     }

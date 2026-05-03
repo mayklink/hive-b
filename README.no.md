@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>En åpen kildekode AI-agent orkestrator for parallell koding på tvers av prosjekter.</strong></p>
   <p>Kjør Claude Code, OpenCode og Codex økter parallelt. Ett vindu. Isolerte grener. Null fane-kaos.</p>
   <p>

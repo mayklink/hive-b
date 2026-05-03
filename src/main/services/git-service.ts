@@ -291,10 +291,10 @@ export class GitService {
   }
 
   /**
-   * Get the base directory for all Hive worktrees
+   * Get the base directory for all Octob worktrees
    */
   static getWorktreesBaseDir(): string {
-    return join(app.getPath('home'), '.hive-worktrees')
+    return join(app.getPath('home'), '.octob-worktrees')
   }
 
   /**
@@ -1412,7 +1412,7 @@ export class GitService {
   private async applyPatchString(patch: string, options: string[]): Promise<void> {
     const tmpFile = join(
       tmpdir(),
-      `hive-patch-${Date.now()}-${Math.random().toString(36).slice(2)}.patch`
+      `octob-patch-${Date.now()}-${Math.random().toString(36).slice(2)}.patch`
     )
     try {
       writeFileSync(tmpFile, patch, 'utf-8')
@@ -2154,7 +2154,7 @@ export class GitService {
     }
     // Strip remote prefix (e.g. "origin/main" → "main") — gh expects a bare branch name
     const baseBranch = options.baseBranch.replace(/^[^/]+\//, '')
-    const tempFile = join(tmpdir(), `hive-pr-body-${Date.now()}.md`)
+    const tempFile = join(tmpdir(), `octob-pr-body-${Date.now()}.md`)
     try {
       writeFileSync(tempFile, options.body, 'utf-8')
       const { stdout } = await execFileAsync(

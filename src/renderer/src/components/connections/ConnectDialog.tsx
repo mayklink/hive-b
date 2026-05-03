@@ -265,7 +265,7 @@ export function ConnectDialog({
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">
               No worktrees from other projects available.
               <br />
-              Add another project to Hive first.
+              Add another project to Octob first.
             </div>
           ) : filteredGroups.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-muted-foreground">

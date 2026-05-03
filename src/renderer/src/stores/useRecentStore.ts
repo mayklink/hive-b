@@ -3,7 +3,7 @@ import { useWorktreeStore } from './useWorktreeStore'
 import { useSessionStore } from './useSessionStore'
 
 const ONE_HOUR_MS = 60 * 60 * 1000
-const STORAGE_KEY = 'hive-recent-visible'
+const STORAGE_KEY = 'octob-recent-visible'
 
 interface RecentState {
   recentVisible: boolean

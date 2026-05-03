@@ -1295,20 +1295,20 @@ const opencodeOps = {
   // Connect to OpenCode for a worktree (lazy starts server if needed)
   connect: (
     worktreePath: string,
-    hiveSessionId: string
+    octobSessionId: string
   ): Promise<{ success: boolean; sessionId?: string; error?: string }> =>
-    ipcRenderer.invoke('opencode:connect', worktreePath, hiveSessionId),
+    ipcRenderer.invoke('opencode:connect', worktreePath, octobSessionId),
 
   // Reconnect to existing OpenCode session
   reconnect: (
     worktreePath: string,
     opencodeSessionId: string,
-    hiveSessionId: string
+    octobSessionId: string
   ): Promise<{
     success: boolean
     sessionStatus?: 'idle' | 'busy' | 'retry'
     revertMessageID?: string | null
-  }> => ipcRenderer.invoke('opencode:reconnect', worktreePath, opencodeSessionId, hiveSessionId),
+  }> => ipcRenderer.invoke('opencode:reconnect', worktreePath, opencodeSessionId, octobSessionId),
 
   // Send a prompt (response streams via onStream)
   // Accepts either a string message or a MessagePart[] array for rich content (text + file attachments)
@@ -1425,21 +1425,21 @@ const opencodeOps = {
   // Approve a pending plan (ExitPlanMode) — unblocks the SDK to implement
   planApprove: (
     worktreePath: string,
-    hiveSessionId: string,
+    octobSessionId: string,
     requestId?: string
   ): Promise<{ success: boolean; error?: string }> =>
-    ipcRenderer.invoke('opencode:plan:approve', { worktreePath, hiveSessionId, requestId }),
+    ipcRenderer.invoke('opencode:plan:approve', { worktreePath, octobSessionId, requestId }),
 
   // Reject a pending plan with user feedback — Claude will revise
   planReject: (
     worktreePath: string,
-    hiveSessionId: string,
+    octobSessionId: string,
     feedback: string,
     requestId?: string
   ): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('opencode:plan:reject', {
       worktreePath,
-      hiveSessionId,
+      octobSessionId,
       feedback,
       requestId
     }),

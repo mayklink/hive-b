@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>প্রজেক্ট জুড়ে সমান্তরাল কোডিংয়ের জন্য একটি ওপেন সোর্স AI এজেন্ট অর্কেস্ট্রেটর।</strong></p>
   <p>Claude Code, OpenCode এবং Codex সেশন সমান্তরালে চালান। একটি উইন্ডো। বিচ্ছিন্ন ব্রাঞ্চ। শূন্য ট্যাব বিশৃঙ্খলা।</p>
   <p>

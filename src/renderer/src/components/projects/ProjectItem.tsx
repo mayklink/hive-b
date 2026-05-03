@@ -203,7 +203,7 @@ export function ProjectItem({
     setRemoveConfirmOpen(false)
     const success = await removeProject(project.id)
     if (success) {
-      toast.success('Project removed from Hive')
+      toast.success('Project removed from Octob')
     } else {
       toast.error('Failed to remove project')
     }
@@ -278,8 +278,8 @@ export function ProjectItem({
       const ce = e as CustomEvent<{ projectId: string }>
       if (ce.detail.projectId === project.id) doCreateWorktree()
     }
-    window.addEventListener('hive:hint-plus', handler)
-    return () => window.removeEventListener('hive:hint-plus', handler)
+    window.addEventListener('octob:hint-plus', handler)
+    return () => window.removeEventListener('octob:hint-plus', handler)
   }, [project.id, doCreateWorktree])
 
   const handleBranchSelect = useCallback(
@@ -547,7 +547,7 @@ export function ProjectItem({
               className="text-destructive focus:text-destructive focus:bg-destructive/10"
             >
               <Trash2 className="h-4 w-4 mr-2" />
-              Remove from Hive
+              Remove from Octob
             </ContextMenuItem>
           </ContextMenuContent>
         )}
@@ -568,11 +568,11 @@ export function ProjectItem({
       <AlertDialog open={removeConfirmOpen} onOpenChange={setRemoveConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove project from Hive?</AlertDialogTitle>
+            <AlertDialogTitle>Remove project from Octob?</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2">
                 <p>
-                  This will remove <span className="font-semibold">{project.name}</span> from Hive.
+                  This will remove <span className="font-semibold">{project.name}</span> from Octob.
                 </p>
                 <p className="font-mono text-xs bg-muted rounded px-2 py-1 break-all">
                   {project.path}

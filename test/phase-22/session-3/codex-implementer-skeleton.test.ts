@@ -190,7 +190,7 @@ describe('CodexImplementer skeleton', () => {
     it('assigns canonical same-turn IDs and rolls subsequent assistant deltas below the steered user', async () => {
       const state = {
         threadId: 'thread-1',
-        hiveSessionId: 'hive-1',
+        octobSessionId: 'hive-1',
         worktreePath: '/path',
         status: 'running' as const,
         messages: [

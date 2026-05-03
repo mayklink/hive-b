@@ -435,7 +435,7 @@ Slash command popover:
 ### 7. Project-Level "+" Button for Worktree Creation
 
 #### 7.1 Current State
-Each project in the sidebar shows a 3-dot (MoreHorizontal) button on hover. The context menu has: Edit Name, Open in Finder, Copy Path, Refresh Language, Project Settings, Remove from Hive. Worktree creation is done via a "New Worktree" button inside the WorktreeList component.
+Each project in the sidebar shows a 3-dot (MoreHorizontal) button on hover. The context menu has: Edit Name, Open in Finder, Copy Path, Refresh Language, Project Settings, Remove from Octob. Worktree creation is done via a "New Worktree" button inside the WorktreeList component.
 
 #### 7.2 New Design
 

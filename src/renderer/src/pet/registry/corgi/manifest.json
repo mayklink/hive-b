@@ -2,7 +2,7 @@
   "id": "corgi",
   "name": "Corgi",
   "version": "1.0.0",
-  "author": "Hive",
+  "author": "Octob",
   "assets": {
     "idle": "assets/corgi-static.png",
     "working": "assets/corgi-static.png",

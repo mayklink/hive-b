@@ -25,7 +25,7 @@ interface ExportedDependency {
   blockerId: string
 }
 
-interface HiveImportModalProps {
+interface OctobImportModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   projectId: string
@@ -33,13 +33,13 @@ interface HiveImportModalProps {
   dependencies?: ExportedDependency[]
 }
 
-export function HiveImportModal({
+export function OctobImportModal({
   open,
   onOpenChange,
   projectId,
   tickets,
   dependencies = []
-}: HiveImportModalProps) {
+}: OctobImportModalProps) {
   const loadTickets = useKanbanStore((s) => s.loadTickets)
   const existingTickets = useKanbanStore((s) => s.tickets)
 
@@ -133,7 +133,7 @@ export function HiveImportModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Download className="h-5 w-5" />
-            Import from Hive JSON
+            Import from Octob JSON
           </DialogTitle>
         </DialogHeader>
 

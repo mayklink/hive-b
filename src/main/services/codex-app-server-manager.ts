@@ -355,10 +355,10 @@ export function killChildTree(child: ChildProcess): void {
 
 // ── Approval decision mapping ────────────────────────────────────
 
-export type HiveApprovalDecision = 'once' | 'always' | 'reject'
+export type OctobApprovalDecision = 'once' | 'always' | 'reject'
 
 function toCodexCommandApprovalDecision(
-  decision: HiveApprovalDecision
+  decision: OctobApprovalDecision
 ): CommandExecutionApprovalDecision {
   switch (decision) {
     case 'once':
@@ -371,7 +371,7 @@ function toCodexCommandApprovalDecision(
 }
 
 function toCodexFileChangeApprovalDecision(
-  decision: HiveApprovalDecision
+  decision: OctobApprovalDecision
 ): FileChangeApprovalDecision {
   switch (decision) {
     case 'once':
@@ -451,8 +451,8 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
       // Initialize protocol
       await this.sendRequest(context, 'initialize', {
         clientInfo: {
-          name: 'hive_desktop',
-          title: 'OctoB Desktop',
+          name: 'octob_desktop',
+          title: 'Octob Desktop',
           version: '1.0.0'
         },
         capabilities: {
@@ -730,7 +730,7 @@ export class CodexAppServerManager extends EventEmitter<CodexAppServerManagerEve
   respondToApproval(
     threadId: string,
     requestId: string,
-    decision: HiveApprovalDecision
+    decision: OctobApprovalDecision
   ): void {
     const context = this.sessions.get(threadId)
     if (!context) {

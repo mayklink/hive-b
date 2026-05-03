@@ -23,7 +23,7 @@
 
 | Component                    | Technology                                                                                         |
 | ---------------------------- | -------------------------------------------------------------------------------------------------- |
-| Custom Project Icon          | DB migration (column), file picker + copy to `~/.hive/project-icons/`, modified `LanguageIcon.tsx` |
+| Custom Project Icon          | DB migration (column), file picker + copy to `~/.octob/project-icons/`, modified `LanguageIcon.tsx` |
 | Git Merge From               | New `merge()` in `git-service.ts`, new IPC handler, merge UI in `GitPushPull.tsx`                  |
 | File Changes Dual Display    | Modified `getFileStatuses()` in `git-service.ts` — dual entries for staged+unstaged files          |
 | Question Submit Confirmation | Modified `QuestionPrompt.tsx` — remove auto-submit, always require explicit Submit                 |
@@ -74,7 +74,7 @@ The `ProjectSettingsDialog` in `src/renderer/src/components/projects/ProjectSett
 
 The `Project` type in `src/preload/index.d.ts` and `src/main/db/types.ts` has no `custom_icon` field. The database schema (version 7) has no such column.
 
-The app stores persistent data under `~/.hive/` (database at `~/.hive/hive.db`, logs at `~/.hive/logs/`).
+The app stores persistent data under `~/.octob/` (database at `~/.octob/octob.db`, logs at `~/.octob/logs/`).
 
 #### 1.2 New Design
 
@@ -102,8 +102,8 @@ Custom Project Icon Flow:
   File handling:
   1. User clicks "Change" → native dialog.showOpenDialog with filters:
      [{ name: 'Images', extensions: ['svg', 'png', 'jpg', 'jpeg', 'webp'] }]
-  2. Selected file is COPIED to ~/.hive/project-icons/{projectId}{ext}
-     (e.g. ~/.hive/project-icons/abc123.png)
+  2. Selected file is COPIED to ~/.octob/project-icons/{projectId}{ext}
+     (e.g. ~/.octob/project-icons/abc123.png)
   3. Database stores the filename: "abc123.png"
   4. Renderer reads it as a file:// URL or via an IPC that returns
      the data URL / resolved path
@@ -120,7 +120,7 @@ Custom Project Icon Flow:
   4. fallback → FolderGit2 icon
 
   Storage: filename string in `projects.custom_icon` column (e.g. "abc123.svg").
-  Actual file at ~/.hive/project-icons/{filename}.
+  Actual file at ~/.octob/project-icons/{filename}.
 ```
 
 #### 1.3 Implementation
@@ -160,7 +160,7 @@ import { dialog, app } from 'electron'
 import { join, extname } from 'path'
 import { copyFileSync, mkdirSync, existsSync, unlinkSync } from 'fs'
 
-const ICONS_DIR = join(app.getPath('home'), '.hive', 'project-icons')
+const ICONS_DIR = join(app.getPath('home'), '.octob', 'project-icons')
 
 // Ensure icons directory exists
 function ensureIconsDir(): void {
@@ -248,7 +248,7 @@ getProjectIconPath: (filename: string): string =>
   ipcRenderer.sendSync('project:getIconPath', filename)
 ```
 
-Note: For `getProjectIconPath`, a synchronous IPC call keeps the rendering simple. Alternatively, resolve the path on the main process side and store the full path in the DB, or use a preload-computed path since `~/.hive/project-icons/` is deterministic.
+Note: For `getProjectIconPath`, a synchronous IPC call keeps the rendering simple. Alternatively, resolve the path on the main process side and store the full path in the DB, or use a preload-computed path since `~/.octob/project-icons/` is deterministic.
 
 A simpler approach: expose a constant `ICONS_BASE_PATH` from preload and let the renderer construct `file://${ICONS_BASE_PATH}/${filename}` directly, avoiding the IPC round-trip entirely.
 

@@ -415,7 +415,7 @@ describe('Session 3: Tool Card Polish', () => {
 4. Create `src/main/services/response-logger.ts`:
    - `createResponseLog(sessionId: string): string` — creates JSONL file, writes header, returns file path
    - `appendResponseLog(filePath: string, data: unknown): void` — appends JSON line to file
-   - Log directory: `~/.hive/logs/responses/`
+   - Log directory: `~/.octob/logs/responses/`
    - File naming: `{sessionId}-{timestamp}.jsonl`
    - Follow pattern from existing `src/main/services/logger.ts`
 5. Wire up response logging IPC handlers:
@@ -433,7 +433,7 @@ describe('Session 3: Tool Card Polish', () => {
 - [ ] Log message printed when `--log` is active
 - [ ] `system:isLogMode` IPC handler returns boolean
 - [ ] `response-logger.ts` service created with `createResponseLog` and `appendResponseLog`
-- [ ] Log files written to `~/.hive/logs/responses/`
+- [ ] Log files written to `~/.octob/logs/responses/`
 - [ ] Log files use JSONL format (one JSON object per line)
 - [ ] Session start header written when log created
 - [ ] Each log entry has timestamp
@@ -471,7 +471,7 @@ describe('Session 4: Response Logging — Main Process', () => {
     // Verify each line is valid JSON
   });
 
-  test('Log file goes to ~/.hive/logs/responses/', async () => {
+  test('Log file goes to ~/.octob/logs/responses/', async () => {
     // Call createResponseLog
     // Verify file path starts with expected directory
   });

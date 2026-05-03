@@ -262,7 +262,7 @@ export function dispatchHintAction(key: string, actionMode: HintActionMode = 'se
     if (!expandedProjectIds.has(projectId)) {
       toggleProjectExpanded(projectId)
     }
-    window.dispatchEvent(new CustomEvent('hive:hint-plus', { detail: { projectId } }))
+    window.dispatchEvent(new CustomEvent('octob:hint-plus', { detail: { projectId } }))
   } else if (key.startsWith('project:')) {
     const projectId = key.slice('project:'.length)
     useProjectStore.getState().toggleProjectExpanded(projectId)

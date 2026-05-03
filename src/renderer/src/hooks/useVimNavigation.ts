@@ -248,7 +248,7 @@ export function useVimNavigation(): void {
         }
         const tabMap: Record<string, string> = { c: 'changes', f: 'files', d: 'diffs' }
         window.dispatchEvent(
-          new CustomEvent('hive:right-sidebar-tab', { detail: { tab: tabMap[event.key] } })
+          new CustomEvent('octob:right-sidebar-tab', { detail: { tab: tabMap[event.key] } })
         )
         event.preventDefault()
         return

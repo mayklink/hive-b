@@ -79,7 +79,7 @@ Right-click on any project to:
 - Open in Finder
 - Open in Terminal
 - Copy repository path
-- Remove from Hive (doesn't delete files)
+- Remove from Octob (doesn't delete files)
 - View project settings
 
 ### Project Organization

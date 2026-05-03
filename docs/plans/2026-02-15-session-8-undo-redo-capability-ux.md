@@ -182,7 +182,7 @@ Add two fields to `ClaudeSessionState` interface:
 ```ts
 export interface ClaudeSessionState {
   // ... existing fields ...
-  /** Current revert boundary message ID (hive-side), set by undo */
+  /** Current revert boundary message ID (octob-side), set by undo */
   revertMessageID: string | null
   /** Diff string from last rewindFiles result */
   revertDiff: string | null
@@ -197,7 +197,7 @@ Initialize them as `null` wherever sessions are created (in `connect()` and `rec
 async undo(
   worktreePath: string,
   agentSessionId: string,
-  _hiveSessionId: string
+  _octobSessionId: string
 ): Promise<{ revertMessageID: string; restoredPrompt: string; revertDiff: string | null }> {
   const session = this.getSession(worktreePath, agentSessionId)
   if (!session) throw new Error('No active session')
@@ -265,7 +265,7 @@ async undo(
 async redo(
   _worktreePath: string,
   _agentSessionId: string,
-  _hiveSessionId: string
+  _octobSessionId: string
 ): Promise<unknown> {
   throw new Error('Redo is not supported for Claude Code sessions')
 }

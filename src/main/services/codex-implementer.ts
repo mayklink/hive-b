@@ -51,7 +51,7 @@ const HITL_REQUEST_METHODS = new Set([
 
 export interface CodexSessionState {
   threadId: string
-  hiveSessionId: string
+  octobSessionId: string
   worktreePath: string
   status: 'connecting' | 'ready' | 'running' | 'error' | 'closed'
   messages: unknown[]
@@ -104,7 +104,7 @@ interface CodexLiveAssistantDraft {
 
 interface PendingHitlEntry {
   threadId: string
-  hiveSessionId: string
+  octobSessionId: string
   worktreePath: string
   turnId?: string
 }
@@ -321,7 +321,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
       this.sendToRenderer('opencode:stream', {
         type: 'session.context_usage',
-        sessionId: targetSession.hiveSessionId,
+        sessionId: targetSession.octobSessionId,
         data: {
           tokens: {
             // inputTokens includes cached; subtract so
@@ -345,7 +345,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
       this.sendToRenderer('opencode:stream', {
         type: 'session.context_compacted',
-        sessionId: targetSession.hiveSessionId,
+        sessionId: targetSession.octobSessionId,
         data: {}
       })
       return
@@ -367,7 +367,7 @@ export class CodexImplementer implements AgentSdkImplementer {
     ) {
       this.pendingApprovalSessions.set(requestId, {
         threadId: targetSession.threadId,
-        hiveSessionId: targetSession.hiveSessionId,
+        octobSessionId: targetSession.octobSessionId,
         worktreePath: targetSession.worktreePath,
         turnId: event.turnId
       })
@@ -380,17 +380,17 @@ export class CodexImplementer implements AgentSdkImplementer {
       const payload = asObject(event.payload)
       this.sendToRenderer('opencode:stream', {
         type: 'permission.asked',
-        sessionId: targetSession.hiveSessionId,
+        sessionId: targetSession.octobSessionId,
         data: this.toPermissionRequest(
           requestId,
-          targetSession.hiveSessionId,
+          targetSession.octobSessionId,
           event.method,
           payload,
           event.turnId,
           event.itemId
         )
       })
-      this.maybeNotifyUserFeedbackNeeded(targetSession.hiveSessionId, 'permission')
+      this.maybeNotifyUserFeedbackNeeded(targetSession.octobSessionId, 'permission')
       return
     }
 
@@ -398,7 +398,7 @@ export class CodexImplementer implements AgentSdkImplementer {
     if (event.method === 'item/tool/requestUserInput') {
       this.pendingQuestions.set(requestId, {
         threadId: targetSession.threadId,
-        hiveSessionId: targetSession.hiveSessionId,
+        octobSessionId: targetSession.octobSessionId,
         worktreePath: targetSession.worktreePath,
         turnId: event.turnId
       })
@@ -409,14 +409,14 @@ export class CodexImplementer implements AgentSdkImplementer {
 
       this.sendToRenderer('opencode:stream', {
         type: 'question.asked',
-        sessionId: targetSession.hiveSessionId,
+        sessionId: targetSession.octobSessionId,
         data: {
           requestId,
           id: requestId,
           questions
         }
       })
-      this.maybeNotifyUserFeedbackNeeded(targetSession.hiveSessionId, 'question')
+      this.maybeNotifyUserFeedbackNeeded(targetSession.octobSessionId, 'question')
     }
   }
 
@@ -426,7 +426,7 @@ export class CodexImplementer implements AgentSdkImplementer {
     const title = typed?.threadName ?? asString(payload?.threadName)
     log.info('handleProviderTitleUpdate: received provider title update', {
       threadId: event.threadId,
-      hiveSessionId: this.findSessionByThreadId(event.threadId)?.hiveSessionId ?? null,
+      octobSessionId: this.findSessionByThreadId(event.threadId)?.octobSessionId ?? null,
       title: title ?? null
     })
     if (!title) {
@@ -455,7 +455,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     log.info('handleProviderTitleUpdate: applying provider title update', {
       threadId: event.threadId,
-      hiveSessionId: targetSession.hiveSessionId,
+      octobSessionId: targetSession.octobSessionId,
       title
     })
     await this.applyGeneratedTitle(targetSession, title)
@@ -463,9 +463,9 @@ export class CodexImplementer implements AgentSdkImplementer {
 
   // ── Lifecycle ────────────────────────────────────────────────────
 
-  async connect(worktreePath: string, hiveSessionId: string): Promise<{ sessionId: string }> {
+  async connect(worktreePath: string, octobSessionId: string): Promise<{ sessionId: string }> {
     const resolvedModel = resolveCodexModelSlug(this.selectedModel)
-    log.info('Connecting', { worktreePath, hiveSessionId, model: resolvedModel })
+    log.info('Connecting', { worktreePath, octobSessionId, model: resolvedModel })
 
     // Ensure the manager event listener is attached for HITL flows
     this.attachManagerListener()
@@ -484,7 +484,7 @@ export class CodexImplementer implements AgentSdkImplementer {
     const key = this.getSessionKey(worktreePath, threadId)
     const state: CodexSessionState = {
       threadId,
-      hiveSessionId,
+      octobSessionId,
       worktreePath,
       status: this.mapProviderStatus(providerSession.status),
       messages: [],
@@ -503,18 +503,18 @@ export class CodexImplementer implements AgentSdkImplementer {
     // Notify renderer that the session has materialized
     this.sendToRenderer('opencode:stream', {
       type: 'session.materialized',
-      sessionId: hiveSessionId,
+      sessionId: octobSessionId,
       data: { newSessionId: threadId, wasFork: false }
     })
 
-    log.info('Connected', { worktreePath, hiveSessionId, threadId })
+    log.info('Connected', { worktreePath, octobSessionId, threadId })
     return { sessionId: threadId }
   }
 
   async reconnect(
     worktreePath: string,
     agentSessionId: string,
-    hiveSessionId: string
+    octobSessionId: string
   ): Promise<{
     success: boolean
     sessionStatus?: 'idle' | 'busy' | 'retry'
@@ -522,15 +522,15 @@ export class CodexImplementer implements AgentSdkImplementer {
   }> {
     const key = this.getSessionKey(worktreePath, agentSessionId)
 
-    // If session already exists locally, just update the hiveSessionId
+    // If session already exists locally, just update the octobSessionId
     const existing = this.sessions.get(key)
     if (existing) {
-      existing.hiveSessionId = hiveSessionId
-      const sessionStatus = this.statusToHive(existing.status)
-      log.info('Reconnect: session already registered, updated hiveSessionId', {
+      existing.octobSessionId = octobSessionId
+      const sessionStatus = this.statusToOctob(existing.status)
+      log.info('Reconnect: session already registered, updated octobSessionId', {
         worktreePath,
         agentSessionId,
-        hiveSessionId,
+        octobSessionId,
         sessionStatus
       })
       return { success: true, sessionStatus, revertMessageID: null }
@@ -558,7 +558,7 @@ export class CodexImplementer implements AgentSdkImplementer {
       const newKey = this.getSessionKey(worktreePath, threadId)
       const state: CodexSessionState = {
         threadId,
-        hiveSessionId,
+        octobSessionId,
         worktreePath,
         status: this.mapProviderStatus(providerSession.status),
         messages: [],
@@ -582,7 +582,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
       return {
         success: true,
-        sessionStatus: this.statusToHive(state.status),
+        sessionStatus: this.statusToOctob(state.status),
         revertMessageID: null
       }
     } catch (error) {
@@ -678,10 +678,10 @@ export class CodexImplementer implements AgentSdkImplementer {
     }
 
     if (!session.titleGenerationStarted) {
-      const currentTitle = this.dbService?.getSession(session.hiveSessionId)?.name ?? null
+      const currentTitle = this.dbService?.getSession(session.octobSessionId)?.name ?? null
       const shouldGenerateTitle = isDefaultSessionTitle(currentTitle)
       log.info('Prompt: evaluating title generation', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         threadId: session.threadId,
         currentTitle,
         shouldGenerateTitle,
@@ -690,12 +690,12 @@ export class CodexImplementer implements AgentSdkImplementer {
       if (shouldGenerateTitle) {
         session.titleGenerationStarted = true
         log.info('Prompt: starting title generation', {
-          hiveSessionId: session.hiveSessionId,
+          octobSessionId: session.octobSessionId,
           threadId: session.threadId
         })
         this.handleTitleGeneration(session, text).catch((error) => {
           log.warn('Prompt: title generation promise rejected unexpectedly', {
-            hiveSessionId: session.hiveSessionId,
+            octobSessionId: session.octobSessionId,
             error: error instanceof Error ? error.message : String(error)
           })
         })
@@ -703,7 +703,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         session.titleGenerated = true
         session.titleGenerationStarted = true
         log.info('Prompt: skipped title generation for pre-titled session', {
-          hiveSessionId: session.hiveSessionId,
+          octobSessionId: session.octobSessionId,
           currentTitle
         })
       }
@@ -724,12 +724,12 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     // Emit busy status
     session.status = 'running'
-    this.emitStatus(session.hiveSessionId, 'busy')
+    this.emitStatus(session.octobSessionId, 'busy')
 
     log.info('Prompt: starting', {
       worktreePath,
       agentSessionId,
-      hiveSessionId: session.hiveSessionId,
+      octobSessionId: session.octobSessionId,
       textLength: text.length
     })
 
@@ -750,7 +750,7 @@ export class CodexImplementer implements AgentSdkImplementer {
       if (event.threadId !== session.threadId) return
       this.syncPendingHitlRequestFromEvent(session, event)
 
-      const streamEvents = mapCodexEventToStreamEvents(event, session.hiveSessionId)
+      const streamEvents = mapCodexEventToStreamEvents(event, session.octobSessionId)
       for (const streamEvent of streamEvents) {
         if (
           event.method === 'turn/completed' &&
@@ -834,7 +834,7 @@ export class CodexImplementer implements AgentSdkImplementer {
       // Determine interaction mode from DB session mode (same pattern as claude-code-implementer)
       if (this.dbService) {
         try {
-          const dbSession = this.dbService.getSession(session.hiveSessionId)
+          const dbSession = this.dbService.getSession(session.octobSessionId)
           if (dbSession?.mode === 'plan') {
             interactionMode = 'plan'
           }
@@ -933,7 +933,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         })
         this.sendToRenderer('opencode:stream', {
           type: 'plan.ready',
-          sessionId: session.hiveSessionId,
+          sessionId: session.octobSessionId,
           data: {
             id: requestId,
             requestId,
@@ -944,7 +944,7 @@ export class CodexImplementer implements AgentSdkImplementer {
       }
 
       session.status = turnFailed ? 'error' : 'ready'
-      this.emitStatus(session.hiveSessionId, 'idle')
+      this.emitStatus(session.octobSessionId, 'idle')
 
       log.info('Prompt: completed', {
         worktreePath,
@@ -964,10 +964,10 @@ export class CodexImplementer implements AgentSdkImplementer {
       session.liveAssistantDraft = null
       this.sendToRenderer('opencode:stream', {
         type: 'session.error',
-        sessionId: session.hiveSessionId,
+        sessionId: session.octobSessionId,
         data: { error: errorMessage }
       })
-      this.emitStatus(session.hiveSessionId, 'idle')
+      this.emitStatus(session.octobSessionId, 'idle')
     } finally {
       this.flushPendingPersist(session)
       session.currentTurnId = null
@@ -1052,7 +1052,7 @@ export class CodexImplementer implements AgentSdkImplementer {
     session.currentAssistantMessageId = null
     this.flushPendingPersist(session)
     this.persistCanonicalMessages(session)
-    this.emitStatus(session.hiveSessionId, 'idle')
+    this.emitStatus(session.octobSessionId, 'idle')
     return true
   }
 
@@ -1083,7 +1083,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     if (this.dbService) {
       try {
-        const persistedMessages = this.dbService.getSessionMessages(session.hiveSessionId)
+        const persistedMessages = this.dbService.getSessionMessages(session.octobSessionId)
         if (persistedMessages.length > 0) {
           const parsed = persistedMessages.flatMap((message) => {
             const raw = message.opencode_message_json ?? message.opencode_timeline_json
@@ -1202,7 +1202,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     log.info('questionReply: responding to pending question', {
       requestId,
-      hiveSessionId: pending.hiveSessionId,
+      octobSessionId: pending.octobSessionId,
       answerCount: codexAnswers.length
     })
 
@@ -1226,7 +1226,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     this.sendToRenderer('opencode:stream', {
       type: 'question.replied',
-      sessionId: pending.hiveSessionId,
+      sessionId: pending.octobSessionId,
       data: { requestId, id: requestId }
     })
   }
@@ -1239,7 +1239,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     log.info('questionReject: rejecting pending question', {
       requestId,
-      hiveSessionId: pending.hiveSessionId
+      octobSessionId: pending.octobSessionId
     })
 
     const session = this.findSessionByThreadId(pending.threadId)
@@ -1262,7 +1262,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     this.sendToRenderer('opencode:stream', {
       type: 'question.rejected',
-      sessionId: pending.hiveSessionId,
+      sessionId: pending.octobSessionId,
       data: { requestId, id: requestId }
     })
   }
@@ -1279,7 +1279,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     log.info('permissionReply: responding to pending approval', {
       requestId,
-      hiveSessionId: pending.hiveSessionId,
+      octobSessionId: pending.octobSessionId,
       decision
     })
 
@@ -1303,7 +1303,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     this.sendToRenderer('opencode:stream', {
       type: 'permission.replied',
-      sessionId: pending.hiveSessionId,
+      sessionId: pending.octobSessionId,
       data: { requestId, id: requestId, decision }
     })
   }
@@ -1318,7 +1318,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         result.push({
           ...this.toPermissionRequest(
             approval.requestId,
-            session.hiveSessionId,
+            session.octobSessionId,
             approval.method,
             payload,
             approval.turnId,
@@ -1332,7 +1332,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
   private toPermissionRequest(
     requestId: string,
-    hiveSessionId: string,
+    octobSessionId: string,
     method: string,
     payload: Record<string, unknown> | undefined,
     turnId?: string,
@@ -1343,7 +1343,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     return {
       id: requestId,
-      sessionID: hiveSessionId,
+      sessionID: octobSessionId,
       permission,
       patterns,
       metadata: {
@@ -1400,7 +1400,7 @@ export class CodexImplementer implements AgentSdkImplementer {
   async undo(
     worktreePath: string,
     agentSessionId: string,
-    _hiveSessionId: string
+    _octobSessionId: string
   ): Promise<{ revertMessageID: string; restoredPrompt: string; revertDiff: string | null }> {
     const sessionKey = this.getSessionKey(worktreePath, agentSessionId)
     const session = this.sessions.get(sessionKey)
@@ -1429,7 +1429,7 @@ export class CodexImplementer implements AgentSdkImplementer {
     // Emit session info update to renderer
     this.sendToRenderer('opencode:stream', {
       type: 'session.updated',
-      sessionId: session.hiveSessionId,
+      sessionId: session.octobSessionId,
       data: { revertMessageID }
     })
 
@@ -1447,7 +1447,7 @@ export class CodexImplementer implements AgentSdkImplementer {
   async redo(
     _worktreePath: string,
     _agentSessionId: string,
-    _hiveSessionId: string
+    _octobSessionId: string
   ): Promise<unknown> {
     throw new Error('Redo is not supported for Codex sessions')
   }
@@ -1470,7 +1470,7 @@ export class CodexImplementer implements AgentSdkImplementer {
   // ── Session management ───────────────────────────────────────────
 
   async renameSession(_worktreePath: string, agentSessionId: string, name: string): Promise<void> {
-    // Codex has no server-side rename — just update Hive's local DB
+    // Codex has no server-side rename — just update Octob's local DB
     if (!this.dbService) {
       log.warn('renameSession: no dbService available', { agentSessionId })
       return
@@ -1480,17 +1480,17 @@ export class CodexImplementer implements AgentSdkImplementer {
     const sessionKey = this.findSessionKeyByAgentId(agentSessionId)
     if (sessionKey) {
       const session = this.sessions.get(sessionKey)
-      if (session?.hiveSessionId) {
+      if (session?.octobSessionId) {
         try {
-          this.dbService.updateSession(session.hiveSessionId, { name })
+          this.dbService.updateSession(session.octobSessionId, { name })
           log.info('renameSession: updated title in DB', {
-            hiveSessionId: session.hiveSessionId,
+            octobSessionId: session.octobSessionId,
             name
           })
         } catch (err) {
           const error = err instanceof Error ? err : new Error(String(err))
           log.error('renameSession: failed to update title', error, {
-            hiveSessionId: session.hiveSessionId
+            octobSessionId: session.octobSessionId
           })
         }
       }
@@ -1652,7 +1652,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
       this.sendToRenderer('opencode:stream', {
         type: 'session.context_usage',
-        sessionId: session.hiveSessionId,
+        sessionId: session.octobSessionId,
         data: {
           tokens: {
             input: inputTokens - cachedInputTokens,
@@ -1667,14 +1667,14 @@ export class CodexImplementer implements AgentSdkImplementer {
       })
 
       log.info('hydrateTokenUsage: emitted context_usage from JSONL', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         inputTokens,
         contextWindow,
         modelID
       })
     } catch (error) {
       log.debug('hydrateTokenUsage: failed', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         error: error instanceof Error ? error.message : String(error)
       })
     }
@@ -1707,7 +1707,7 @@ export class CodexImplementer implements AgentSdkImplementer {
    * unfocused.
    */
   private maybeNotifyUserFeedbackNeeded(
-    hiveSessionId: string,
+    octobSessionId: string,
     kind: 'question' | 'permission'
   ): void {
     try {
@@ -1717,9 +1717,9 @@ export class CodexImplementer implements AgentSdkImplementer {
 
       if (!this.dbService) return
 
-      const session = this.dbService.getSession(hiveSessionId)
+      const session = this.dbService.getSession(octobSessionId)
       if (!session) {
-        log.warn('Cannot notify: session not found', { hiveSessionId })
+        log.warn('Cannot notify: session not found', { octobSessionId })
         return
       }
 
@@ -1735,13 +1735,13 @@ export class CodexImplementer implements AgentSdkImplementer {
           sessionName: session.name || 'Untitled',
           projectId: session.project_id,
           worktreeId: session.worktree_id || '',
-          sessionId: hiveSessionId
+          sessionId: octobSessionId
         },
         kind
       )
     } catch (error) {
       log.warn('Failed to show pending user feedback notification', {
-        hiveSessionId,
+        octobSessionId,
         error,
         kind
       })
@@ -1751,14 +1751,14 @@ export class CodexImplementer implements AgentSdkImplementer {
   private persistActivity(session: CodexSessionState, event: CodexManagerEvent): void {
     if (!this.dbService) return
 
-    const activity = mapCodexManagerEventToActivity(session.hiveSessionId, session.threadId, event)
+    const activity = mapCodexManagerEventToActivity(session.octobSessionId, session.threadId, event)
     if (!activity) return
 
     try {
       this.dbService.upsertSessionActivity(activity)
     } catch (error) {
       log.warn('Failed to persist Codex activity', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         method: event.method,
         error: error instanceof Error ? error.message : String(error)
       })
@@ -1788,7 +1788,7 @@ export class CodexImplementer implements AgentSdkImplementer {
     try {
       this.dbService.upsertSessionActivity({
         id: params.id,
-        session_id: session.hiveSessionId,
+        session_id: session.octobSessionId,
         agent_session_id: session.threadId,
         thread_id: session.threadId,
         turn_id: params.turnId ?? null,
@@ -1800,7 +1800,7 @@ export class CodexImplementer implements AgentSdkImplementer {
       })
     } catch (error) {
       log.warn('Failed to persist synthetic Codex activity', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         kind: params.kind,
         error: error instanceof Error ? error.message : String(error)
       })
@@ -1848,7 +1848,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
         return [
           {
-            session_id: session.hiveSessionId,
+            session_id: session.octobSessionId,
             role,
             content: textContent,
             opencode_message_id: canonicalMessage.id,
@@ -1862,12 +1862,12 @@ export class CodexImplementer implements AgentSdkImplementer {
       )
 
       this.dbService.replaceSessionMessages(
-        session.hiveSessionId,
+        session.octobSessionId,
         normalizeCodexMessageTimestamps(rows)
       )
     } catch (error) {
       log.warn('Failed to persist Codex canonical messages', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         error: error instanceof Error ? error.message : String(error)
       })
     }
@@ -1879,20 +1879,20 @@ export class CodexImplementer implements AgentSdkImplementer {
     return status
   }
 
-  private statusToHive(status: CodexSessionState['status']): 'idle' | 'busy' | 'retry' {
+  private statusToOctob(status: CodexSessionState['status']): 'idle' | 'busy' | 'retry' {
     if (status === 'running') return 'busy'
     return 'idle'
   }
 
   private emitStatus(
-    hiveSessionId: string,
+    octobSessionId: string,
     status: 'idle' | 'busy' | 'retry',
     extra?: { attempt?: number; message?: string; next?: number }
   ): void {
     const statusPayload = { type: status, ...extra }
     this.sendToRenderer('opencode:stream', {
       type: 'session.status',
-      sessionId: hiveSessionId,
+      sessionId: octobSessionId,
       data: { status: statusPayload },
       statusPayload
     })
@@ -2951,7 +2951,7 @@ export class CodexImplementer implements AgentSdkImplementer {
 
       const recovered: CodexSessionState = {
         threadId,
-        hiveSessionId: persistedSession.id,
+        octobSessionId: persistedSession.id,
         worktreePath,
         status: this.mapProviderStatus(providerSession.status),
         messages: [],
@@ -2972,7 +2972,7 @@ export class CodexImplementer implements AgentSdkImplementer {
         worktreePath,
         agentSessionId,
         threadId,
-        hiveSessionId: persistedSession.id
+        octobSessionId: persistedSession.id
       })
 
       return recovered
@@ -2992,7 +2992,7 @@ export class CodexImplementer implements AgentSdkImplementer {
   ): Promise<void> {
     try {
       log.info('handleTitleGeneration: starting', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         threadId: session.threadId,
         worktreePath: session.worktreePath,
         messageLength: userMessage.length,
@@ -3004,24 +3004,24 @@ export class CodexImplementer implements AgentSdkImplementer {
         this.codexBinaryPath
       )
       log.info('handleTitleGeneration: generateCodexSessionTitle returned', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         title: title ?? null
       })
       if (!title) {
         log.warn('handleTitleGeneration: generator returned null title', {
-          hiveSessionId: session.hiveSessionId,
+          octobSessionId: session.octobSessionId,
           threadId: session.threadId
         })
         return
       }
       log.info('handleTitleGeneration: applying generated title', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         title
       })
       await this.applyGeneratedTitle(session, title)
     } catch (err) {
       log.warn('handleTitleGeneration: failed', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         threadId: session.threadId,
         error: err instanceof Error ? err.message : String(err)
       })
@@ -3032,7 +3032,7 @@ export class CodexImplementer implements AgentSdkImplementer {
     const trimmedTitle = title.trim()
     if (!trimmedTitle) {
       log.warn('applyGeneratedTitle: received empty title after trim', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         rawTitle: title
       })
       return
@@ -3042,7 +3042,7 @@ export class CodexImplementer implements AgentSdkImplementer {
     let currentTitle: string | null = null
     if (this.dbService) {
       try {
-        currentTitle = this.dbService.getSession(session.hiveSessionId)?.name ?? null
+        currentTitle = this.dbService.getSession(session.octobSessionId)?.name ?? null
       } catch {
         currentTitle = null
       }
@@ -3050,20 +3050,20 @@ export class CodexImplementer implements AgentSdkImplementer {
 
     const titleChanged = currentTitle !== trimmedTitle
     log.info('applyGeneratedTitle: evaluating title update', {
-      hiveSessionId: session.hiveSessionId,
+      octobSessionId: session.octobSessionId,
       currentTitle,
       nextTitle: trimmedTitle,
       titleChanged
     })
 
     if (this.dbService && titleChanged) {
-      this.dbService.updateSession(session.hiveSessionId, { name: trimmedTitle })
+      this.dbService.updateSession(session.octobSessionId, { name: trimmedTitle })
       log.info('applyGeneratedTitle: updated DB', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         title: trimmedTitle
       })
       logCodexLifecycleEvent('title/applied', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         threadId: session.threadId,
         title: trimmedTitle
       })
@@ -3072,18 +3072,18 @@ export class CodexImplementer implements AgentSdkImplementer {
     if (titleChanged) {
       this.sendToRenderer('opencode:stream', {
         type: 'session.updated',
-        sessionId: session.hiveSessionId,
+        sessionId: session.octobSessionId,
         data: { title: trimmedTitle, info: { title: trimmedTitle } }
       })
     } else {
       log.debug('applyGeneratedTitle: title unchanged, skipping session rename event', {
-        hiveSessionId: session.hiveSessionId,
+        octobSessionId: session.octobSessionId,
         title: trimmedTitle
       })
     }
 
     if (!this.dbService) return
-    const worktree = this.dbService.getWorktreeBySessionId(session.hiveSessionId)
+    const worktree = this.dbService.getWorktreeBySessionId(session.octobSessionId)
     if (worktree && !worktree.branch_renamed) {
       try {
         const result = await autoRenameWorktreeBranch({
@@ -3111,7 +3111,7 @@ export class CodexImplementer implements AgentSdkImplementer {
       }
     }
 
-    const dbSession = this.dbService.getSession(session.hiveSessionId)
+    const dbSession = this.dbService.getSession(session.octobSessionId)
     if (!dbSession?.connection_id) return
 
     const connection = this.dbService.getConnection(dbSession.connection_id)

@@ -245,7 +245,7 @@ describe('Codex Undo/Redo', () => {
 
       const session = {
         threadId: 'thread-undo-1',
-        hiveSessionId: 'hive-undo-1',
+        octobSessionId: 'hive-undo-1',
         worktreePath: '/test',
         status: 'ready' as const,
         messages: [
@@ -291,7 +291,7 @@ describe('Codex Undo/Redo', () => {
 
       const session = {
         threadId: 'thread-undo-1',
-        hiveSessionId: 'hive-undo-1',
+        octobSessionId: 'hive-undo-1',
         worktreePath: '/test',
         status: 'ready' as const,
         messages: [
@@ -334,7 +334,7 @@ describe('Codex Undo/Redo', () => {
 
       impl.getSessions().set('/test::thread-undo-1', {
         threadId: 'thread-undo-1',
-        hiveSessionId: 'hive-undo-1',
+        octobSessionId: 'hive-undo-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [
@@ -378,7 +378,7 @@ describe('Codex Undo/Redo', () => {
 
       impl.getSessions().set('/test::thread-undo-1', {
         threadId: 'thread-undo-1',
-        hiveSessionId: 'hive-undo-1',
+        octobSessionId: 'hive-undo-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -405,7 +405,7 @@ describe('Codex Undo/Redo', () => {
 
       const session = {
         threadId: 'thread-undo-1',
-        hiveSessionId: 'hive-undo-1',
+        octobSessionId: 'hive-undo-1',
         worktreePath: '/test',
         status: 'ready' as const,
         messages: [

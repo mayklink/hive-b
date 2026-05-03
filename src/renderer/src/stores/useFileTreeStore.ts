@@ -381,7 +381,7 @@ export const useFileTreeStore = create<FileTreeState>()(
       }
     }),
     {
-      name: 'hive-file-tree',
+      name: 'octob-file-tree',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         // Only persist expanded paths

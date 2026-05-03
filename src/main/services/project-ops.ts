@@ -27,7 +27,7 @@ const MIME_TYPES: Record<string, string> = {
   '.ico': 'image/x-icon'
 }
 
-const iconDir = join(app.getPath('home'), '.hive', 'project-icons')
+const iconDir = join(app.getPath('home'), '.octob', 'project-icons')
 
 /**
  * Ensure the project-icons directory exists
@@ -207,7 +207,7 @@ export function getAbsoluteIconDataUrl(absolutePath: string): string | null {
 
 /**
  * Upload a project icon from base64 data (for mobile/GraphQL API).
- * Saves the file to ~/.hive/project-icons/ and updates the DB custom_icon field.
+ * Saves the file to ~/.octob/project-icons/ and updates the DB custom_icon field.
  */
 export function uploadIcon(
   projectId: string,

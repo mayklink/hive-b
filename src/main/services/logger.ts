@@ -46,9 +46,9 @@ class LoggerService {
   private minLevel: LogLevel
 
   private constructor() {
-    // Use ~/.hive/logs/ for logs
+    // Use ~/.octob/logs/ for logs
     const homeDir = app.getPath('home')
-    this.logDir = join(homeDir, '.hive', LOG_DIR_NAME)
+    this.logDir = join(homeDir, '.octob', LOG_DIR_NAME)
     this.ensureLogDir()
     this.currentLogFile = this.getLogFileName()
     this.minLevel = process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.INFO
@@ -70,7 +70,7 @@ class LoggerService {
 
   private getLogFileName(): string {
     const date = new Date().toISOString().split('T')[0]
-    return join(this.logDir, `hive-${date}.log`)
+    return join(this.logDir, `octob-${date}.log`)
   }
 
   private formatEntry(entry: LogEntry): string {
@@ -114,7 +114,10 @@ class LoggerService {
   private cleanOldLogs(): void {
     try {
       const files = readdirSync(this.logDir)
-        .filter((f) => f.startsWith('hive-') && f.endsWith('.log'))
+        .filter(
+          (f) =>
+            (f.startsWith('octob-') || f.startsWith('hive-')) && f.endsWith('.log')
+        )
         .map((f) => ({
           name: f,
           path: join(this.logDir, f),

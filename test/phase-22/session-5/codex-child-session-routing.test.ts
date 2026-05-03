@@ -63,11 +63,11 @@ describe('Codex child session routing', () => {
   function seedSession(
     worktreePath: string,
     threadId: string,
-    hiveSessionId: string
+    octobSessionId: string
   ): CodexSessionState {
     const session: CodexSessionState = {
       threadId,
-      hiveSessionId,
+      octobSessionId,
       worktreePath,
       status: 'ready',
       messages: [],

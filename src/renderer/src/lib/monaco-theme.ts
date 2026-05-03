@@ -1,9 +1,9 @@
 import type { editor } from 'monaco-editor'
 
-export const HIVE_THEME_NAME = 'hive-dark'
+export const OCTOB_THEME_NAME = 'octob-dark'
 
 /**
- * Create a Monaco editor theme that matches Hive's CSS variable-based dark UI.
+ * Create a Monaco editor theme that matches Octob's CSS variable-based dark UI.
  * Falls back to sensible dark defaults when CSS variables aren't available.
  */
 function getCssVar(name: string, fallback: string): string {
@@ -60,7 +60,7 @@ function resolveColor(cssVarName: string, fallbackHex: string): string {
   return hex || fallbackHex
 }
 
-export function createHiveThemeData(): editor.IStandaloneThemeData {
+export function createOctobThemeData(): editor.IStandaloneThemeData {
   const bg = resolveColor('--background', '#09090b')
   const fg = resolveColor('--foreground', '#fafafa')
   const mutedFg = resolveColor('--muted-foreground', '#71717a')
@@ -113,8 +113,8 @@ export function createHiveThemeData(): editor.IStandaloneThemeData {
 }
 
 /**
- * Register the Hive theme with Monaco. Call once before mounting any editor.
+ * Register the Octob theme with Monaco. Call once before mounting any editor.
  */
-export function registerHiveTheme(monaco: typeof import('monaco-editor')): void {
-  monaco.editor.defineTheme(HIVE_THEME_NAME, createHiveThemeData())
+export function registerOctobTheme(monaco: typeof import('monaco-editor')): void {
+  monaco.editor.defineTheme(OCTOB_THEME_NAME, createOctobThemeData())
 }

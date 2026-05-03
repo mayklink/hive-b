@@ -216,11 +216,11 @@ describe('Session 2: Application Layout', () => {
 5. Build DatabaseService class with typed methods
 6. Implement IPC handlers for database operations
 7. Create database connection pooling/management
-8. Add database location at `~/.hive/hive.db`
+8. Add database location at `~/.octob/octob.db`
 
 ### Definition of Done
 
-- [ ] Database file is created at `~/.hive/hive.db`
+- [ ] Database file is created at `~/.octob/octob.db`
 - [ ] All tables are created with correct schema
 - [ ] Foreign key constraints work correctly
 - [ ] Indexes are created for performance
@@ -235,7 +235,7 @@ describe('Session 2: Application Layout', () => {
 // test/session-3/database.test.ts
 describe('Session 3: Database', () => {
   test('Database file is created in correct location', async () => {
-    // Verify ~/.hive/hive.db exists after app init
+    // Verify ~/.octob/octob.db exists after app init
   })
 
   test('All tables are created', async () => {
@@ -379,7 +379,7 @@ describe('Session 4: Project Management', () => {
 1. Install and configure simple-git
 2. Create GitService class in main process
 3. Implement city name selection algorithm with collision handling
-4. Create worktree at `~/.hive-worktrees/{project}/{city}`
+4. Create worktree at `~/.octob-worktrees/{project}/{city}`
 5. Create `WorktreeList.tsx` and `WorktreeItem.tsx` components
 6. Implement worktree creation flow ("+" button)
 7. Implement Archive action (remove worktree + delete branch)
@@ -394,7 +394,7 @@ describe('Session 4: Project Management', () => {
 - [ ] Worktrees display under their parent project
 - [ ] "+" button creates new worktree with city name
 - [ ] City names avoid collisions with existing branches
-- [ ] Worktrees are created at `~/.hive-worktrees/{project}/{city}`
+- [ ] Worktrees are created at `~/.octob-worktrees/{project}/{city}`
 - [ ] Archive removes worktree AND deletes branch
 - [ ] Unbranch removes worktree but preserves branch
 - [ ] Open in Terminal launches terminal at worktree path
@@ -424,7 +424,7 @@ describe('Session 5: Git Worktree Operations', () => {
   })
 
   test('Worktree path is correct', async () => {
-    // Verify path is ~/.hive-worktrees/{project-name}/{city-name}
+    // Verify path is ~/.octob-worktrees/{project-name}/{city-name}
   })
 
   test('Archive removes worktree and branch', async () => {
@@ -773,7 +773,7 @@ describe('Session 9: Session History', () => {
 
 ### Tasks
 
-1. Create logging service (writes to `~/.hive/logs/`)
+1. Create logging service (writes to `~/.octob/logs/`)
 2. Implement error boundary components
 3. Create toast notification system
 4. Add loading states to all async operations
@@ -787,7 +787,7 @@ describe('Session 9: Session History', () => {
 
 ### Definition of Done
 
-- [ ] Logs are written to `~/.hive/logs/`
+- [ ] Logs are written to `~/.octob/logs/`
 - [ ] Error boundaries catch and display React errors
 - [ ] Toast notifications show for all user actions
 - [ ] Loading spinners on all async operations
@@ -804,7 +804,7 @@ describe('Session 9: Session History', () => {
 // test/session-10/polish.test.ts
 describe('Session 10: Error Handling & Polish', () => {
   test('Logs are created in correct location', async () => {
-    // Trigger log event, verify file in ~/.hive/logs/
+    // Trigger log event, verify file in ~/.octob/logs/
   })
 
   test('Error boundary catches React errors', async () => {

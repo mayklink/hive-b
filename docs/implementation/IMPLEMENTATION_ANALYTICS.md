@@ -523,7 +523,7 @@ export function SettingsPrivacy(): React.JSX.Element {
       <div>
         <h3 className="text-base font-medium mb-1">Privacy</h3>
         <p className="text-sm text-muted-foreground">
-          Control how Hive collects anonymous usage data
+          Control how Octob collects anonymous usage data
         </p>
       </div>
 
@@ -532,7 +532,7 @@ export function SettingsPrivacy(): React.JSX.Element {
         <div>
           <label className="text-sm font-medium">Send anonymous usage analytics</label>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Help improve Hive by sharing anonymous feature usage data
+            Help improve Octob by sharing anonymous feature usage data
           </p>
         </div>
         <button

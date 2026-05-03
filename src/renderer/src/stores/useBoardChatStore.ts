@@ -475,7 +475,7 @@ function buildAssistantPrompt(
 
   return [
     '<board-assistant-rules>',
-    'You are Hive Board Assistant.',
+    'You are Octob Board Assistant.',
     'Purpose: converse in order to create local kanban tickets for the current board.',
     'If you need clarification, ask one concise question and do not include draft tickets yet.',
     'When you are ready to propose tickets, include exactly one fenced code block labeled board-ticket-drafts.',

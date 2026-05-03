@@ -82,7 +82,7 @@ describe('CodexImplementer.prompt()', () => {
   function seedSession(overrides?: Partial<CodexSessionState>): CodexSessionState {
     const session: CodexSessionState = {
       threadId: 'thread-1',
-      hiveSessionId: 'hive-session-1',
+      octobSessionId: 'hive-session-1',
       worktreePath: '/test/project',
       status: 'ready',
       messages: [],
@@ -144,14 +144,14 @@ describe('CodexImplementer.prompt()', () => {
     expect(mockLogInfo).toHaveBeenCalledWith(
       'Prompt: evaluating title generation',
       expect.objectContaining({
-        hiveSessionId: 'hive-session-1',
+        octobSessionId: 'hive-session-1',
         threadId: 'thread-1',
         shouldGenerateTitle: true
       })
     )
     expect(mockLogWarn).toHaveBeenCalledWith(
       'handleTitleGeneration: generator returned null title',
-      { hiveSessionId: 'hive-session-1', threadId: 'thread-1' }
+      { octobSessionId: 'hive-session-1', threadId: 'thread-1' }
     )
   })
 
@@ -178,7 +178,7 @@ describe('CodexImplementer.prompt()', () => {
     expect(mockGenerateCodexSessionTitle).not.toHaveBeenCalled()
     expect(mockLogInfo).toHaveBeenCalledWith(
       'Prompt: skipped title generation for pre-titled session',
-      { hiveSessionId: 'hive-session-1', currentTitle: 'Existing title' }
+      { octobSessionId: 'hive-session-1', currentTitle: 'Existing title' }
     )
   })
 

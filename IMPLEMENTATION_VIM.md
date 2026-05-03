@@ -53,7 +53,7 @@
   - `assignSessionHints(['s1','s2','s3'])` → `{s1:'Sa', s2:'Sb', s3:'Sc'}`
   - `assignSessionHints` handles 34 sessions (full SECOND_CHARS capacity)
   - `assignSessionHints` with >34 sessions gracefully skips overflow
-  - `dispatchHintAction('plus:p1')` dispatches `hive:hint-plus` event
+  - `dispatchHintAction('plus:p1')` dispatches `octob:hint-plus` event
   - `dispatchHintAction('project:p1')` calls `toggleProjectExpanded`
   - `dispatchHintAction('w1')` calls `selectWorktree` + `selectProject`
 - [ ] **1.7** Run tests → verify FAIL
@@ -114,7 +114,7 @@
   - `Escape` in insert mode → calls `enterNormalMode()`
   - `Escape` in normal mode + helpOverlayOpen → calls `setHelpOverlayOpen(false)`
   - `Escape` in normal mode, no overlay → does NOT `preventDefault()` (propagates for modals)
-  - `I` (Shift+I) in normal mode → calls `enterInsertMode()`, opens left sidebar if collapsed, dispatches `hive:focus-project-filter`
+  - `I` (Shift+I) in normal mode → calls `enterInsertMode()`, opens left sidebar if collapsed, dispatches `octob:focus-project-filter`
   - `?` → calls `toggleHelpOverlay()`
 - [ ] **2.4** Write focusin/focusout tests:
   - `focusin` on INPUT outside Radix → calls `enterInsertMode()`
@@ -127,7 +127,7 @@
   - `useEffect` registering capture-phase `keydown`, `focusin`, `focusout` on `document`
   - Guard checks (modifier keys, insert mode, radix overlay, command palette)
   - Escape handling (insert→normal, close help, or propagate)
-  - `I` handling (expand sidebar, enterInsertMode, dispatch `hive:focus-project-filter`)
+  - `I` handling (expand sidebar, enterInsertMode, dispatch `octob:focus-project-filter`)
   - `?` handling (toggleHelpOverlay)
   - focusin/focusout handlers with `isInputElement()` and `isInsideRadixOverlay()` helpers
 - [ ] **2.7** Add export to `src/renderer/src/hooks/index.ts`: `export { useVimNavigation } from './useVimNavigation'`
@@ -167,9 +167,9 @@
   - `l` at last session → clamped
   - `l` also calls `setActiveFile(null)` to clear file viewer
 - [ ] **3.2** Add panel navigation tests:
-  - `c` calls `setRightSidebarCollapsed(false)` if collapsed + dispatches `hive:right-sidebar-tab` with `changes`
-  - `f` → `hive:right-sidebar-tab` with `files`
-  - `d` → `hive:right-sidebar-tab` with `diffs`
+  - `c` calls `setRightSidebarCollapsed(false)` if collapsed + dispatches `octob:right-sidebar-tab` with `changes`
+  - `f` → `octob:right-sidebar-tab` with `files`
+  - `d` → `octob:right-sidebar-tab` with `diffs`
   - `s` calls `setBottomPanelTab('setup')` + opens right sidebar if collapsed
   - `r` calls `setBottomPanelTab('run')` + opens right sidebar
   - `t` calls `setBottomPanelTab('terminal')` + opens right sidebar
@@ -192,7 +192,7 @@
   - Read `Array.from(openFiles.keys())`, find `activeFilePath` index
   - Clamp delta, call `setActiveFile(newPath)`
 - [ ] **3.8** Implement panel shortcuts in `handleKeyDown`:
-  - `c`/`f`/`d` → open right sidebar if collapsed + dispatch `hive:right-sidebar-tab` custom event
+  - `c`/`f`/`d` → open right sidebar if collapsed + dispatch `octob:right-sidebar-tab` custom event
   - `s`/`r`/`t` → open right sidebar if collapsed + call `setBottomPanelTab()`
   - `[`/`]` → call `navigateFileTab(±1)`
 - [ ] **3.9** Run tests → verify PASS
@@ -304,7 +304,7 @@
 
 ## Session 7: Right Sidebar Tab Event Listener
 
-**Goal:** Wire the `hive:right-sidebar-tab` custom event so `c`/`f`/`d` keys actually switch tabs.
+**Goal:** Wire the `octob:right-sidebar-tab` custom event so `c`/`f`/`d` keys actually switch tabs.
 
 ### Files to modify
 - `src/renderer/src/components/layout/FileSidebar.tsx` (or wherever the right sidebar top tabs live)
@@ -312,7 +312,7 @@
 ### Tasks
 
 - [ ] **7.1** Read `FileSidebar.tsx` to find the local `activeTab` state and tab-switching logic
-- [ ] **7.2** Add `useEffect` to listen for `hive:right-sidebar-tab` custom event:
+- [ ] **7.2** Add `useEffect` to listen for `octob:right-sidebar-tab` custom event:
   ```typescript
   useEffect(() => {
     const handler = (e: Event) => {
@@ -321,8 +321,8 @@
         setActiveTab(tab)
       }
     }
-    window.addEventListener('hive:right-sidebar-tab', handler)
-    return () => window.removeEventListener('hive:right-sidebar-tab', handler)
+    window.addEventListener('octob:right-sidebar-tab', handler)
+    return () => window.removeEventListener('octob:right-sidebar-tab', handler)
   }, [])
   ```
 - [ ] **7.3** Manual test: press `c`/`f`/`d` in normal mode → right sidebar tab switches

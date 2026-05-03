@@ -29,27 +29,27 @@ export function registerOpenCodeHandlers(
   // Connect to OpenCode for a worktree (lazy starts server if needed)
   ipcMain.handle(
     'opencode:connect',
-    async (_event, worktreePath: string, hiveSessionId: string) => {
-      log.info('IPC: opencode:connect', { worktreePath, hiveSessionId })
+    async (_event, worktreePath: string, octobSessionId: string) => {
+      log.info('IPC: opencode:connect', { worktreePath, octobSessionId })
       // New session on this worktree — allow context injection for the first prompt
       injectedWorktrees.delete(worktreePath)
       try {
         // SDK-aware dispatch: route non-OpenCode sessions to their implementer
         if (sdkManager && dbService) {
-          const session = dbService.getSession(hiveSessionId)
+          const session = dbService.getSession(octobSessionId)
           // Terminal sessions have no AI backend — short-circuit
           if (session?.agent_sdk === 'terminal') {
-            return { success: true, sessionId: hiveSessionId }
+            return { success: true, sessionId: octobSessionId }
           }
           if (session?.agent_sdk && session.agent_sdk !== 'opencode') {
             const impl = sdkManager.getImplementer(session.agent_sdk)
-            const result = await impl.connect(worktreePath, hiveSessionId)
+            const result = await impl.connect(worktreePath, octobSessionId)
             telemetryService.track('session_started', { agent_sdk: session.agent_sdk })
             return { success: true, ...result }
           }
         }
         // Fall through to existing OpenCode path
-        const result = await openCodeService.connect(worktreePath, hiveSessionId)
+        const result = await openCodeService.connect(worktreePath, octobSessionId)
         telemetryService.track('session_started', { agent_sdk: 'opencode' })
         return { success: true, ...result }
       } catch (error) {
@@ -65,8 +65,8 @@ export function registerOpenCodeHandlers(
   // Reconnect to existing OpenCode session
   ipcMain.handle(
     'opencode:reconnect',
-    async (_event, worktreePath: string, opencodeSessionId: string, hiveSessionId: string) => {
-      log.info('IPC: opencode:reconnect', { worktreePath, opencodeSessionId, hiveSessionId })
+    async (_event, worktreePath: string, opencodeSessionId: string, octobSessionId: string) => {
+      log.info('IPC: opencode:reconnect', { worktreePath, opencodeSessionId, octobSessionId })
       try {
         // SDK-aware dispatch: route non-OpenCode sessions to their implementer
         if (sdkManager && dbService) {
@@ -77,7 +77,7 @@ export function registerOpenCodeHandlers(
           }
           if (sdkId && sdkId !== 'opencode') {
             const impl = sdkManager.getImplementer(sdkId)
-            const result = await impl.reconnect(worktreePath, opencodeSessionId, hiveSessionId)
+            const result = await impl.reconnect(worktreePath, opencodeSessionId, octobSessionId)
             return result
           }
         }
@@ -85,7 +85,7 @@ export function registerOpenCodeHandlers(
         const result = await openCodeService.reconnect(
           worktreePath,
           opencodeSessionId,
-          hiveSessionId
+          octobSessionId
         )
         return result
       } catch (error) {
@@ -697,20 +697,20 @@ export function registerOpenCodeHandlers(
       _event,
       {
         worktreePath,
-        hiveSessionId,
+        octobSessionId,
         requestId
-      }: { worktreePath: string; hiveSessionId: string; requestId?: string }
+      }: { worktreePath: string; octobSessionId: string; requestId?: string }
     ) => {
-      log.info('IPC: opencode:plan:approve', { hiveSessionId, requestId })
+      log.info('IPC: opencode:plan:approve', { octobSessionId, requestId })
       try {
         // TODO(codex): Generalize when Codex implements this HITL flow
         if (sdkManager) {
           const claudeImpl = sdkManager.getImplementer('claude-code') as ClaudeCodeImplementer
           if (
             (requestId && claudeImpl.hasPendingPlan(requestId)) ||
-            claudeImpl.hasPendingPlanForSession(hiveSessionId)
+            claudeImpl.hasPendingPlanForSession(octobSessionId)
           ) {
-            await claudeImpl.planApprove(worktreePath, hiveSessionId, requestId)
+            await claudeImpl.planApprove(worktreePath, octobSessionId, requestId)
             return { success: true }
           }
         }
@@ -732,13 +732,13 @@ export function registerOpenCodeHandlers(
       _event,
       {
         worktreePath,
-        hiveSessionId,
+        octobSessionId,
         feedback,
         requestId
-      }: { worktreePath: string; hiveSessionId: string; feedback: string; requestId?: string }
+      }: { worktreePath: string; octobSessionId: string; feedback: string; requestId?: string }
     ) => {
       log.info('IPC: opencode:plan:reject', {
-        hiveSessionId,
+        octobSessionId,
         requestId,
         feedbackLength: feedback.length
       })
@@ -748,9 +748,9 @@ export function registerOpenCodeHandlers(
           const claudeImpl = sdkManager.getImplementer('claude-code') as ClaudeCodeImplementer
           if (
             (requestId && claudeImpl.hasPendingPlan(requestId)) ||
-            claudeImpl.hasPendingPlanForSession(hiveSessionId)
+            claudeImpl.hasPendingPlanForSession(octobSessionId)
           ) {
-            await claudeImpl.planReject(worktreePath, hiveSessionId, feedback, requestId)
+            await claudeImpl.planReject(worktreePath, octobSessionId, feedback, requestId)
             return { success: true }
           }
         }

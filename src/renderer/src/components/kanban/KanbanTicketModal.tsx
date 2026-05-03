@@ -598,7 +598,7 @@ function KanbanTicketModalContent({
     // from disk; for OpenCode sessions it pokes the server).  Without this,
     // SessionStreamPanel's useSessionStream hook may call getMessages() before
     // the cache is warm and receive an empty result.
-    console.info('[KanbanModal:sessionReady] starting — worktreePath=%s, opcSessionId=%s, hiveSessionId=%s', worktreePath, opcSessionId, ticket.current_session_id)
+    console.info('[KanbanModal:sessionReady] starting — worktreePath=%s, opcSessionId=%s, octobSessionId=%s', worktreePath, opcSessionId, ticket.current_session_id)
     ;(async () => {
       try {
         const reconnResult = await window.opencodeOps.reconnect(worktreePath, opcSessionId, ticket.current_session_id)

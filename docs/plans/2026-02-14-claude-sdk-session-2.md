@@ -277,8 +277,8 @@ const log = createLogger({ component: 'ClaudeCodeImplementer' })
 export interface ClaudeSessionState {
   /** The Claude SDK session ID (from SDKSystemMessage init) */
   claudeSessionId: string
-  /** The Hive session ID (our DB row) */
-  hiveSessionId: string
+  /** The Octob session ID (our DB row) */
+  octobSessionId: string
   /** Working directory for this session */
   worktreePath: string
   /** AbortController for the active query (null if idle) */
@@ -337,14 +337,14 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
 
   // --- Lifecycle (Session 3) ---
 
-  async connect(_worktreePath: string, _hiveSessionId: string): Promise<{ sessionId: string }> {
+  async connect(_worktreePath: string, _octobSessionId: string): Promise<{ sessionId: string }> {
     throw new Error('ClaudeCodeImplementer.connect: not yet implemented (Session 3)')
   }
 
   async reconnect(
     _worktreePath: string,
     _agentSessionId: string,
-    _hiveSessionId: string
+    _octobSessionId: string
   ): Promise<{
     success: boolean
     sessionStatus?: 'idle' | 'busy' | 'retry'
@@ -457,7 +457,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
   async undo(
     _worktreePath: string,
     _agentSessionId: string,
-    _hiveSessionId: string
+    _octobSessionId: string
   ): Promise<unknown> {
     throw new Error('ClaudeCodeImplementer.undo: not yet implemented (Session 8)')
   }
@@ -465,7 +465,7 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
   async redo(
     _worktreePath: string,
     _agentSessionId: string,
-    _hiveSessionId: string
+    _octobSessionId: string
   ): Promise<unknown> {
     throw new Error('ClaudeCodeImplementer.redo: not yet implemented (Session 8)')
   }
@@ -537,7 +537,7 @@ describe('cleanup', () => {
 
     impl.sessions.set('path::session-1', {
       claudeSessionId: 'session-1',
-      hiveSessionId: 'hive-1',
+      octobSessionId: 'hive-1',
       worktreePath: '/path',
       abortController,
       checkpoints: new Map()
@@ -558,21 +558,21 @@ describe('cleanup', () => {
 
     impl.sessions.set('a::s1', {
       claudeSessionId: 's1',
-      hiveSessionId: 'h1',
+      octobSessionId: 'h1',
       worktreePath: 'a',
       abortController: controllers[0],
       checkpoints: new Map()
     })
     impl.sessions.set('b::s2', {
       claudeSessionId: 's2',
-      hiveSessionId: 'h2',
+      octobSessionId: 'h2',
       worktreePath: 'b',
       abortController: controllers[1],
       checkpoints: new Map()
     })
     impl.sessions.set('c::s3', {
       claudeSessionId: 's3',
-      hiveSessionId: 'h3',
+      octobSessionId: 'h3',
       worktreePath: 'c',
       abortController: null,
       checkpoints: new Map()
@@ -590,7 +590,7 @@ describe('cleanup', () => {
     const impl = implementer as any
     impl.sessions.set('path::session-idle', {
       claudeSessionId: 'session-idle',
-      hiveSessionId: 'hive-idle',
+      octobSessionId: 'hive-idle',
       worktreePath: '/path',
       abortController: null,
       checkpoints: new Map()
@@ -648,7 +648,7 @@ describe('session key helpers', () => {
     const impl = implementer as any
     const state = {
       claudeSessionId: 'abc',
-      hiveSessionId: 'h1',
+      octobSessionId: 'h1',
       worktreePath: '/foo',
       abortController: null,
       checkpoints: new Map()

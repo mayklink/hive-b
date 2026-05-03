@@ -59,7 +59,7 @@ interface OpenCodeInstance {
     url: string
     close(): void
   }
-  // Map of directory-scoped OpenCode session keys to Hive session IDs for routing events
+  // Map of directory-scoped OpenCode session keys to Octob session IDs for routing events
   sessionMap: Map<string, string>
   // Map of directory-scoped OpenCode session keys to worktree paths
   sessionDirectories: Map<string, string>
@@ -292,10 +292,10 @@ class OpenCodeService {
     instance: OpenCodeInstance,
     directory: string,
     opencodeSessionId: string,
-    hiveSessionId: string
+    octobSessionId: string
   ): void {
     const key = this.getSessionMapKey(directory, opencodeSessionId)
-    instance.sessionMap.set(key, hiveSessionId)
+    instance.sessionMap.set(key, octobSessionId)
     instance.sessionDirectories.set(key, directory)
   }
 
@@ -317,7 +317,7 @@ class OpenCodeService {
     }
   }
 
-  private getMappedHiveSessionId(
+  private getMappedOctobSessionId(
     instance: OpenCodeInstance,
     opencodeSessionId: string,
     directory?: string
@@ -334,9 +334,9 @@ class OpenCodeService {
 
     // Compatibility fallback for mixed-state maps.
     const scopedSuffix = `::${opencodeSessionId}`
-    for (const [key, hiveSessionId] of instance.sessionMap.entries()) {
+    for (const [key, octobSessionId] of instance.sessionMap.entries()) {
       if (key.endsWith(scopedSuffix)) {
-        return hiveSessionId
+        return octobSessionId
       }
     }
 
@@ -479,8 +479,8 @@ class OpenCodeService {
   /**
    * Connect to OpenCode for a worktree (lazy starts server if needed)
    */
-  async connect(worktreePath: string, hiveSessionId: string): Promise<{ sessionId: string }> {
-    log.info('Connecting to OpenCode', { worktreePath, hiveSessionId })
+  async connect(worktreePath: string, octobSessionId: string): Promise<{ sessionId: string }> {
+    log.info('Connecting to OpenCode', { worktreePath, octobSessionId })
 
     const instance = await this.getOrCreateInstance()
 
@@ -495,14 +495,14 @@ class OpenCodeService {
         throw new Error('Failed to create OpenCode session: no session ID returned')
       }
 
-      this.setSessionMapping(instance, worktreePath, sessionId, hiveSessionId)
+      this.setSessionMapping(instance, worktreePath, sessionId, octobSessionId)
 
       // Subscribe to events for this directory
       this.subscribeToDirectory(instance, worktreePath)
 
       log.info('Created OpenCode session', {
         sessionId,
-        hiveSessionId,
+        octobSessionId,
         worktreePath,
         totalSessions: instance.sessionMap.size
       })
@@ -544,7 +544,7 @@ class OpenCodeService {
   async reconnect(
     worktreePath: string,
     opencodeSessionId: string,
-    hiveSessionId: string
+    octobSessionId: string
   ): Promise<{
     success: boolean
     sessionStatus?: 'idle' | 'busy' | 'retry'
@@ -553,7 +553,7 @@ class OpenCodeService {
     log.info('Attempting to reconnect to OpenCode session', {
       worktreePath,
       opencodeSessionId,
-      hiveSessionId
+      octobSessionId
     })
 
     try {
@@ -562,9 +562,9 @@ class OpenCodeService {
       this.migrateLegacySessionMapping(instance, worktreePath, opencodeSessionId)
 
       // If session is already registered (e.g., user switched projects and back),
-      // just update the Hive session mapping. Skip subscription to avoid count leak.
+      // just update the Octob session mapping. Skip subscription to avoid count leak.
       if (instance.sessionMap.has(scopedKey)) {
-        instance.sessionMap.set(scopedKey, hiveSessionId)
+        instance.sessionMap.set(scopedKey, octobSessionId)
 
         // The directory subscription may have been cancelled if all sessions
         // disconnected (unsubscribeFromDirectory deletes the entry when
@@ -575,7 +575,7 @@ class OpenCodeService {
 
         log.info('Session already registered, updated mapping', {
           opencodeSessionId,
-          hiveSessionId
+          octobSessionId
         })
         const sessionStatus = await this.querySessionStatus(
           instance,
@@ -599,7 +599,7 @@ class OpenCodeService {
       })
 
       if (result.data) {
-        this.setSessionMapping(instance, worktreePath, opencodeSessionId, hiveSessionId)
+        this.setSessionMapping(instance, worktreePath, opencodeSessionId, octobSessionId)
 
         // Subscribe to events for this directory
         this.subscribeToDirectory(instance, worktreePath)
@@ -613,7 +613,7 @@ class OpenCodeService {
         const revertMessageID = asString(asRecord(revert)?.messageID) ?? null
         log.info('Successfully reconnected to OpenCode session', {
           opencodeSessionId,
-          hiveSessionId,
+          octobSessionId,
           sessionStatus,
           revertMessageID
         })
@@ -1185,35 +1185,35 @@ class OpenCodeService {
       return
     }
 
-    // Get the Hive session ID for routing — check parent session if this is a child/subagent
-    const directHiveId = this.getMappedHiveSessionId(instance, sessionId, eventDirectory)
-    let hiveSessionId = directHiveId
+    // Get the Octob session ID for routing — check parent session if this is a child/subagent
+    const directOctobId = this.getMappedOctobSessionId(instance, sessionId, eventDirectory)
+    let octobSessionId = directOctobId
 
-    if (!hiveSessionId) {
+    if (!octobSessionId) {
       const parentId = await this.resolveParentSession(instance, sessionId, eventDirectory)
       if (parentId) {
-        hiveSessionId = this.getMappedHiveSessionId(instance, parentId, eventDirectory)
+        octobSessionId = this.getMappedOctobSessionId(instance, parentId, eventDirectory)
       }
     }
 
-    if (!hiveSessionId) {
-      log.warn('No Hive session found for OpenCode session', { sessionId })
+    if (!octobSessionId) {
+      log.warn('No Octob session found for OpenCode session', { sessionId })
       return
     }
 
     // Detect child/subagent events: no direct mapping but resolved through parent
-    const isChildEvent = !directHiveId && !!hiveSessionId
+    const isChildEvent = !directOctobId && !!octobSessionId
 
     // Log session lifecycle events and trigger notification when unfocused
     if (eventType === 'session.idle') {
       log.info('Forwarding session.idle to renderer', {
         opencodeSessionId: sessionId,
-        hiveSessionId,
+        octobSessionId,
         isChildEvent
       })
       // Only notify for parent session completion, not child/subagent sessions
       if (!isChildEvent) {
-        this.maybeNotifySessionComplete(hiveSessionId)
+        this.maybeNotifySessionComplete(octobSessionId)
       }
     }
 
@@ -1221,7 +1221,7 @@ class OpenCodeService {
     // backgrounded. Notify for both direct and subagent permissions — a
     // subagent permission prompt still blocks the parent.
     if (eventType === 'permission.asked') {
-      this.maybeNotifyUserFeedbackNeeded(hiveSessionId, 'permission')
+      this.maybeNotifyUserFeedbackNeeded(octobSessionId, 'permission')
     }
 
     // Handle session.updated events — persist title to DB before forwarding to renderer
@@ -1230,34 +1230,34 @@ class OpenCodeService {
       const sessionInfo = event.properties?.info
       const rawSessionTitle = sessionInfo?.title || event.properties?.title
       const sessionTitle = rawSessionTitle ? maybeExtractJsonTitle(rawSessionTitle) : rawSessionTitle
-      if (hiveSessionId && sessionTitle) {
+      if (octobSessionId && sessionTitle) {
         try {
           const db = getDatabase()
 
           // Detect placeholder titles that shouldn't trigger branch renames:
-          // - Hive default: "Session 1", "Session 2", etc.
+          // - Octob default: "Session 1", "Session 2", etc.
           // - OpenCode default: "New Session 2026-02-12T21:15:03.818Z"
           const isPlaceholderTitle =
             /^Session \d+$/i.test(sessionTitle) ||
             /^New session\s*-?\s*\d{4}-\d{2}-\d{2}/i.test(sessionTitle)
 
           // DEBUG: Log every session.updated title to diagnose branch rename issues
-          const worktreeForLog = db.getWorktreeBySessionId(hiveSessionId)
+          const worktreeForLog = db.getWorktreeBySessionId(octobSessionId)
           log.info('session.updated title received', {
             sessionTitle,
             isPlaceholderTitle,
-            hiveSessionId,
+            octobSessionId,
             branchRenamed: worktreeForLog?.branch_renamed,
             currentBranch: worktreeForLog?.branch_name
           })
 
           // Only persist non-placeholder titles to the DB (avoid overwriting
-          // a good Hive name like "Session 1" with OpenCode's timestamp default)
+          // a good Octob name like "Session 1" with OpenCode's timestamp default)
           if (!isPlaceholderTitle) {
-            db.updateSession(hiveSessionId, { name: sessionTitle })
+            db.updateSession(octobSessionId, { name: sessionTitle })
           }
           // Auto-rename branch for the session's direct worktree
-          const worktree = db.getWorktreeBySessionId(hiveSessionId)
+          const worktree = db.getWorktreeBySessionId(octobSessionId)
           if (worktree && !worktree.branch_renamed && !isPlaceholderTitle) {
             try {
               const result = await autoRenameWorktreeBranch({
@@ -1290,7 +1290,7 @@ class OpenCodeService {
 
           // Auto-rename branches for all connection member worktrees
           if (!isPlaceholderTitle) {
-            const session = db.getSession(hiveSessionId)
+            const session = db.getSession(octobSessionId)
             if (session?.connection_id) {
               const connection = db.getConnection(session.connection_id)
               if (connection) {
@@ -1347,7 +1347,7 @@ class OpenCodeService {
     // Send event to renderer
     const streamEvent: StreamEvent = {
       type: eventType,
-      sessionId: hiveSessionId,
+      sessionId: octobSessionId,
       data: event.properties || event,
       ...(isChildEvent ? { childSessionId: sessionId } : {}),
       ...(eventType === 'session.status' && event.properties?.status
@@ -1413,7 +1413,7 @@ class OpenCodeService {
   /**
    * Show a native notification when a session completes while the app window is unfocused
    */
-  private maybeNotifySessionComplete(hiveSessionId: string): void {
+  private maybeNotifySessionComplete(octobSessionId: string): void {
     try {
       // Only notify when the window is not focused
       if (!this.mainWindow || this.mainWindow.isDestroyed() || this.mainWindow.isFocused()) {
@@ -1421,9 +1421,9 @@ class OpenCodeService {
       }
 
       const db = getDatabase()
-      const session = db.getSession(hiveSessionId)
+      const session = db.getSession(octobSessionId)
       if (!session) {
-        log.warn('Cannot notify: session not found', { hiveSessionId })
+        log.warn('Cannot notify: session not found', { octobSessionId })
         return
       }
 
@@ -1438,10 +1438,10 @@ class OpenCodeService {
         sessionName: session.name || 'Untitled',
         projectId: session.project_id,
         worktreeId: session.worktree_id || '',
-        sessionId: hiveSessionId
+        sessionId: octobSessionId
       })
     } catch (error) {
-      log.warn('Failed to show session completion notification', { hiveSessionId, error })
+      log.warn('Failed to show session completion notification', { octobSessionId, error })
     }
   }
 
@@ -1450,7 +1450,7 @@ class OpenCodeService {
    * permission prompt) while the app window is unfocused.
    */
   private maybeNotifyUserFeedbackNeeded(
-    hiveSessionId: string,
+    octobSessionId: string,
     kind: 'question' | 'permission'
   ): void {
     try {
@@ -1459,9 +1459,9 @@ class OpenCodeService {
       }
 
       const db = getDatabase()
-      const session = db.getSession(hiveSessionId)
+      const session = db.getSession(octobSessionId)
       if (!session) {
-        log.warn('Cannot notify: session not found', { hiveSessionId })
+        log.warn('Cannot notify: session not found', { octobSessionId })
         return
       }
 
@@ -1477,13 +1477,13 @@ class OpenCodeService {
           sessionName: session.name || 'Untitled',
           projectId: session.project_id,
           worktreeId: session.worktree_id || '',
-          sessionId: hiveSessionId
+          sessionId: octobSessionId
         },
         kind
       )
     } catch (error) {
       log.warn('Failed to show pending user feedback notification', {
-        hiveSessionId,
+        octobSessionId,
         error,
         kind
       })

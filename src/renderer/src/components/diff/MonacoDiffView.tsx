@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import '@/lib/monaco-setup'
 import { DiffEditor, type Monaco } from '@monaco-editor/react'
 import { Loader2 } from 'lucide-react'
-import { registerHiveTheme, HIVE_THEME_NAME } from '@/lib/monaco-theme'
+import { registerOctobTheme, OCTOB_THEME_NAME } from '@/lib/monaco-theme'
 import { parseHunks, getMonacoLanguage } from '@/lib/diff-utils'
 import type { Hunk } from '@/lib/diff-utils'
 import { MonacoDiffToolbar } from './MonacoDiffToolbar'
@@ -209,7 +209,7 @@ export default function MonacoDiffView({
 
   // Register theme before Monaco loads
   const handleBeforeMount = useCallback((monaco: Monaco) => {
-    registerHiveTheme(monaco)
+    registerOctobTheme(monaco)
   }, [])
 
   // Hunk navigation — scroll to next/prev hunk in the modified editor
@@ -350,7 +350,7 @@ export default function MonacoDiffView({
             original={originalContent ?? ''}
             modified={modifiedContent ?? ''}
             language={language}
-            theme={HIVE_THEME_NAME}
+            theme={OCTOB_THEME_NAME}
             onMount={handleEditorDidMount}
             beforeMount={handleBeforeMount}
             options={{

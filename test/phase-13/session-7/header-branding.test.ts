@@ -4,10 +4,10 @@ import { describe, test, expect, beforeAll } from 'vitest'
  * Session 7: Header Branding — Tests
  *
  * These tests verify:
- * 1. OctoB mark (SVG) replaces raster logo in the header
+ * 1. Octob mark (SVG) replaces raster logo in the header
  * 2. Project name displays when a project is selected
  * 3. Branch name displays in parentheses after the project name
- * 4. OctoB + Hive fallback when no project selected
+ * 4. Octob fallback when no project selected
  * 5. Default worktree (no-worktree) hides branch name
  * 6. Brand mark component exists
  */
@@ -33,12 +33,12 @@ describe('Session 7: Header Branding', () => {
       expect(source).toContain("import { useWorktreeStore } from '@/stores/useWorktreeStore'")
     })
 
-    test('imports OctoBMark brand component', () => {
-      expect(source).toContain("import { OctoBMark } from '@/components/brand/OctoBMark'")
+    test('imports OctobMark brand component', () => {
+      expect(source).toContain("import { OctobMark } from '@/components/brand/OctobMark'")
     })
 
-    test('renders OctoB mark in header', () => {
-      expect(source).toContain('<OctoBMark')
+    test('renders Octob mark in header', () => {
+      expect(source).toContain('<OctobMark')
       expect(source).toContain('className="h-5 w-5 shrink-0"')
     })
 
@@ -52,17 +52,16 @@ describe('Session 7: Header Branding', () => {
       expect(source).toContain('text-primary')
     })
 
-    test('shows OctoB and Hive fallback when no project selected', () => {
+    test('shows Octob fallback when no project selected', () => {
       expect(source).toContain('data-testid="header-brand-fallback"')
-      expect(source).toMatch(/<span[^>]*>\s*OctoB\s*<\/span>/)
-      expect(source).toMatch(/<span[^>]*>\s*Hive\s*<\/span>/)
+      expect(source).toMatch(/<span[^>]*>\s*Octob\s*<\/span>/)
     })
 
     test('does not show branch for default worktree (no-worktree)', () => {
       expect(source).toContain("'(no-worktree)'")
     })
 
-    test('no longer has h1 Hive heading', () => {
+    test('no longer has h1 heading in header', () => {
       expect(source).not.toContain('<h1')
     })
 
@@ -93,11 +92,11 @@ describe('Session 7: Header Branding', () => {
     })
   })
 
-  describe('OctoB mark component exists', () => {
-    test('OctoBMark.tsx exists', async () => {
+  describe('Octob mark component exists', () => {
+    test('OctobMark.tsx exists', async () => {
       const fs = await import('fs')
       const path = await import('path')
-      const p = path.resolve(__dirname, '../../../src/renderer/src/components/brand/OctoBMark.tsx')
+      const p = path.resolve(__dirname, '../../../src/renderer/src/components/brand/OctobMark.tsx')
       expect(fs.existsSync(p)).toBe(true)
     })
   })

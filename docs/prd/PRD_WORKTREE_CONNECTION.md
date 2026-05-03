@@ -23,7 +23,7 @@ Primary use case: connecting a frontend worktree and a backend worktree so the a
 | ------------------------- | --------------------------------------------------------------------------------------------------- |
 | Connection DB table       | New `connections` table in SQLite: id, name, status, created_at, updated_at                         |
 | Connection members table  | New `connection_members` table: connection_id FK, worktree_id FK, project_id FK                     |
-| Connection filesystem ops | Node.js `fs.symlink` / `fs.unlink` for managing symlinks in `~/.hive/connections/{name}/`           |
+| Connection filesystem ops | Node.js `fs.symlink` / `fs.unlink` for managing symlinks in `~/.octob/connections/{name}/`           |
 | AGENTS.md generation      | Template-based file generation describing connected repos, their paths, and purposes                |
 | Connection IPC handlers   | New `src/main/ipc/connection-handlers.ts` with create/update/delete/addMember/removeMember channels |
 | Connection store          | New `useConnectionStore` Zustand store in renderer                                                  |
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS connections (
 ```
 
 - `name`: Auto-generated breed name (same naming system as worktrees). User can rename later.
-- `path`: Filesystem path to the connection folder (`~/.hive/connections/{name}/`).
+- `path`: Filesystem path to the connection folder (`~/.octob/connections/{name}/`).
 - `status`: `'active'` or `'archived'`.
 
 ### `connection_members` Table
@@ -109,15 +109,15 @@ interface ConnectionWithMembers extends Connection {
 ## Filesystem Layout
 
 ```
-~/.hive/connections/
+~/.octob/connections/
   french-bulldog/                    # connection folder (breed name)
     AGENTS.md                        # auto-generated context file
-    frontend/  -> symlink to ~/.hive-worktrees/my-frontend/golden-retriever/
-    backend/   -> symlink to ~/.hive-worktrees/my-backend/persian-cat/
+    frontend/  -> symlink to ~/.octob-worktrees/my-frontend/golden-retriever/
+    backend/   -> symlink to ~/.octob-worktrees/my-backend/persian-cat/
   siberian-husky/                    # another connection
     AGENTS.md
-    api/       -> symlink to ~/.hive-worktrees/api-service/labrador/
-    dashboard/ -> symlink to ~/.hive-worktrees/dashboard-app/maine-coon/
+    api/       -> symlink to ~/.octob-worktrees/api-service/labrador/
+    dashboard/ -> symlink to ~/.octob-worktrees/dashboard-app/maine-coon/
 ```
 
 **Symlink naming:** The symlink name is derived from the project name (lowercased, hyphenated). If two worktrees come from the same project (unusual but possible), append `-2`, `-3`, etc.
@@ -204,7 +204,7 @@ User right-clicks a worktree in the sidebar:
 When the user clicks "Connect":
 
 1. Generate a unique breed name for the connection (same `selectUniqueBreedName` function, checking against existing connection names).
-2. Create the connection directory: `~/.hive/connections/{breedName}/`
+2. Create the connection directory: `~/.octob/connections/{breedName}/`
 3. Create symlinks for each selected worktree:
    - Symlink name = project name (lowercased, hyphenated)
    - Target = worktree's filesystem path
@@ -555,7 +555,7 @@ Schema version bump: `CURRENT_SCHEMA_VERSION` incremented. New migration appende
 
 - Worktree path no longer exists on disk -- symlink is broken. Connection should still load; show warning indicator.
 - Two connections referencing the same worktree -- both should work independently
-- Creating a connection when `~/.hive/connections/` doesn't exist yet -- should create parent dir
+- Creating a connection when `~/.octob/connections/` doesn't exist yet -- should create parent dir
 - Symlink name collision (two worktrees from projects with the same name) -- append numeric suffix
 
 ---

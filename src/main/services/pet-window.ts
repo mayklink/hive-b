@@ -28,7 +28,7 @@ const BEE_MANIFEST: PetManifest = {
   id: 'bee',
   name: 'Bee',
   version: '1.0.0',
-  author: 'Hive',
+  author: 'Octob',
   assets: {
     idle: 'assets/bee.png',
     working: 'assets/bee.png',
@@ -49,7 +49,7 @@ const CORGI_MANIFEST: PetManifest = {
   id: 'corgi',
   name: 'Corgi',
   version: '1.0.0',
-  author: 'Hive',
+  author: 'Octob',
   assets: {
     idle: 'assets/corgi-static.png',
     working: 'assets/corgi-static.png',

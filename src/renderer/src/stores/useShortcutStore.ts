@@ -109,7 +109,7 @@ export const useShortcutStore = create<ShortcutState>()(
       }
     }),
     {
-      name: 'hive-shortcuts',
+      name: 'octob-shortcuts',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         customBindings: state.customBindings

@@ -136,7 +136,7 @@ export const useProjectStore = create<ProjectState>()(
           // Check if project already exists
           const existingProject = await window.db.project.getByPath(path)
           if (existingProject) {
-            return { success: false, error: 'This project has already been added to Hive.' }
+            return { success: false, error: 'This project has already been added to Octob.' }
           }
 
           // Create the project
@@ -420,7 +420,7 @@ export const useProjectStore = create<ProjectState>()(
       }
     }),
     {
-      name: 'hive-projects',
+      name: 'octob-projects',
       storage: createJSONStorage(() => localStorage),
       // Only persist expandedProjectIds
       partialize: (state) => ({

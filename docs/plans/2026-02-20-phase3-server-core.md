@@ -488,8 +488,8 @@ const DEFAULTS: HeadlessConfig = {
   port: 8443,
   bindAddress: '0.0.0.0',
   tls: {
-    certPath: join(homedir(), '.hive', 'tls', 'server.crt'),
-    keyPath: join(homedir(), '.hive', 'tls', 'server.key')
+    certPath: join(homedir(), '.octob', 'tls', 'server.crt'),
+    keyPath: join(homedir(), '.octob', 'tls', 'server.key')
   },
   security: {
     bruteForceMaxAttempts: 5,
@@ -530,7 +530,7 @@ function deepMerge<T extends Record<string, unknown>>(
 export function loadHeadlessConfig(
   configPath?: string
 ): HeadlessConfig {
-  const path = configPath ?? join(homedir(), '.hive', 'headless.json')
+  const path = configPath ?? join(homedir(), '.octob', 'headless.json')
   if (!existsSync(path)) return { ...DEFAULTS, tls: { ...DEFAULTS.tls }, security: { ...DEFAULTS.security } }
 
   try {
@@ -1236,7 +1236,7 @@ export async function headlessBootstrap(opts: HeadlessBootstrapOpts): Promise<vo
   const eventBus = getEventBus()
 
   // Ensure TLS certs
-  const tlsDir = join(homedir(), '.hive', 'tls')
+  const tlsDir = join(homedir(), '.octob', 'tls')
   const fingerprint = ensureTlsCerts(tlsDir, (fp) => {
     db.setSetting('headless_cert_fingerprint', fp)
   })
@@ -1299,7 +1299,7 @@ export interface ManagementCommandOpts {
 
 export async function handleManagementCommand(opts: ManagementCommandOpts): Promise<void> {
   const db = getDatabase()
-  const hiveDir = join(homedir(), '.hive')
+  const octobDir = join(homedir(), '.octob')
 
   if (opts.rotateKey) {
     const newKey = generateApiKey()
@@ -1312,7 +1312,7 @@ export async function handleManagementCommand(opts: ManagementCommandOpts): Prom
   }
 
   if (opts.regenCerts) {
-    const tlsDir = join(hiveDir, 'tls')
+    const tlsDir = join(octobDir, 'tls')
     // Remove old certs
     rmSync(join(tlsDir, 'server.crt'), { force: true })
     rmSync(join(tlsDir, 'server.key'), { force: true })
@@ -1325,7 +1325,7 @@ export async function handleManagementCommand(opts: ManagementCommandOpts): Prom
   }
 
   if (opts.showStatus) {
-    const statusPath = join(hiveDir, 'hive-headless.status.json')
+    const statusPath = join(octobDir, 'hive-headless.status.json')
     try {
       const { readFileSync } = await import('node:fs')
       const status = JSON.parse(readFileSync(statusPath, 'utf-8'))
@@ -1336,7 +1336,7 @@ export async function handleManagementCommand(opts: ManagementCommandOpts): Prom
   }
 
   if (opts.kill) {
-    const pidPath = join(hiveDir, 'hive-headless.pid')
+    const pidPath = join(octobDir, 'hive-headless.pid')
     try {
       const { readFileSync } = await import('node:fs')
       const pid = parseInt(readFileSync(pidPath, 'utf-8').trim())

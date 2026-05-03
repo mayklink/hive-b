@@ -20,7 +20,7 @@ function makeEvent(overrides: Partial<CodexManagerEvent>): CodexManagerEvent {
   }
 }
 
-const HIVE_SESSION = 'hive-session-abc'
+const OCTOB_SESSION = 'hive-session-abc'
 
 describe('typed event mapper migration', () => {
   // ── Step 1: thread/name/updated with ThreadNameUpdatedNotification ──
@@ -32,12 +32,12 @@ describe('typed event mapper migration', () => {
         payload: { threadId: 'thread-1', threadName: 'My Session' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0]).toEqual({
         type: 'session.updated',
-        sessionId: HIVE_SESSION,
+        sessionId: OCTOB_SESSION,
         data: { title: 'My Session', info: { title: 'My Session' } }
       })
     })
@@ -48,7 +48,7 @@ describe('typed event mapper migration', () => {
         payload: { threadId: 'thread-1' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(0)
     })
@@ -59,7 +59,7 @@ describe('typed event mapper migration', () => {
         payload: { threadId: 'thread-1', threadName: '' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(0)
     })
@@ -74,7 +74,7 @@ describe('typed event mapper migration', () => {
         payload: { threadId: 'thread-1', turnId: 't1', itemId: 'i1', delta: 'Hello' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('message.part.updated')
@@ -89,7 +89,7 @@ describe('typed event mapper migration', () => {
         payload: { threadId: 'thread-1', turnId: 't1', itemId: 'i1', delta: 'Thinking...' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const data = result[0].data as any
@@ -109,7 +109,7 @@ describe('typed event mapper migration', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const data = result[0].data as any
@@ -124,7 +124,7 @@ describe('typed event mapper migration', () => {
         payload: { threadId: 'thread-1', turnId: 't1', itemId: 'tool-42', delta: 'output line' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       expect(result[0].type).toBe('message.part.updated')
@@ -142,7 +142,7 @@ describe('typed event mapper migration', () => {
         payload: { threadId: 'thread-1', turnId: 't1', itemId: 'tool-fc-7', delta: 'diff content' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
@@ -158,7 +158,7 @@ describe('typed event mapper migration', () => {
         payload: { threadId: 'thread-1', turnId: 't1', itemId: 'i1', delta: 'plan step 1' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const data = result[0].data as any
@@ -174,7 +174,7 @@ describe('typed event mapper migration', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const data = result[0].data as any
@@ -188,7 +188,7 @@ describe('typed event mapper migration', () => {
         payload: { assistantText: 'payload assistant text' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const data = result[0].data as any
@@ -202,7 +202,7 @@ describe('typed event mapper migration', () => {
         payload: { reasoningText: 'payload reasoning text' }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const data = result[0].data as any
@@ -235,7 +235,7 @@ describe('typed event mapper migration', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       const errorEvent = result.find((e: any) => e.type === 'session.error')
       expect(errorEvent).toBeDefined()
@@ -259,7 +259,7 @@ describe('typed event mapper migration', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       const statusEvents = result.filter((e) => e.type === 'session.status')
       expect(statusEvents).toHaveLength(1)
@@ -286,7 +286,7 @@ describe('typed event mapper migration', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       const statusEvents = result.filter((e) => e.type === 'session.status')
       expect(statusEvents).toHaveLength(1)
@@ -304,7 +304,7 @@ describe('typed event mapper migration', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       const errorEvent = result.find((e: any) => e.type === 'session.error')
       expect(errorEvent).toBeDefined()
@@ -330,7 +330,7 @@ describe('typed event mapper migration', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       const usageEvents = result.filter((e) => e.type === 'message.updated')
       expect(usageEvents).toHaveLength(1)
@@ -347,7 +347,7 @@ describe('typed event mapper migration', () => {
         payload: {}
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       const statusEvents = result.filter((e) => e.type === 'session.status')
       expect(statusEvents).toHaveLength(1)
@@ -382,7 +382,7 @@ describe('typed event mapper migration', () => {
           turnId: 'turn-1'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.type).toBe('tool')
@@ -421,7 +421,7 @@ describe('typed event mapper migration', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
@@ -463,7 +463,7 @@ describe('typed event mapper migration', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
@@ -490,7 +490,7 @@ describe('typed event mapper migration', () => {
           turnId: 'turn-1'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('fileChange')
@@ -516,7 +516,7 @@ describe('typed event mapper migration', () => {
           turnId: 'turn-1'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('MCP')
@@ -541,7 +541,7 @@ describe('typed event mapper migration', () => {
           turnId: 'turn-1'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('Tool')
@@ -568,7 +568,7 @@ describe('typed event mapper migration', () => {
           turnId: 'turn-1'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('Task')
@@ -589,7 +589,7 @@ describe('typed event mapper migration', () => {
           turnId: 'turn-1'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('WebSearch')
@@ -617,7 +617,7 @@ describe('typed event mapper migration', () => {
           turnId: 'turn-1'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.state.status).toBe('completed')
@@ -645,7 +645,7 @@ describe('typed event mapper migration', () => {
           turnId: 'turn-1'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.state.status).toBe('error')
@@ -659,7 +659,7 @@ describe('typed event mapper migration', () => {
           item: { toolName: 'shell', type: 'commandExecution', id: 'x' }
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.type).toBe('tool')
@@ -683,7 +683,7 @@ describe('typed event mapper migration', () => {
           cwd: '/project'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('Bash')
@@ -706,7 +706,7 @@ describe('typed event mapper migration', () => {
         }
       })
 
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
@@ -731,7 +731,7 @@ describe('typed event mapper migration', () => {
           reason: 'needs write access'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('fileChange')
@@ -749,7 +749,7 @@ describe('typed event mapper migration', () => {
           command: 'echo hello'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.callID).toBe('cmd-from-payload')
@@ -764,7 +764,7 @@ describe('typed event mapper migration', () => {
           item: { id: 'legacy-1', command: 'ls' }
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('Bash')
@@ -781,7 +781,7 @@ describe('typed event mapper migration', () => {
           itemId: 'fr-1'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('Read')
@@ -803,7 +803,7 @@ describe('typed event mapper migration', () => {
           stdin: 'y\n'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.type).toBe('tool')
@@ -822,7 +822,7 @@ describe('typed event mapper migration', () => {
           stdin: 'y\n'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(0)
     })
 
@@ -838,7 +838,7 @@ describe('typed event mapper migration', () => {
           stdin: 'y\n'
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.callID).toBe('from-event')
@@ -853,7 +853,7 @@ describe('typed event mapper migration', () => {
         method: 'turn/completed',
         payload: { state: 'failed', error: 'Connection lost' }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       const errorEvent = result.find((e: any) => e.type === 'session.error')
       expect(errorEvent).toBeDefined()
       expect((errorEvent as any).data.error).toBe('Connection lost')
@@ -867,7 +867,7 @@ describe('typed event mapper migration', () => {
         method: 'turn/completed',
         payload: { some: 'other data' }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       const errorEvents = result.filter((e: any) => e.type === 'session.error')
       expect(errorEvents).toHaveLength(0)
       const statusEvents = result.filter((e: any) => e.type === 'session.status')
@@ -882,7 +882,7 @@ describe('typed event mapper migration', () => {
           item: { toolName: 'run_shell', type: 'commandExecution', id: 'legacy-cmd' }
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.type).toBe('tool')
@@ -895,7 +895,7 @@ describe('typed event mapper migration', () => {
         method: 'item/agentMessage/delta',
         payload: { delta: { type: 'text', text: 'structured fallback' } }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const data = result[0].data as any
       expect(data.part).toEqual({ type: 'text', text: 'structured fallback' })
@@ -906,7 +906,7 @@ describe('typed event mapper migration', () => {
         method: 'item/reasoning/textDelta',
         payload: { delta: { type: 'reasoning', text: 'thinking deeply' } }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const data = result[0].data as any
       expect(data.part).toEqual({ type: 'reasoning', text: 'thinking deeply' })
@@ -917,7 +917,7 @@ describe('typed event mapper migration', () => {
         method: 'item/agentMessage/delta',
         payload: { assistantText: 'from assistantText field' }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const data = result[0].data as any
       expect(data.part).toEqual({ type: 'text', text: 'from assistantText field' })
@@ -928,7 +928,7 @@ describe('typed event mapper migration', () => {
         method: 'item/reasoning/textDelta',
         payload: { reasoningText: 'from reasoningText field' }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const data = result[0].data as any
       expect(data.part).toEqual({ type: 'reasoning', text: 'from reasoningText field' })
@@ -939,7 +939,7 @@ describe('typed event mapper migration', () => {
         method: 'item/agentMessage/delta',
         textDelta: 'from textDelta'
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const data = result[0].data as any
       expect(data.part).toEqual({ type: 'text', text: 'from textDelta' })
@@ -954,7 +954,7 @@ describe('typed event mapper migration', () => {
           item: { id: 'wrap-1', command: '/bin/zsh -lc \'git status\'' }
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.tool).toBe('Bash')
@@ -969,7 +969,7 @@ describe('typed event mapper migration', () => {
           item: { type: 'commandExecution', id: 'leg-1', toolName: 'shell', status: 'completed', output: 'legacy output' }
         }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.state.status).toBe('completed')
@@ -981,11 +981,11 @@ describe('typed event mapper migration', () => {
         method: 'thread/name/updated',
         payload: { threadName: 'Legacy Title' }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       expect(result[0]).toEqual({
         type: 'session.updated',
-        sessionId: HIVE_SESSION,
+        sessionId: OCTOB_SESSION,
         data: { title: 'Legacy Title', info: { title: 'Legacy Title' } }
       })
     })
@@ -996,7 +996,7 @@ describe('typed event mapper migration', () => {
         itemId: 'fallback-ti',
         payload: { item: { id: 'fallback-ti', type: 'commandExecution' } }
       })
-      const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+      const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
       expect(result).toHaveLength(1)
       const part = (result[0].data as any).part
       expect(part.type).toBe('tool')

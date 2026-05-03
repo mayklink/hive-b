@@ -24,7 +24,7 @@ describe('Session 2: Hidden Files', () => {
   let tempDir: string
 
   beforeEach(async () => {
-    tempDir = await fs.mkdtemp(join(tmpdir(), 'hive-hidden-files-'))
+    tempDir = await fs.mkdtemp(join(tmpdir(), 'octob-hidden-files-'))
 
     // Create dotfiles
     await fs.writeFile(join(tempDir, '.env'), 'SECRET=123')

@@ -81,7 +81,7 @@ class PerfDiagnosticsService {
 
   constructor() {
     const homeDir = app.getPath('home')
-    this.logDir = join(homeDir, '.hive', 'logs')
+    this.logDir = join(homeDir, '.octob', 'logs')
     this.logFile = join(this.logDir, 'perf-diagnostics.jsonl')
   }
 

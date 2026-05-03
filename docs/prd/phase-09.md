@@ -860,7 +860,7 @@ There are three distinct bugs in how subagents are handled:
 
 **Bug A — Premature Notifications** (`opencode-service.ts` lines 1003–1008):
 
-When a child/subagent session emits `session.idle`, the event is routed to the parent Hive session via `resolveParentSession()`. Then `maybeNotifySessionComplete(hiveSessionId)` fires for the parent, sending a "session completed" notification even though only a subagent finished — the parent may still be processing.
+When a child/subagent session emits `session.idle`, the event is routed to the parent Hive session via `resolveParentSession()`. Then `maybeNotifySessionComplete(octobSessionId)` fires for the parent, sending a "session completed" notification even though only a subagent finished — the parent may still be processing.
 
 **Bug B — Subagent Content Streams to Main Page** (`opencode-service.ts` lines 987–999):
 
@@ -886,7 +886,7 @@ When forwarding stream events from a child session to the renderer, include a `c
 // StreamEvent enhancement:
 interface StreamEvent {
   type: string
-  sessionId: string // Hive session ID (parent)
+  sessionId: string // Octob session ID (parent)
   data: unknown
   childSessionId?: string // OpenCode session ID of the child, if this event came from a subagent
 }
@@ -917,13 +917,13 @@ Modify `handleEvent()` to tag child events and guard notifications:
 ```typescript
 // After resolving child to parent:
 const isChildEvent =
-  hiveSessionId !== this.getMappedHiveSessionId(instance, sessionId, eventDirectory)
+  octobSessionId !== this.getMappedOctobSessionId(instance, sessionId, eventDirectory)
 // (i.e., the original sessionId didn't map directly — we went through resolveParentSession)
 
 // Only notify on parent's own session.idle
 if (eventType === 'session.idle') {
   if (!isChildEvent) {
-    this.maybeNotifySessionComplete(hiveSessionId)
+    this.maybeNotifySessionComplete(octobSessionId)
   }
   // For child session.idle, still forward the event (renderer needs it to update subtask status)
 }
@@ -931,7 +931,7 @@ if (eventType === 'session.idle') {
 // Tag the event with the child session ID
 const streamEvent: StreamEvent = {
   type: eventType,
-  sessionId: hiveSessionId,
+  sessionId: octobSessionId,
   data: event.properties || event,
   ...(isChildEvent ? { childSessionId: sessionId } : {})
 }

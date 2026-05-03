@@ -22,15 +22,15 @@ The existing IPC handler pattern (from `src/main/ipc/opencode-handlers.ts` lines
 ```typescript
 // For each operation, check if session uses claude-code SDK
 if (sdkManager && dbService) {
-  const session = dbService.getSession(hiveSessionId)
+  const session = dbService.getSession(octobSessionId)
   if (session?.agent_sdk === 'claude-code') {
     const impl = sdkManager.getImplementer('claude-code')
-    const result = await impl.connect(worktreePath, hiveSessionId)
+    const result = await impl.connect(worktreePath, octobSessionId)
     return { success: true, ...result }
   }
 }
 // Fall through to existing OpenCode path
-const result = await openCodeService.connect(worktreePath, hiveSessionId)
+const result = await openCodeService.connect(worktreePath, octobSessionId)
 return { success: true, ...result }
 ```
 
@@ -91,15 +91,15 @@ async function dispatchToSdk(ctx, sessionId, opencodeFn, claudeFn) {
 
 3. `[server]` Implement `opencodeConnect`:
    ```typescript
-   opencodeConnect: async (_p, { worktreePath, hiveSessionId }, ctx) => {
+   opencodeConnect: async (_p, { worktreePath, octobSessionId }, ctx) => {
      try {
-       const session = ctx.db.session.get(hiveSessionId)
+       const session = ctx.db.session.get(octobSessionId)
        if (session?.agent_sdk === 'claude-code' && ctx.sdkManager) {
          const impl = ctx.sdkManager.getImplementer('claude-code')
-         const result = await impl.connect(worktreePath, hiveSessionId)
+         const result = await impl.connect(worktreePath, octobSessionId)
          return { success: true, sessionId: result.sessionId }
        }
-       const result = await openCodeService.connect(worktreePath, hiveSessionId)
+       const result = await openCodeService.connect(worktreePath, octobSessionId)
        return { success: true, sessionId: result.sessionId }
      } catch (error) {
        return { success: false, error: error.message }
@@ -108,10 +108,10 @@ async function dispatchToSdk(ctx, sessionId, opencodeFn, claudeFn) {
    ```
 
 4. `[server]` Implement `opencodeReconnect`:
-   - Takes `OpenCodeReconnectInput { worktreePath, opencodeSessionId, hiveSessionId }`
+   - Takes `OpenCodeReconnectInput { worktreePath, opencodeSessionId, octobSessionId }`
    - SDK dispatch: check `db.getAgentSdkForSession(opencodeSessionId)`
-   - OpenCode path: `openCodeService.reconnect(worktreePath, opencodeSessionId, hiveSessionId)`
-   - Claude path: `impl.reconnect(worktreePath, opencodeSessionId, hiveSessionId)`
+   - OpenCode path: `openCodeService.reconnect(worktreePath, opencodeSessionId, octobSessionId)`
+   - Claude path: `impl.reconnect(worktreePath, opencodeSessionId, octobSessionId)`
    - Returns `OpenCodeReconnectResult { success, sessionStatus, revertMessageID }`
 
 5. `[server]` Implement `opencodeDisconnect`:
@@ -349,13 +349,13 @@ async function dispatchToSdk(ctx, sessionId, opencodeFn, claudeFn) {
 **Tasks:**
 
 1. `[server]` Implement `opencodePlanApprove`:
-   - Takes `PlanApproveInput { worktreePath, hiveSessionId, requestId }`
-   - OpenCode path: `openCodeService.planApprove(worktreePath, hiveSessionId, requestId)`
+   - Takes `PlanApproveInput { worktreePath, octobSessionId, requestId }`
+   - OpenCode path: `openCodeService.planApprove(worktreePath, octobSessionId, requestId)`
    - Returns `SuccessResult`
 
 2. `[server]` Implement `opencodePlanReject`:
-   - Takes `PlanRejectInput { worktreePath, hiveSessionId, feedback, requestId }`
-   - OpenCode path: `openCodeService.planReject(worktreePath, hiveSessionId, feedback, requestId)`
+   - Takes `PlanRejectInput { worktreePath, octobSessionId, feedback, requestId }`
+   - OpenCode path: `openCodeService.planReject(worktreePath, octobSessionId, feedback, requestId)`
    - Returns `SuccessResult`
 
 3. `[server]` Verify: `pnpm build`

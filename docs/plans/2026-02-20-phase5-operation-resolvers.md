@@ -164,7 +164,7 @@ import { createLogger } from './logger'
 
 const log = createLogger({ component: 'ProjectOps' })
 
-const ICON_DIR = join(app.getPath('home'), '.hive', 'project-icons')
+const ICON_DIR = join(app.getPath('home'), '.octob', 'project-icons')
 
 const MIME_TYPES: Record<string, string> = {
   '.svg': 'image/svg+xml',

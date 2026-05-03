@@ -119,7 +119,7 @@ describe('ClaudeCodeImplementer', () => {
       // Inject a session via the exposed helper
       ;(impl as any).sessions.set('wp::/sid', {
         claudeSessionId: 'sid',
-        hiveSessionId: 'hive-1',
+        octobSessionId: 'hive-1',
         worktreePath: 'wp',
         abortController: controller,
         checkpoints: new Map(),
@@ -140,7 +140,7 @@ describe('ClaudeCodeImplementer', () => {
       const sessions = (impl as any).sessions as Map<string, ClaudeSessionState>
       sessions.set('a::1', {
         claudeSessionId: '1',
-        hiveSessionId: 'h1',
+        octobSessionId: 'h1',
         worktreePath: 'a',
         abortController: c1,
         checkpoints: new Map(),
@@ -149,7 +149,7 @@ describe('ClaudeCodeImplementer', () => {
       })
       sessions.set('b::2', {
         claudeSessionId: '2',
-        hiveSessionId: 'h2',
+        octobSessionId: 'h2',
         worktreePath: 'b',
         abortController: null,
         checkpoints: new Map(),
@@ -158,7 +158,7 @@ describe('ClaudeCodeImplementer', () => {
       })
       sessions.set('c::3', {
         claudeSessionId: '3',
-        hiveSessionId: 'h3',
+        octobSessionId: 'h3',
         worktreePath: 'c',
         abortController: c2,
         checkpoints: new Map(),
@@ -175,7 +175,7 @@ describe('ClaudeCodeImplementer', () => {
       const sessions = (impl as any).sessions as Map<string, ClaudeSessionState>
       sessions.set('x::y', {
         claudeSessionId: 'y',
-        hiveSessionId: 'hy',
+        octobSessionId: 'hy',
         worktreePath: 'x',
         abortController: null,
         checkpoints: new Map(),
@@ -190,7 +190,7 @@ describe('ClaudeCodeImplementer', () => {
       const sessions = (impl as any).sessions as Map<string, ClaudeSessionState>
       sessions.set('k::v', {
         claudeSessionId: 'v',
-        hiveSessionId: 'hv',
+        octobSessionId: 'hv',
         worktreePath: 'k',
         abortController: new AbortController(),
         checkpoints: new Map(),
@@ -242,7 +242,7 @@ describe('ClaudeCodeImplementer', () => {
     it('getSession returns state for registered session', () => {
       const state: ClaudeSessionState = {
         claudeSessionId: 's1',
-        hiveSessionId: 'h1',
+        octobSessionId: 'h1',
         worktreePath: '/proj',
         abortController: null,
         checkpoints: new Map(),

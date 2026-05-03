@@ -297,7 +297,7 @@ describe('Codex Question Prompts', () => {
       // Seed session
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        hiveSessionId: 'hive-q-1',
+        octobSessionId: 'hive-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -308,7 +308,7 @@ describe('Codex Question Prompts', () => {
       // Seed pending question
       impl.getPendingQuestions().set('q-req-1', {
         threadId: 'thread-q-1',
-        hiveSessionId: 'hive-q-1',
+        octobSessionId: 'hive-q-1',
         worktreePath: '/test'
       })
 
@@ -335,7 +335,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        hiveSessionId: 'hive-q-1',
+        octobSessionId: 'hive-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -344,7 +344,7 @@ describe('Codex Question Prompts', () => {
       })
       impl.getPendingQuestions().set('q-req-1', {
         threadId: 'thread-q-1',
-        hiveSessionId: 'hive-q-1',
+        octobSessionId: 'hive-q-1',
         worktreePath: '/test'
       })
 
@@ -371,7 +371,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        hiveSessionId: 'hive-q-1',
+        octobSessionId: 'hive-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -380,7 +380,7 @@ describe('Codex Question Prompts', () => {
       })
       impl.getPendingQuestions().set('q-req-2', {
         threadId: 'thread-q-1',
-        hiveSessionId: 'hive-q-1',
+        octobSessionId: 'hive-q-1',
         worktreePath: '/test'
       })
 
@@ -399,7 +399,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        hiveSessionId: 'hive-q-1',
+        octobSessionId: 'hive-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -408,7 +408,7 @@ describe('Codex Question Prompts', () => {
       })
       impl.getPendingQuestions().set('q-req-2', {
         threadId: 'thread-q-1',
-        hiveSessionId: 'hive-q-1',
+        octobSessionId: 'hive-q-1',
         worktreePath: '/test'
       })
 
@@ -434,7 +434,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getPendingQuestions().set('q-1', {
         threadId: 'thread-1',
-        hiveSessionId: 'hive-1',
+        octobSessionId: 'hive-1',
         worktreePath: '/test'
       })
 
@@ -465,7 +465,7 @@ describe('Codex Question Prompts', () => {
       // Seed a session
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        hiveSessionId: 'hive-q-1',
+        octobSessionId: 'hive-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -525,7 +525,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        hiveSessionId: 'hive-q-1',
+        octobSessionId: 'hive-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -610,7 +610,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        hiveSessionId: 'hive-q-1',
+        octobSessionId: 'hive-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],

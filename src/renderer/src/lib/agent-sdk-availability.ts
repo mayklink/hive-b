@@ -43,5 +43,5 @@ export function getUnavailableAgentSdkMessage(
     return null
   }
 
-  return `${getAgentSdkLabel(sdk)} is not available on this system. Install it and restart Hive, or choose another provider.`
+  return `${getAgentSdkLabel(sdk)} is not available on this system. Install it and restart Octob, or choose another provider.`
 }

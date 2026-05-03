@@ -1,6 +1,6 @@
 <div align="center" dir="rtl">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>מתזמר סוכני AI בקוד פתוח לקידוד מקבילי בין פרויקטים.</strong></p>
   <p>הריצו סשנים של Claude Code, OpenCode ו-Codex במקביל. חלון אחד. ענפים מבודדים. אפס כאוס טאבים.</p>
 </div>

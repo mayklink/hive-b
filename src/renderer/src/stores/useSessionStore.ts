@@ -2189,7 +2189,7 @@ export const useSessionStore = create<SessionState>()(
       }
     }),
     {
-      name: 'hive-session-tabs',
+      name: 'octob-session-tabs',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         activeSessionByWorktree: state.activeSessionByWorktree,

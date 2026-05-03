@@ -45,7 +45,7 @@ export const usePromptHistoryStore = create<PromptHistoryState>()(
       }
     }),
     {
-      name: 'hive-prompt-history',
+      name: 'octob-prompt-history',
       storage: createJSONStorage(() => localStorage),
       version: 1,
       migrate: (persisted: unknown, version: number) => {

@@ -57,11 +57,11 @@ export class DatabaseService {
     if (dbPath) {
       this.dbPath = dbPath
     } else {
-      const hiveDir = join(app.getPath('home'), '.hive')
-      if (!existsSync(hiveDir)) {
-        mkdirSync(hiveDir, { recursive: true })
+      const octobDir = join(app.getPath('home'), '.octob')
+      if (!existsSync(octobDir)) {
+        mkdirSync(octobDir, { recursive: true })
       }
-      this.dbPath = join(hiveDir, 'hive.db')
+      this.dbPath = join(octobDir, 'octob.db')
     }
   }
 

@@ -1075,7 +1075,7 @@ export const useKanbanStore = create<KanbanState>()(
       }
     }),
     {
-      name: 'hive-kanban',
+      name: 'octob-kanban',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         isBoardViewActive: state.isBoardViewActive,

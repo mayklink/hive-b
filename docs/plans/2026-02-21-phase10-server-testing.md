@@ -41,8 +41,8 @@ vi.mock('electron', () => ({
   app: {
     getPath: (name: string) => {
       if (name === 'home') return homedir()
-      if (name === 'userData') return join(homedir(), '.hive')
-      if (name === 'logs') return join(homedir(), '.hive', 'logs')
+      if (name === 'userData') return join(homedir(), '.octob')
+      if (name === 'logs') return join(homedir(), '.octob', 'logs')
       return '/tmp'
     },
     getVersion: () => '0.0.0-test',
@@ -212,8 +212,8 @@ vi.mock('electron', () => ({
   app: {
     getPath: (name: string) => {
       if (name === 'home') return homedir()
-      if (name === 'userData') return join(homedir(), '.hive')
-      if (name === 'logs') return join(homedir(), '.hive', 'logs')
+      if (name === 'userData') return join(homedir(), '.octob')
+      if (name === 'logs') return join(homedir(), '.octob', 'logs')
       return '/tmp'
     },
     getVersion: () => '0.0.0-test',
@@ -953,7 +953,7 @@ Add inside the main describe block (after the existing `'renames session'` test,
         mutation {
           opencodePlanApprove(input: {
             worktreePath: "/tmp/wt"
-            hiveSessionId: "${hiveClaudeSessionId}"
+            octobSessionId: "${hiveClaudeSessionId}"
           }) {
             success
           }
@@ -972,7 +972,7 @@ Add inside the main describe block (after the existing `'renames session'` test,
         mutation {
           opencodePlanApprove(input: {
             worktreePath: "/tmp/wt"
-            hiveSessionId: "${hiveClaudeSessionId}"
+            octobSessionId: "${hiveClaudeSessionId}"
             requestId: "plan-req-1"
           }) {
             success
@@ -990,7 +990,7 @@ Add inside the main describe block (after the existing `'renames session'` test,
         mutation {
           opencodePlanApprove(input: {
             worktreePath: "/tmp/wt"
-            hiveSessionId: "no-such-session"
+            octobSessionId: "no-such-session"
           }) {
             success error
           }
@@ -1009,7 +1009,7 @@ Add inside the main describe block (after the existing `'renames session'` test,
         mutation {
           opencodePlanReject(input: {
             worktreePath: "/tmp/wt"
-            hiveSessionId: "${hiveClaudeSessionId}"
+            octobSessionId: "${hiveClaudeSessionId}"
             feedback: "needs more detail"
           }) {
             success

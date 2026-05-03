@@ -53,8 +53,8 @@ export function AddProjectButton(): React.JSX.Element {
     const handler = (): void => {
       handleAddProject()
     }
-    window.addEventListener('hive:add-project', handler)
-    return () => window.removeEventListener('hive:add-project', handler)
+    window.addEventListener('octob:add-project', handler)
+    return () => window.removeEventListener('octob:add-project', handler)
   }, [handleAddProject])
 
   const handleInitRepository = useCallback(async (): Promise<void> => {

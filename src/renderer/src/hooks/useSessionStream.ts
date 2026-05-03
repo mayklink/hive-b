@@ -11,7 +11,7 @@ import type { ToolUseInfo } from '@/components/sessions/ToolCard'
 // ---------------------------------------------------------------------------
 
 export interface UseSessionStreamParams {
-  sessionId: string // The hive session ID (used to filter stream events)
+  sessionId: string // The Octob session ID (used to filter stream events)
   worktreePath: string // Filesystem path to the worktree
   opencodeSessionId: string // The opencode SDK session ID
   enabled?: boolean

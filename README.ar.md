@@ -1,6 +1,6 @@
 <div align="center" dir="rtl">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>منسّق وكلاء ذكاء اصطناعي مفتوح المصدر للبرمجة المتوازية عبر المشاريع.</strong></p>
   <p>شغّل جلسات Claude Code وOpenCode وCodex بالتوازي. نافذة واحدة. فروع معزولة. بلا فوضى تبويبات.</p>
 </div>

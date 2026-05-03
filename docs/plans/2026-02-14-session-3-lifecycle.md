@@ -49,7 +49,7 @@ export interface ClaudeQuery {
 
 export interface ClaudeSessionState {
   claudeSessionId: string
-  hiveSessionId: string
+  octobSessionId: string
   worktreePath: string
   abortController: AbortController | null
   checkpoints: Map<string, number>
@@ -117,7 +117,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
         (implementer as any).getSessionKey('/path/to/worktree', result.sessionId)
       ) as ClaudeSessionState
       expect(session).toBeDefined()
-      expect(session.hiveSessionId).toBe('hive-session-1')
+      expect(session.octobSessionId).toBe('hive-session-1')
       expect(session.worktreePath).toBe('/path/to/worktree')
       expect(session.claudeSessionId).toBe(result.sessionId)
       expect(session.materialized).toBe(false)
@@ -163,7 +163,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
       ) as ClaudeSessionState
       expect(session).toBeDefined()
       expect(session.claudeSessionId).toBe('claude-session-abc123')
-      expect(session.hiveSessionId).toBe('hive-session-1')
+      expect(session.octobSessionId).toBe('hive-session-1')
       expect(session.worktreePath).toBe('/path/to/worktree')
     })
 
@@ -346,7 +346,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
         (implementer as any).getSessionKey('/wt2', r2.sessionId)
       )
       expect(remaining).toBeDefined()
-      expect(remaining.hiveSessionId).toBe('hive-2')
+      expect(remaining.octobSessionId).toBe('hive-2')
     })
 
     it('reconnect after app restart simulation (fresh implementer)', async () => {
@@ -369,7 +369,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
       ) as ClaudeSessionState
       expect(session.materialized).toBe(true)
       expect(session.query).toBeNull()
-      expect(session.hiveSessionId).toBe('hive-session-from-db')
+      expect(session.octobSessionId).toBe('hive-session-from-db')
     })
   })
 })
@@ -400,7 +400,7 @@ git commit -m "test(claude): add failing lifecycle tests for Session 3"
 Replace the stub with:
 
 ```typescript
-async connect(worktreePath: string, hiveSessionId: string): Promise<{ sessionId: string }> {
+async connect(worktreePath: string, octobSessionId: string): Promise<{ sessionId: string }> {
   // Generate a placeholder session ID. The real Claude session ID will be
   // obtained when the first prompt() call streams from the SDK.
   const placeholderId = `pending::${crypto.randomUUID()}`
@@ -408,7 +408,7 @@ async connect(worktreePath: string, hiveSessionId: string): Promise<{ sessionId:
   const key = this.getSessionKey(worktreePath, placeholderId)
   const state: ClaudeSessionState = {
     claudeSessionId: placeholderId,
-    hiveSessionId,
+    octobSessionId,
     worktreePath,
     abortController: new AbortController(),
     checkpoints: new Map(),
@@ -419,7 +419,7 @@ async connect(worktreePath: string, hiveSessionId: string): Promise<{ sessionId:
 
   log.info('Connected (deferred)', {
     worktreePath,
-    hiveSessionId,
+    octobSessionId,
     placeholderId
   })
 
@@ -463,7 +463,7 @@ Replace the stub with:
 async reconnect(
   worktreePath: string,
   agentSessionId: string,
-  hiveSessionId: string
+  octobSessionId: string
 ): Promise<{
   success: boolean
   sessionStatus?: 'idle' | 'busy' | 'retry'
@@ -474,11 +474,11 @@ async reconnect(
   // If already registered (e.g., tab switch without full teardown), update the mapping
   const existing = this.sessions.get(key)
   if (existing) {
-    existing.hiveSessionId = hiveSessionId
-    log.info('Reconnect: session already registered, updated hiveSessionId', {
+    existing.octobSessionId = octobSessionId
+    log.info('Reconnect: session already registered, updated octobSessionId', {
       worktreePath,
       agentSessionId,
-      hiveSessionId
+      octobSessionId
     })
     return { success: true, sessionStatus: 'idle', revertMessageID: null }
   }
@@ -486,7 +486,7 @@ async reconnect(
   // Register the persisted session ID. Actual SDK resume happens on next prompt().
   const state: ClaudeSessionState = {
     claudeSessionId: agentSessionId,
-    hiveSessionId,
+    octobSessionId,
     worktreePath,
     abortController: new AbortController(),
     checkpoints: new Map(),
@@ -498,7 +498,7 @@ async reconnect(
   log.info('Reconnected (deferred)', {
     worktreePath,
     agentSessionId,
-    hiveSessionId
+    octobSessionId
   })
 
   return { success: true, sessionStatus: 'idle', revertMessageID: null }

@@ -183,7 +183,7 @@ export const useCommandPaletteStore = create<CommandPaletteState>()(
       }
     }),
     {
-      name: 'hive-command-palette',
+      name: 'octob-command-palette',
       storage: createJSONStorage(() => localStorage),
       // Only persist recent commands
       partialize: (state) => ({

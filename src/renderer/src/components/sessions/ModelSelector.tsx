@@ -211,8 +211,8 @@ export function ModelSelector({
   useEffect(() => {
     if (onChange) return
     const handleCycleVariant = (): void => cycleVariant()
-    window.addEventListener('hive:cycle-variant', handleCycleVariant)
-    return () => window.removeEventListener('hive:cycle-variant', handleCycleVariant)
+    window.addEventListener('octob:cycle-variant', handleCycleVariant)
+    return () => window.removeEventListener('octob:cycle-variant', handleCycleVariant)
   }, [cycleVariant, onChange])
 
   // Determine display name for the pill

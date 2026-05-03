@@ -10,7 +10,7 @@ const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10MB
 const ALLOWED_EXTENSIONS = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'])
 
 async function getAttachmentsDir(): Promise<string> {
-  const dir = join(app.getPath('home'), '.hive', 'attachments')
+  const dir = join(app.getPath('home'), '.octob', 'attachments')
   await mkdir(dir, { recursive: true })
   return dir
 }

@@ -538,7 +538,7 @@ echo "      - Hive-${NEW_VERSION}-mac.zip"
 echo "      - canary-mac.yml (auto-updater)"
 if $WIN_BUILD_OK; then
   echo "    Windows:"
-  echo "      - Hive-Setup-${NEW_VERSION}.exe  (NSIS installer)"
+  echo "      - Octob-Setup-${NEW_VERSION}.exe  (NSIS installer)"
   echo "      - Hive-${NEW_VERSION}-win.zip    (portable)"
   echo "      - canary.yml (auto-updater)"
 else

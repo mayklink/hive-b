@@ -298,7 +298,7 @@ export function useCommands() {
       {
         id: 'action:add-project',
         label: 'Add Project',
-        description: 'Add a new project to Hive',
+        description: 'Add a new project to Octob',
         category: 'action',
         icon: 'FolderPlus',
         keywords: ['add', 'new', 'project', 'import'],
@@ -565,7 +565,7 @@ export function useCommands() {
         keywords: ['settings', 'preferences', 'config'],
         action: () => {
           closeCommandPalette()
-          window.dispatchEvent(new CustomEvent('hive:open-settings'))
+          window.dispatchEvent(new CustomEvent('octob:open-settings'))
         }
       },
       {

@@ -89,12 +89,12 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
       expect(state.query).toBeNull()
     })
 
-    it('stores worktreePath and hiveSessionId correctly', async () => {
+    it('stores worktreePath and octobSessionId correctly', async () => {
       const { sessionId } = await impl.connect('/my/path', 'hive-42')
       const key = (impl as any).getSessionKey('/my/path', sessionId)
       const state = sessions.get(key)!
       expect(state.worktreePath).toBe('/my/path')
-      expect(state.hiveSessionId).toBe('hive-42')
+      expect(state.octobSessionId).toBe('hive-42')
       expect(state.claudeSessionId).toBe(sessionId)
     })
   })
@@ -132,7 +132,7 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
       expect(state.query).toBeNull()
     })
 
-    it('handles already-registered sessions by updating hiveSessionId', async () => {
+    it('handles already-registered sessions by updating octobSessionId', async () => {
       await impl.reconnect('/proj', 'sid-1', 'hive-old')
       const result = await impl.reconnect('/proj', 'sid-1', 'hive-new')
 
@@ -144,7 +144,7 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
 
       const key = (impl as any).getSessionKey('/proj', 'sid-1')
       const state = sessions.get(key)!
-      expect(state.hiveSessionId).toBe('hive-new')
+      expect(state.octobSessionId).toBe('hive-new')
     })
 
     it('does not create a duplicate entry for already-registered sessions', async () => {
@@ -164,7 +164,7 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
       const state = sessions.get(key)!
       expect(state.worktreePath).toBe('/other/path')
       expect(state.claudeSessionId).toBe('persisted-id')
-      expect(state.hiveSessionId).toBe('h5')
+      expect(state.octobSessionId).toBe('h5')
     })
   })
 
@@ -299,7 +299,7 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
       const key = '/x::manual'
       sessions.set(key, {
         claudeSessionId: 'manual',
-        hiveSessionId: 'h1',
+        octobSessionId: 'h1',
         worktreePath: '/x',
         abortController: null,
         checkpoints: new Map(),

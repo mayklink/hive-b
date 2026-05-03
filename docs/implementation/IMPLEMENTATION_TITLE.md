@@ -13,9 +13,9 @@ Reference: [PRD_TITLES.md](../prd/PRD_TITLES.md)
 1. Rewrite `src/main/services/claude-session-title.ts`:
    - Remove all `execFile`/`child_process` imports and types (`ExecFileExecutor`, `defaultExecFile`)
    - Import `loadClaudeSDK` from `./claude-sdk-loader`, `mkdirSync`/`existsSync` from `node:fs`, `join` from `node:path`, `homedir` from `node:os`
-   - Compute `titlesDir` as `join(homedir(), '.hive', 'titles')`
+   - Compute `titlesDir` as `join(homedir(), '.octob', 'titles')`
    - Change function signature to `generateSessionTitle(message: string, claudeBinaryPath?: string | null): Promise<string | null>`
-   - Ensure `~/.hive/titles/` exists via `mkdirSync(titlesDir, { recursive: true })`
+   - Ensure `~/.octob/titles/` exists via `mkdirSync(titlesDir, { recursive: true })`
    - Load SDK via `loadClaudeSDK()`
    - Build prompt from `TITLE_PROMPT + truncatedMessage` (keep existing prompt text and `MAX_MESSAGE_LENGTH` truncation)
    - Call `sdk.query({ prompt, options: { cwd: titlesDir, model: 'haiku', maxTurns: 1, pathToClaudeCodeExecutable (if provided) } })`
@@ -27,7 +27,7 @@ Reference: [PRD_TITLES.md](../prd/PRD_TITLES.md)
 ### Definition of Done
 
 - `claude-session-title.ts` has zero references to `child_process`, `execFile`, `ExecFileExecutor`, `defaultExecFile`, `CLAUDECODE`
-- Function uses `loadClaudeSDK()` → `sdk.query()` with `cwd: ~/.hive/titles/`
+- Function uses `loadClaudeSDK()` → `sdk.query()` with `cwd: ~/.octob/titles/`
 - Function signature is `(message, claudeBinaryPath?) → Promise<string | null>`
 - File compiles with no TypeScript errors: `npx tsc --noEmit` on the file passes
 
@@ -61,11 +61,11 @@ Reference: [PRD_TITLES.md](../prd/PRD_TITLES.md)
      - Never throws — always returns string or `null`
    - Add new test cases for SDK-specific behavior:
      - Uses `model: 'haiku'` in query options
-     - Sets `cwd` to `~/.hive/titles/` path
+     - Sets `cwd` to `~/.octob/titles/` path
      - Passes `maxTurns: 1` in query options
      - Passes `pathToClaudeCodeExecutable` when `claudeBinaryPath` is provided
      - Omits `pathToClaudeCodeExecutable` when `claudeBinaryPath` is `null`/`undefined`
-     - Creates `~/.hive/titles/` directory if it doesn't exist
+     - Creates `~/.octob/titles/` directory if it doesn't exist
      - Aborts query via AbortController after timeout
 
 ### Definition of Done
@@ -140,7 +140,7 @@ Reference: [PRD_TITLES.md](../prd/PRD_TITLES.md)
 
 1. Run the combined test suite:
    - `npx vitest run test/claude-session-title.test.ts test/claude-code-title-integration.test.ts test/phase-21/session-2/claude-code-implementer.test.ts test/phase-21/session-3/claude-lifecycle.test.ts`
-2. Verify `~/.hive/titles/` directory behavior:
+2. Verify `~/.octob/titles/` directory behavior:
    - Confirm the directory gets created on first title generation
    - Confirm SDK session artifacts land there, not in the project directory
 3. Clean up `PRD_TITLES.md` and `IMPLEMENTATION_TITLE.md` — remove or move to docs if desired
@@ -157,7 +157,7 @@ Reference: [PRD_TITLES.md](../prd/PRD_TITLES.md)
 - All automated tests pass
 - Manual smoke test confirms title appears in sidebar and branch renames
 - No references to the old CLI-based approach remain in source or test files
-- `~/.hive/titles/` directory is created and contains SDK artifacts
+- `~/.octob/titles/` directory is created and contains SDK artifacts
 
 ### Testing Criteria
 

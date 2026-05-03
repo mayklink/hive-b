@@ -64,7 +64,7 @@ Before processing any key, check these in order. If any match, `return` without 
 | `Escape` | insert | normal | `enterNormalMode()` (blurs active input) |
 | `Escape` | normal (help open) | normal | `setHelpOverlayOpen(false)` |
 | `Escape` | normal (no overlay) | — | Do nothing, let it propagate (for modals) |
-| `I` (Shift+I) | normal | insert | Open left sidebar if collapsed, dispatch `hive:focus-project-filter` event |
+| `I` (Shift+I) | normal | insert | Open left sidebar if collapsed, dispatch `octob:focus-project-filter` event |
 | `focusin` on INPUT/TEXTAREA/contentEditable | normal | insert | Auto-switch (but NOT if inside `[data-radix-dialog-content]`, `[cmdk-root]`, or `[data-radix-popover-content]`) |
 | `focusout` from input | insert | normal | Only if new `document.activeElement` is not an input/textarea/contentEditable |
 

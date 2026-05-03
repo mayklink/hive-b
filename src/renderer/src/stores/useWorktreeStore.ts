@@ -151,7 +151,7 @@ interface WorktreeState {
 // Load persisted worktree order from localStorage
 function loadPersistedOrder(): Map<string, string[]> {
   try {
-    const raw = localStorage.getItem('hive-worktree-order')
+    const raw = localStorage.getItem('octob-worktree-order')
     if (raw) {
       const parsed = JSON.parse(raw) as Record<string, string[]>
       const map = new Map<string, string[]>()
@@ -825,7 +825,7 @@ export const useWorktreeStore = create<WorktreeState>((set, get) => ({
         for (const [pid, o] of newOrderMap.entries()) {
           serialized[pid] = o
         }
-        localStorage.setItem('hive-worktree-order', JSON.stringify(serialized))
+        localStorage.setItem('octob-worktree-order', JSON.stringify(serialized))
       } catch {
         // Ignore storage errors
       }

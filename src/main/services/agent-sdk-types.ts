@@ -23,11 +23,11 @@ export interface AgentSdkImplementer {
   readonly capabilities: AgentSdkCapabilities
 
   // Lifecycle
-  connect(worktreePath: string, hiveSessionId: string): Promise<{ sessionId: string }>
+  connect(worktreePath: string, octobSessionId: string): Promise<{ sessionId: string }>
   reconnect(
     worktreePath: string,
     agentSessionId: string,
-    hiveSessionId: string
+    octobSessionId: string
   ): Promise<{
     success: boolean
     sessionStatus?: 'idle' | 'busy' | 'retry'
@@ -84,8 +84,8 @@ export interface AgentSdkImplementer {
   permissionList(worktreePath?: string): Promise<unknown[]>
 
   // Undo/Redo
-  undo(worktreePath: string, agentSessionId: string, hiveSessionId: string): Promise<unknown>
-  redo(worktreePath: string, agentSessionId: string, hiveSessionId: string): Promise<unknown>
+  undo(worktreePath: string, agentSessionId: string, octobSessionId: string): Promise<unknown>
+  redo(worktreePath: string, agentSessionId: string, octobSessionId: string): Promise<unknown>
 
   // Commands
   listCommands(worktreePath: string): Promise<unknown[]>

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { mapCodexEventToStreamEvents } from '../../../src/main/services/codex-event-mapper'
 import type { CodexManagerEvent } from '../../../src/main/services/codex-app-server-manager'
 
-const HIVE_SESSION = 'hive-session-123'
+const OCTOB_SESSION = 'hive-session-123'
 
 function makeEvent(overrides: Partial<CodexManagerEvent>): CodexManagerEvent {
   return {
@@ -34,11 +34,11 @@ describe('Codex plan update stream mapping', () => {
       }
     })
 
-    const result = mapCodexEventToStreamEvents(event, HIVE_SESSION)
+    const result = mapCodexEventToStreamEvents(event, OCTOB_SESSION)
 
     expect(result).toHaveLength(1)
     expect(result[0]?.type).toBe('message.part.updated')
-    expect(result[0]?.sessionId).toBe(HIVE_SESSION)
+    expect(result[0]?.sessionId).toBe(OCTOB_SESSION)
 
     const data = result[0]?.data as any
     expect(data._codexEventId).toBe('evt-plan-1')

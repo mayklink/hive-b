@@ -10,7 +10,7 @@
 - Improve diff view color contrast by using dark-colored text on colored backgrounds (dark green text on green bg, dark red text on red bg) instead of light/white text
 - Show a modal dialog when a user tries to add a non-git directory, offering to run `git init --initial-branch=main` or abort
 - Replace the QuickActions split-button dropdown with individual icon buttons (Cursor, Ghostty, Copy Path, Finder) spread horizontally for one-click access
-- Replace the "Hive" text title in the header with the app logo and display the active project name with branch in parentheses, e.g. `tedooo-website (lisbon)`
+- Replace the "Octob" text title in the header with the app logo and display the active project name with branch in parentheses, e.g. `tedooo-website (lisbon)`
 - Add a "Refresh Project" action to the project context menu that re-syncs worktree branch names from `git worktree list` output
 - Auto-highlight parent project items when a child worktree or session is selected, eliminating the visual inconsistency of independent selection states
 - Auto-expand thinking/reasoning blocks while they are actively streaming, then auto-collapse them once the streaming completes
@@ -605,7 +605,7 @@ The `Header` component in `src/renderer/src/components/layout/Header.tsx` (68 li
 ```tsx
 <div className="w-16 flex-shrink-0" />  {/* macOS traffic light spacer */}
 <div className="flex items-center gap-2 flex-1">
-  <h1 className="text-lg font-semibold">Hive</h1>
+  <h1 className="text-lg font-semibold">Octob</h1>
 </div>
 ```
 
@@ -630,7 +630,7 @@ Header Left Section:
   - When selectedWorktreeId changes → branch name updates
   - When branch is renamed (via auto-rename or manual) → branch name updates
     (already handled by store reactivity since worktree data refreshes)
-  - When no project selected → show "Hive" as fallback
+  - When no project selected → show "Octob" as fallback
   - When no worktree selected → show just project name without parenthetical
 
   Logo source:
@@ -662,11 +662,11 @@ const selectedWorktree = (() => {
   return null
 })()
 
-// In JSX — replace the <h1>Hive</h1> section:
+// In JSX — replace the <h1>Octob</h1> section:
 <div className="flex items-center gap-2 flex-1 min-w-0">
   <img
     src="hive-logo.svg"  // or inline SVG component
-    alt="Hive"
+    alt="Octob"
     className="h-5 w-5 shrink-0"
   />
   {selectedProject ? (
@@ -679,7 +679,7 @@ const selectedWorktree = (() => {
       )}
     </span>
   ) : (
-    <span className="text-sm font-medium">Hive</span>
+    <span className="text-sm font-medium">Octob</span>
   )}
 </div>
 ```
@@ -694,7 +694,7 @@ Alternatively, copy the app icon to the renderer's `public/` or `assets/` direct
 
 | File                                            | Change                                                            |
 | ----------------------------------------------- | ----------------------------------------------------------------- |
-| `src/renderer/src/components/layout/Header.tsx` | Replace `<h1>Hive</h1>` with logo + project/branch display        |
+| `src/renderer/src/components/layout/Header.tsx` | Replace `<h1>Octob</h1>` with logo + project/branch display        |
 | `src/renderer/src/assets/hive-logo.svg`         | **New file** — SVG logo asset (or inline SVG component in Header) |
 
 ---
@@ -735,7 +735,7 @@ Refresh Project Action:
   │ New Workspace From...│
   │ Project Settings     │
   │ ──────────────────── │
-  │ Remove from Hive     │
+  │ Remove from Octob     │
   └──────────────────────┘
 
   Behavior:
@@ -1132,7 +1132,7 @@ Note: `isStreaming` is already a parameter of `renderParts()` — it just needs 
 - No dropdown menu is required to access any quick action
 - The header displays the active project name and branch in parentheses, e.g. `tedooo-website (lisbon)`
 - The header display updates within one frame when switching projects, worktrees, or when branches are renamed
-- When no project is selected, the header shows the app logo with "Hive" text
+- When no project is selected, the header shows the app logo with "Octob" text
 - "Refresh Project" appears in the project context menu and successfully re-syncs worktree branch names
 - Clicking a worktree in the sidebar highlights both the worktree AND its parent project
 - There is never a state where a worktree is selected but a different project is highlighted

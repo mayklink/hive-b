@@ -74,7 +74,7 @@ Note: `shiki` is optional for syntax highlighting in tool views. All other featu
      persist(
        (set, get) => ({ ... }),
        {
-         name: 'hive-session-tabs',
+         name: 'octob-session-tabs',
          storage: createJSONStorage(() => localStorage),
          partialize: (state) => ({
            activeSessionByWorktree: state.activeSessionByWorktree,
@@ -135,7 +135,7 @@ Note: `shiki` is optional for syntax highlighting in tool views. All other featu
 describe('Session 1: Tab Persistence & Badges', () => {
   test('activeSessionByWorktree persisted to localStorage', () => {
     // Set active session for worktree
-    // Verify localStorage key 'hive-session-tabs' contains the mapping
+    // Verify localStorage key 'octob-session-tabs' contains the mapping
   })
 
   test('Switching worktrees restores last active session', () => {

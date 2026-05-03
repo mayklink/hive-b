@@ -119,10 +119,10 @@ Add a new mapping function before the `CodexAppServerManager` class:
 ```typescript
 // ── Approval decision mapping ────────────────────────────────────
 
-export type HiveApprovalDecision = 'once' | 'always' | 'reject'
+export type OctobApprovalDecision = 'once' | 'always' | 'reject'
 
 function toCodexCommandApprovalDecision(
-  decision: HiveApprovalDecision
+  decision: OctobApprovalDecision
 ): CommandExecutionApprovalDecision {
   switch (decision) {
     case 'once':
@@ -135,7 +135,7 @@ function toCodexCommandApprovalDecision(
 }
 
 function toCodexFileChangeApprovalDecision(
-  decision: HiveApprovalDecision
+  decision: OctobApprovalDecision
 ): FileChangeApprovalDecision {
   switch (decision) {
     case 'once':
@@ -156,7 +156,7 @@ Replace the `respondToApproval` method body (lines 627-655) so it maps decisions
 respondToApproval(
   threadId: string,
   requestId: string,
-  decision: HiveApprovalDecision
+  decision: OctobApprovalDecision
 ): void {
   const context = this.sessions.get(threadId)
   if (!context) {
@@ -261,7 +261,7 @@ types from codex-schemas."
 ### Testing
 
 - **Automatic:** `pnpm vitest run test/phase-22/session-6/codex-permission-requests.test.ts`
-- **Manual:** Start a Codex session → trigger a tool that needs approval → approve it → check `~/.hive/logs/codex.jsonl` for `"decision":"accept"` in the outgoing message (not `"decision":"once"`)
+- **Manual:** Start a Codex session → trigger a tool that needs approval → approve it → check `~/.octob/logs/codex.jsonl` for `"decision":"accept"` in the outgoing message (not `"decision":"once"`)
 
 ---
 
@@ -864,7 +864,7 @@ if (method === 'thread/name/updated') {
   return [
     {
       type: 'session.updated',
-      sessionId: hiveSessionId,
+      sessionId: octobSessionId,
       data: { title, info: { title } }
     }
   ]
@@ -899,7 +899,7 @@ if (event.kind === 'request') {
 
     return [{
       type: 'message.part.updated',
-      sessionId: hiveSessionId,
+      sessionId: octobSessionId,
       data: annotateData({
         part: {
           type: 'tool',
@@ -1082,7 +1082,7 @@ git commit -m "refactor: type codex implementer with generated schemas
 Remove from `codex-app-server-manager.ts`:
 - The `CodexUserInputAnswer` interface (already removed in Session 4)
 - The `toCodexUserInputAnswer` function (already removed in Session 4)
-- The old `'once' | 'always' | 'reject'` literal union from the type signature (replaced by `HiveApprovalDecision` in Session 2)
+- The old `'once' | 'always' | 'reject'` literal union from the type signature (replaced by `OctobApprovalDecision` in Session 2)
 
 Verify no other file imports these removed types.
 

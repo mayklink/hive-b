@@ -140,7 +140,7 @@ export const useLayoutStore = create<LayoutState>()(
       }
     }),
     {
-      name: 'hive-layout',
+      name: 'octob-layout',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         leftSidebarWidth: state.leftSidebarWidth,

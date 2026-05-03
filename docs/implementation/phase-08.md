@@ -141,7 +141,7 @@ These are defense-in-depth — the main process fix is the primary fix, the rend
 1. Start the app, select a worktree, open a session
 2. Send a message to the AI
 3. Wait for the response to complete
-4. Open the SQLite database (`~/.hive/hive.db`) and query: `SELECT id, role, content FROM session_messages WHERE session_id = '<id>' ORDER BY created_at`
+4. Open the SQLite database (`~/.octob/octob.db`) and query: `SELECT id, role, content FROM session_messages WHERE session_id = '<id>' ORDER BY created_at`
 5. Verify: exactly one `user` row with your message, exactly one `assistant` row with the AI response — no duplicates
 6. Send multiple messages in succession — verify no echoes accumulate
 7. Refresh the session (switch away and back) — verify message history is clean

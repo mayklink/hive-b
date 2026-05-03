@@ -30,7 +30,7 @@ GraphQL resolvers use two dispatch mechanisms:
 
 1. **`withSdkDispatch(ctx, agentSessionId, opencodeFn, sdkFn)`** -- Looks up the SDK from the
    agent session ID in the DB, then routes to the correct implementer.
-2. **`withSdkDispatchByHiveSession(ctx, hiveSessionId, opencodeFn, sdkFn)`** -- Used for `connect`
+2. **`withSdkDispatchByOctobSession(ctx, octobSessionId, opencodeFn, sdkFn)`** -- Used for `connect`
    where no agent session ID exists yet; looks up `session.agent_sdk` from the DB.
 
 For operations that take an `agentSdk` parameter from the GraphQL enum (e.g., `opencodeModels`,
@@ -233,7 +233,7 @@ requires implementers to provide:
 | `redo`               | Throws unsupported error (`supportsRedo: false`)                                    |
 | `listCommands`       | Returns `[]` (SDK commands require active query transport)                          |
 | `sendCommand`        | Translates to `/<command> <args>` prompt and delegates to `prompt()`                |
-| `renameSession`      | Updates session name in Hive's local DB (SDK has no rename API)                     |
+| `renameSession`      | Updates session name in Octob's local DB (SDK has no rename API)                     |
 
 ### Codex
 
@@ -257,7 +257,7 @@ requires implementers to provide:
 | `redo`               | Throws unsupported error (`supportsRedo: false`)                                    |
 | `listCommands`       | Throws unsupported error (`supportsCommands: false`)                                |
 | `sendCommand`        | Throws unsupported error (`supportsCommands: false`)                                |
-| `renameSession`      | Updates session name in Hive's local DB (Codex has no rename API)                   |
+| `renameSession`      | Updates session name in Octob's local DB (Codex has no rename API)                   |
 
 ## Known Limitations
 

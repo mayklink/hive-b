@@ -43,7 +43,7 @@ export function SettingsIntegrations(): React.JSX.Element {
 
       let saved: Record<string, string> = {}
       try {
-        const raw = localStorage.getItem('hive-provider-settings')
+        const raw = localStorage.getItem('octob-provider-settings')
         if (raw) {
           const parsed = JSON.parse(raw) as Record<string, string>
           for (const fields of Object.values(schemaMap)) {
@@ -69,7 +69,7 @@ export function SettingsIntegrations(): React.JSX.Element {
             }
           }
           setValues(merged)
-          localStorage.setItem('hive-provider-settings', JSON.stringify(merged))
+          localStorage.setItem('octob-provider-settings', JSON.stringify(merged))
         } else if (Object.keys(saved).length > 0) {
           await saveProviderSettingsToDatabase(saved)
         }
@@ -83,7 +83,7 @@ export function SettingsIntegrations(): React.JSX.Element {
     setValues((prev) => {
       const updated = { ...prev, [key]: value }
       try {
-        localStorage.setItem('hive-provider-settings', JSON.stringify(updated))
+        localStorage.setItem('octob-provider-settings', JSON.stringify(updated))
       } catch {
         // ignore
       }

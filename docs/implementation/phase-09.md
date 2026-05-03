@@ -588,12 +588,12 @@ describe('Session 4: Abort Streaming', () => {
 In `src/main/services/opencode-service.ts`, in the `handleEvent()` method (around line 987), after resolving the hive session ID, track whether this event came from a child session:
 
 ```typescript
-// After line 999 (hiveSessionId resolved):
-const directHiveId = this.getMappedHiveSessionId(instance, sessionId, eventDirectory)
-const isChildEvent = !directHiveId && !!hiveSessionId
+// After line 999 (octobSessionId resolved):
+const directOctobId = this.getMappedOctobSessionId(instance, sessionId, eventDirectory)
+const isChildEvent = !directOctobId && !!octobSessionId
 ```
 
-The logic: if `getMappedHiveSessionId` returned nothing for the raw `sessionId` but we got a `hiveSessionId` through `resolveParentSession`, this is a child event.
+The logic: if `getMappedOctobSessionId` returned nothing for the raw `sessionId` but we got a `octobSessionId` through `resolveParentSession`, this is a child event.
 
 #### 2. Guard notifications for parent-only `session.idle`
 
@@ -603,18 +603,18 @@ Replace lines 1003–1008:
 // BEFORE:
 if (eventType === 'session.idle') {
   log.info('Forwarding session.idle to renderer', { ... })
-  this.maybeNotifySessionComplete(hiveSessionId)
+  this.maybeNotifySessionComplete(octobSessionId)
 }
 
 // AFTER:
 if (eventType === 'session.idle') {
   log.info('Forwarding session.idle to renderer', {
     opencodeSessionId: sessionId,
-    hiveSessionId,
+    octobSessionId,
     isChildEvent
   })
   if (!isChildEvent) {
-    this.maybeNotifySessionComplete(hiveSessionId)
+    this.maybeNotifySessionComplete(octobSessionId)
   }
 }
 ```
@@ -626,7 +626,7 @@ Modify the `StreamEvent` construction (lines 1015–1019):
 ```typescript
 const streamEvent: StreamEvent = {
   type: eventType,
-  sessionId: hiveSessionId,
+  sessionId: octobSessionId,
   data: event.properties || event,
   ...(isChildEvent ? { childSessionId: sessionId } : {})
 }
@@ -640,7 +640,7 @@ Before line 1012, add a guard:
 // Only persist events from the parent session as top-level messages.
 // Child/subagent events will be rendered inside SubtaskCards, not as standalone messages.
 if (!isChildEvent) {
-  this.persistStreamEvent(hiveSessionId, eventType, event.properties || event)
+  this.persistStreamEvent(octobSessionId, eventType, event.properties || event)
 }
 ```
 
@@ -699,13 +699,13 @@ interface OpenCodeStreamEvent {
 // test/phase-9/session-5/subagent-tagging.test.ts
 describe('Session 5: Subagent Event Tagging', () => {
   test('child event detected when resolveParentSession succeeds', () => {
-    // getMappedHiveSessionId returns null for child session ID
+    // getMappedOctobSessionId returns null for child session ID
     // resolveParentSession returns a parent ID
     // Verify isChildEvent = true
   })
 
   test('parent event detected when direct mapping exists', () => {
-    // getMappedHiveSessionId returns hive ID directly
+    // getMappedOctobSessionId returns hive ID directly
     // Verify isChildEvent = false
   })
 

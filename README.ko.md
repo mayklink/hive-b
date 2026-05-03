@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>프로젝트 전반에 걸친 병렬 코딩을 위한 오픈소스 AI 에이전트 오케스트레이터</strong></p>
   <p>Claude Code, OpenCode, Codex 세션을 병렬로 실행. 하나의 창. 격리된 브랜치. 탭 혼란 제로.</p>
   <p>

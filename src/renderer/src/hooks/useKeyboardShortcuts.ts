@@ -275,7 +275,7 @@ export function useKeyboardShortcuts(): void {
           if (activeTab) {
             if (activeTab.status === 'running') {
               window.dispatchEvent(
-                new CustomEvent('hive:close-terminal-tab', {
+                new CustomEvent('octob:close-terminal-tab', {
                   detail: { worktreeId, tabId: activeTab.id, tabName: activeTab.name }
                 })
               )
@@ -379,7 +379,7 @@ function getShortcutHandlers(
                 // Dispatch a custom event that TerminalTabSidebar can listen for
                 // to show the close confirmation dialog
                 window.dispatchEvent(
-                  new CustomEvent('hive:close-terminal-tab', {
+                  new CustomEvent('octob:close-terminal-tab', {
                     detail: { worktreeId, tabId: activeTab.id, tabName: activeTab.name }
                   })
                 )
@@ -461,7 +461,7 @@ function getShortcutHandlers(
       binding: getEffectiveBinding('model:cycle-variant'),
       allowInInput: true,
       handler: () => {
-        window.dispatchEvent(new CustomEvent('hive:cycle-variant'))
+        window.dispatchEvent(new CustomEvent('octob:cycle-variant'))
       }
     },
 
@@ -513,7 +513,7 @@ function getShortcutHandlers(
         // Dispatch focus event (allow a tick for sidebar to render)
         setTimeout(
           () => {
-            window.dispatchEvent(new CustomEvent('hive:focus-project-filter'))
+            window.dispatchEvent(new CustomEvent('octob:focus-project-filter'))
           },
           leftSidebarCollapsed ? 100 : 0
         )
@@ -529,7 +529,7 @@ function getShortcutHandlers(
       allowInInput: false,
       handler: () => {
         // Focus the commit form by dispatching a custom event
-        window.dispatchEvent(new CustomEvent('hive:focus-commit'))
+        window.dispatchEvent(new CustomEvent('octob:focus-commit'))
         // Also ensure right sidebar is open
         const { rightSidebarCollapsed, setRightSidebarCollapsed } = useLayoutStore.getState()
         if (rightSidebarCollapsed) {
@@ -698,7 +698,7 @@ function getShortcutHandlers(
       binding: getEffectiveBinding('settings:open'),
       allowInInput: false,
       handler: () => {
-        window.dispatchEvent(new CustomEvent('hive:open-settings'))
+        window.dispatchEvent(new CustomEvent('octob:open-settings'))
       }
     }
   ]
@@ -743,7 +743,7 @@ function useMenuActionListeners(): void {
     })
 
     on('menu:add-project', () => {
-      window.dispatchEvent(new CustomEvent('hive:add-project'))
+      window.dispatchEvent(new CustomEvent('octob:add-project'))
     })
 
     on('menu:toggle-mode', () => {
@@ -753,7 +753,7 @@ function useMenuActionListeners(): void {
     })
 
     on('menu:cycle-model', () => {
-      window.dispatchEvent(new CustomEvent('hive:cycle-variant'))
+      window.dispatchEvent(new CustomEvent('octob:cycle-variant'))
     })
 
     on('menu:run-project', () => {
@@ -761,15 +761,15 @@ function useMenuActionListeners(): void {
     })
 
     on('menu:undo-turn', () => {
-      window.dispatchEvent(new CustomEvent('hive:undo-turn'))
+      window.dispatchEvent(new CustomEvent('octob:undo-turn'))
     })
 
     on('menu:redo-turn', () => {
-      window.dispatchEvent(new CustomEvent('hive:redo-turn'))
+      window.dispatchEvent(new CustomEvent('octob:redo-turn'))
     })
 
     on('menu:commit', () => {
-      window.dispatchEvent(new CustomEvent('hive:focus-commit'))
+      window.dispatchEvent(new CustomEvent('octob:focus-commit'))
       const { rightSidebarCollapsed, setRightSidebarCollapsed } = useLayoutStore.getState()
       if (rightSidebarCollapsed) {
         setRightSidebarCollapsed(false)

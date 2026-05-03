@@ -107,11 +107,11 @@ import {
 } from '@/lib/constants'
 
 /**
- * Resolve an OpenCode session ID to the corresponding Hive session ID
+ * Resolve an OpenCode session ID to the corresponding Octob session ID
  * by looking up sessions with a matching `opencode_session_id` in the store.
- * Returns null if no matching Hive session is found.
+ * Returns null if no matching Octob session is found.
  */
-function resolveHiveSessionIdFromOpencodeId(opencodeSessionId: string): string | null {
+function resolveOctobSessionIdFromOpencodeId(opencodeSessionId: string): string | null {
   const sessionState = useSessionStore.getState()
 
   for (const sessions of sessionState.sessionsByWorktree.values()) {
@@ -411,7 +411,7 @@ async function loadCodexDurableState(
   }
 }
 
-const TRANSCRIPT_CACHE_KEY_PREFIX = 'hive:session-transcript:'
+const TRANSCRIPT_CACHE_KEY_PREFIX = 'octob:session-transcript:'
 
 function getTranscriptCacheKey(sessionId: string): string {
   return `${TRANSCRIPT_CACHE_KEY_PREFIX}${sessionId}`
@@ -1215,7 +1215,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
               const r = req as PermissionRequest
               if (r.id && r.permission) {
                 const targetSessionId =
-                  (r.sessionID && resolveHiveSessionIdFromOpencodeId(r.sessionID)) || sessionId
+                  (r.sessionID && resolveOctobSessionIdFromOpencodeId(r.sessionID)) || sessionId
                 usePermissionStore.getState().addPermission(targetSessionId, r)
               }
             }
@@ -3117,7 +3117,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
         // Hydrate any pending permission requests (fire-and-forget).
         // The REST endpoint returns ALL pending permissions for the directory,
         // so we use PermissionRequest.sessionID (OpenCode session ID) to route
-        // each permission to the correct Hive session rather than blindly
+        // each permission to the correct Octob session rather than blindly
         // assigning to the mounting session.
         const hydratePermissions = (path: string): void => {
           window.opencodeOps
@@ -3128,7 +3128,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
                   const r = req as PermissionRequest
                   if (r.id && r.permission) {
                     const targetSessionId =
-                      (r.sessionID && resolveHiveSessionIdFromOpencodeId(r.sessionID)) || sessionId
+                      (r.sessionID && resolveOctobSessionIdFromOpencodeId(r.sessionID)) || sessionId
                     usePermissionStore.getState().addPermission(targetSessionId, r)
                   }
                 }
@@ -5426,11 +5426,11 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
       handleRedo()
     }
 
-    window.addEventListener('hive:undo-turn', onUndo)
-    window.addEventListener('hive:redo-turn', onRedo)
+    window.addEventListener('octob:undo-turn', onUndo)
+    window.addEventListener('octob:redo-turn', onRedo)
     return () => {
-      window.removeEventListener('hive:undo-turn', onUndo)
-      window.removeEventListener('hive:redo-turn', onRedo)
+      window.removeEventListener('octob:undo-turn', onUndo)
+      window.removeEventListener('octob:redo-turn', onRedo)
     }
   }, [sessionId, worktreePath, opencodeSessionId, refreshMessagesFromOpenCode])
 

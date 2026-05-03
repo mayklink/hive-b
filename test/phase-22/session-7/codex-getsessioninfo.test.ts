@@ -53,7 +53,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       impl.getSessions().set('/test::thread-1', {
         threadId: 'thread-1',
-        hiveSessionId: 'hive-1',
+        octobSessionId: 'hive-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -75,7 +75,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       const session: CodexSessionState = {
         threadId: 'thread-1',
-        hiveSessionId: 'hive-1',
+        octobSessionId: 'hive-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -104,7 +104,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       impl.getSessions().set('/test::thread-1', {
         threadId: 'thread-1',
-        hiveSessionId: 'hive-1',
+        octobSessionId: 'hive-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [
@@ -141,7 +141,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       impl.getSessions().set('/test::thread-1', {
         threadId: 'thread-1',
-        hiveSessionId: 'hive-1',
+        octobSessionId: 'hive-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -162,7 +162,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       impl.getSessions().set('/test::thread-1', {
         threadId: 'thread-1',
-        hiveSessionId: 'hive-1',
+        octobSessionId: 'hive-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -211,7 +211,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       impl.getSessions().set('/test::thread-1', {
         threadId: 'thread-1',
-        hiveSessionId: 'hive-1',
+        octobSessionId: 'hive-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],

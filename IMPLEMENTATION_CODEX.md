@@ -411,8 +411,8 @@ Use these files throughout implementation:
 
 **Definition of done:**
 
-- Approval prompts can be accepted or rejected from Hive.
-- Question prompts can be answered from Hive.
+- Approval prompts can be accepted or rejected from Octob.
+- Question prompts can be answered from Octob.
 - Abort works and updates session state.
 - `getMessages()` returns Codex session content well enough for reconnect/UI hydration.
 

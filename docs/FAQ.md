@@ -54,7 +54,7 @@ A worktree is a linked working copy of your repository. Think of it as having mu
 ### Where does Hive store worktrees?
 By default, worktrees are stored in:
 ```
-~/.hive-worktrees/{project-name}/{worktree-name}
+~/.octob-worktrees/{project-name}/{worktree-name}
 ```
 
 ### Can I use existing worktrees?
@@ -216,8 +216,8 @@ Use Console.app or `tail -f ~/Library/Logs/hive/main.log` to view them.
 ## Data & Privacy
 
 ### Where does Hive store its data?
-- Database: `~/.hive/hive.db` (SQLite)
-- Worktrees: `~/.hive-worktrees/`
+- Database: `~/.octob/octob.db` (SQLite)
+- Worktrees: `~/.octob-worktrees/`
 - Archives: `~/.hive-archive/`
 - Logs: `~/Library/Logs/hive/`
 - Settings: `~/Library/Application Support/hive/`
@@ -239,7 +239,7 @@ Hive includes optional, anonymous usage analytics via PostHog. You can disable t
 ### "Permission denied" when creating worktrees
 Ensure you have write permissions to:
 - The repository directory
-- `~/.hive-worktrees/`
+- `~/.octob-worktrees/`
 
 ### Git operations fail with "not a git repository"
 This usually means:
@@ -277,7 +277,7 @@ Worktrees are regular git checkouts, so they work with any CI/CD system. Push fr
 ### Can I script Hive operations?
 Not directly, but you can:
 - Use git commands on worktree directories
-- Access the SQLite database at `~/.hive/hive.db`
+- Access the SQLite database at `~/.octob/octob.db`
 - Use the command palette for common operations
 
 ## Getting Help

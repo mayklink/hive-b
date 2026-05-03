@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>Orkiestrator agentów AI o otwartym kodzie źródłowym do równoległego programowania między projektami.</strong></p>
   <p>Uruchamiaj sesje Claude Code, OpenCode i Codex równolegle. Jedno okno. Izolowane gałęzie. Zero chaosu zakładek.</p>
   <p>

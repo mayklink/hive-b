@@ -121,13 +121,13 @@ Triggered by "+" button next to project name.
    b. Repeat up to 10 attempts
 5. After 10 collisions, append suffix: "-v1", "-v2", etc.
 6. Create git branch: git branch {city-name}
-7. Create worktree at: ~/.hive-worktrees/{project-name}/{city-name}
+7. Create worktree at: ~/.octob-worktrees/{project-name}/{city-name}
    Command: git worktree add {path} {branch-name}
 ```
 
 **Worktree Storage Location**:
 ```
-~/.hive-worktrees/
+~/.octob-worktrees/
 ├── project-alpha/
 │   ├── tokyo/
 │   ├── paris/
@@ -154,7 +154,7 @@ interface Worktree {
   projectId: string;       // FK to Project.id
   name: string;            // City name (display)
   branchName: string;      // Git branch name (same as name, lowercase-hyphenated)
-  path: string;            // Absolute path: ~/.hive-worktrees/{project}/{city}
+  path: string;            // Absolute path: ~/.octob-worktrees/{project}/{city}
   status: 'active' | 'archived';
   createdAt: string;       // ISO 8601
   lastAccessedAt: string;  // ISO 8601
@@ -298,7 +298,7 @@ interface SessionMessage {
 
 #### 6.1 SQLite Database
 
-**Location**: `~/.hive/hive.db`
+**Location**: `~/.octob/octob.db`
 
 **Tables**:
 
@@ -559,7 +559,7 @@ export const CITY_NAMES = [
 - Graceful degradation when git operations fail
 - Clear error messages in toast notifications
 - Recovery options where possible (retry, skip, etc.)
-- Logging to `~/.hive/logs/` for debugging
+- Logging to `~/.octob/logs/` for debugging
 
 ### Security
 - No remote code execution

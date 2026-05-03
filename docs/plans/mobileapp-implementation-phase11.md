@@ -69,7 +69,7 @@ interface HiveTransport {
     space: { /* ... */ }
   }
   opencodeOps: {
-    connect(worktreePath: string, hiveSessionId: string): Promise<ConnectResult>
+    connect(worktreePath: string, octobSessionId: string): Promise<ConnectResult>
     prompt(input: PromptInput): Promise<SuccessResult>
     abort(worktreePath: string, sessionId: string): Promise<SuccessResult>
     // ... all opencode operations
@@ -140,7 +140,7 @@ Disconnected → Connecting → Connected → Reconnecting → Connected
    mkdir -p src/{screens,components/ui,stores,hooks,lib,graphql/schema,graphql/__generated__,navigation}
    ```
 
-5. `[app]` Create `src/App.tsx` with a basic `<View><Text>Hive Mobile</Text></View>`.
+5. `[app]` Create `src/App.tsx` with a basic `<View><Text>Octob Mobile</Text></View>`.
 
 6. `[app]` Verify:
    ```bash
@@ -211,7 +211,7 @@ npx expo start --ios
    export function TestStyles() {
      return (
        <View className="flex-1 items-center justify-center bg-zinc-900">
-         <Text className="text-white text-2xl font-bold">Hive Mobile</Text>
+         <Text className="text-white text-2xl font-bold">Octob Mobile</Text>
          <Text className="text-zinc-400 text-sm mt-2">NativeWind working</Text>
        </View>
      )

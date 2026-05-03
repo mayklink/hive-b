@@ -58,7 +58,7 @@ function createMockDbService(overrides: Record<string, any> = {}) {
 function createMockSession(overrides: Partial<CodexSessionState> = {}): CodexSessionState {
   return {
     threadId: 'thread-1',
-    hiveSessionId: 'hive-session-1',
+    octobSessionId: 'hive-session-1',
     worktreePath: '/path/to/worktree',
     status: 'ready',
     messages: [],
@@ -127,12 +127,12 @@ describe('Codex title integration', () => {
     })
     expect(mockLogInfo).toHaveBeenCalledWith(
       'handleTitleGeneration: generateCodexSessionTitle returned',
-      { hiveSessionId: 'hive-session-1', title: 'Fix auth refresh' }
+      { octobSessionId: 'hive-session-1', title: 'Fix auth refresh' }
     )
     expect(mockLogCodexLifecycleEvent).toHaveBeenCalledWith(
       'title/applied',
       expect.objectContaining({
-        hiveSessionId: 'hive-session-1',
+        octobSessionId: 'hive-session-1',
         threadId: 'thread-1',
         title: 'Fix auth refresh'
       })
@@ -167,7 +167,7 @@ describe('Codex title integration', () => {
     )
     expect(mockLogDebug).toHaveBeenCalledWith(
       'applyGeneratedTitle: title unchanged, skipping session rename event',
-      { hiveSessionId: 'hive-session-1', title: 'Fix auth refresh' }
+      { octobSessionId: 'hive-session-1', title: 'Fix auth refresh' }
     )
   })
 
@@ -192,7 +192,7 @@ describe('Codex title integration', () => {
       'handleProviderTitleUpdate: received provider title update',
       expect.objectContaining({
         threadId: 'thread-1',
-        hiveSessionId: 'hive-session-1',
+        octobSessionId: 'hive-session-1',
         title: 'Fix auth refresh'
       })
     )
@@ -225,7 +225,7 @@ describe('Codex title integration', () => {
       'handleProviderTitleUpdate: applying provider title update',
       {
         threadId: 'thread-1',
-        hiveSessionId: 'hive-session-1',
+        octobSessionId: 'hive-session-1',
         title: 'Dark mode settings'
       }
     )

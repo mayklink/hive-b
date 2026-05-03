@@ -334,7 +334,7 @@ export const useConnectionStore = create<ConnectionState>()(
       }
     }),
     {
-      name: 'hive-connections',
+      name: 'octob-connections',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         selectedConnectionId: state.selectedConnectionId

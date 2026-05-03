@@ -31,7 +31,7 @@ describe('scanFlat filesystem fallback', () => {
   })
 
   test('lists files when folder is not a git repository', async () => {
-    tempDir = await mkdtemp(join(tmpdir(), 'hive-scan-flat-'))
+    tempDir = await mkdtemp(join(tmpdir(), 'octob-scan-flat-'))
     await mkdir(join(tempDir, 'src', 'lib'), { recursive: true })
     await writeFile(join(tempDir, 'src', 'lib', 'main.ts'), 'export {}\n')
 
@@ -43,7 +43,7 @@ describe('scanFlat filesystem fallback', () => {
   })
 
   test('skips IGNORE_DIRS such as node_modules', async () => {
-    tempDir = await mkdtemp(join(tmpdir(), 'hive-scan-flat-'))
+    tempDir = await mkdtemp(join(tmpdir(), 'octob-scan-flat-'))
     await mkdir(join(tempDir, 'node_modules', 'pkg'), { recursive: true })
     await writeFile(join(tempDir, 'node_modules', 'pkg', 'index.js'), '')
     await writeFile(join(tempDir, 'ok.ts'), '')

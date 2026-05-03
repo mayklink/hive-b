@@ -29,7 +29,7 @@ describe('Session 9: OpenCode session routing', () => {
     mockDb.getWorktreeBySessionId.mockReturnValue(null)
   })
 
-  test('routes event to correct hive session when opencode session IDs collide across directories', async () => {
+  test('routes event to correct octob session when opencode session IDs collide across directories', async () => {
     const send = vi.fn()
 
     openCodeService.setMainWindow({

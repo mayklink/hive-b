@@ -112,7 +112,7 @@ describe('Session 8: Git Init Dialog', () => {
         ...useProjectStore.getState(),
         addProject: vi.fn().mockResolvedValue({
           success: false,
-          error: 'This project has already been added to Hive.'
+          error: 'This project has already been added to Octob.'
         })
       })
 

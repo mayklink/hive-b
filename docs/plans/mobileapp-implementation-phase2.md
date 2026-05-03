@@ -543,7 +543,7 @@ Phase 2 defines the complete GraphQL schema in SDL (Schema Definition Language) 
    input OpenCodeReconnectInput {
      worktreePath: String!
      opencodeSessionId: String!
-     hiveSessionId: ID!
+     octobSessionId: ID!
    }
 
    input OpenCodePromptInput {
@@ -603,13 +603,13 @@ Phase 2 defines the complete GraphQL schema in SDL (Schema Definition Language) 
 
    input PlanApproveInput {
      worktreePath: String!
-     hiveSessionId: ID!
+     octobSessionId: ID!
      requestId: String
    }
 
    input PlanRejectInput {
      worktreePath: String!
-     hiveSessionId: ID!
+     octobSessionId: ID!
      feedback: String!
      requestId: String
    }

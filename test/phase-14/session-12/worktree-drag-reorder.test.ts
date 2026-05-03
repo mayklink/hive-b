@@ -58,7 +58,7 @@ describe('Session 12: Worktree Drag Reorder', () => {
       isLoading: false,
       error: null
     })
-    localStorage.removeItem('hive-worktree-order')
+    localStorage.removeItem('octob-worktree-order')
   })
 
   test('reorderWorktrees swaps items correctly', () => {
@@ -171,7 +171,7 @@ describe('Session 12: Worktree Drag Reorder', () => {
 
     useWorktreeStore.getState().reorderWorktrees(projectId, 0, 2)
 
-    const stored = JSON.parse(localStorage.getItem('hive-worktree-order') || '{}')
+    const stored = JSON.parse(localStorage.getItem('octob-worktree-order') || '{}')
     expect(stored[projectId]).toEqual(['b', 'c', 'a'])
   })
 

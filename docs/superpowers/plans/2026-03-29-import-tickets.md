@@ -147,7 +147,7 @@ export interface TicketProvider {
 
 - [ ] **Step 2: Verify the file compiles**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npx tsc --noEmit src/main/services/ticket-providers/ticket-provider-types.ts 2>&1 | head -20`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npx tsc --noEmit src/main/services/ticket-providers/ticket-provider-types.ts 2>&1 | head -20`
 
 If there are path resolution issues, just verify no syntax errors with:
 Run: `npx tsc --noEmit --moduleResolution node --module esnext --target esnext src/main/services/ticket-providers/ticket-provider-types.ts 2>&1 | head -20`
@@ -278,7 +278,7 @@ This adds three nullable columns and a composite index for fast dedup lookups.
 
 - [ ] **Step 2: Verify the app starts and migration runs**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -5`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -5`
 
 The build should succeed. When the app next runs, migration v15 will execute automatically.
 
@@ -385,7 +385,7 @@ Add this method after the existing `getKanbanTicket` method (near line 1670):
 
 - [ ] **Step 5: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -5`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -5`
 
 - [ ] **Step 6: Commit**
 
@@ -683,7 +683,7 @@ export { GitHubProvider } from './github-provider'
 
 - [ ] **Step 3: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -5`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -5`
 
 - [ ] **Step 4: Commit**
 
@@ -858,7 +858,7 @@ Find the IPC registration block (near line 530-539 where `registerKanbanHandlers
 
 - [ ] **Step 3: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
 
 - [ ] **Step 4: Commit**
 
@@ -1013,7 +1013,7 @@ In `src/preload/index.d.ts`, find the `kanban: {` block (near line 1309-1334). A
 
 - [ ] **Step 3: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
 
 - [ ] **Step 4: Commit**
 
@@ -1278,10 +1278,10 @@ Add both to the `deepMerge` call in `mergeResolvers()`, after `kanbanMutationRes
 
 - [ ] **Step 6: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
 
 Note: If the project uses graphql-codegen, run that first to regenerate types:
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npx graphql-codegen 2>&1 | tail -5`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npx graphql-codegen 2>&1 | tail -5`
 
 - [ ] **Step 7: Commit**
 
@@ -1433,7 +1433,7 @@ export type TicketImportApi = Window['ticketImport']
 
 - [ ] **Step 3: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
 
 - [ ] **Step 4: Commit**
 
@@ -1824,7 +1824,7 @@ export function ImportTicketsModal({
 
 - [ ] **Step 2: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
 
 - [ ] **Step 3: Commit**
 
@@ -1944,7 +1944,7 @@ If `selectedProjectPath` isn't readily available, you may need to read it from t
 
 - [ ] **Step 3: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
 
 - [ ] **Step 4: Commit**
 
@@ -2171,7 +2171,7 @@ After the title text, add:
 
 - [ ] **Step 3: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
 
 - [ ] **Step 4: Commit**
 
@@ -2369,7 +2369,7 @@ Find the section content rendering area (where each section component is conditi
 
 - [ ] **Step 3: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
 
 - [ ] **Step 4: Commit**
 
@@ -2416,7 +2416,7 @@ This isn't strictly necessary (the modal calls `window.ticketImport.importIssues
 
 - [ ] **Step 3: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
 
 - [ ] **Step 4: Commit**
 
@@ -2501,7 +2501,7 @@ const TICKET_FIELDS = `id projectId sessionId worktreeId title description colum
 
 - [ ] **Step 5: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
 
 - [ ] **Step 6: Commit**
 
@@ -2558,7 +2558,7 @@ Find the `ghFetch` method and replace it with:
 
 - [ ] **Step 2: Verify the build succeeds**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -10`
 
 - [ ] **Step 3: Commit**
 
@@ -2573,13 +2573,13 @@ git commit -m "feat(ticket-import): add rate limit detection with retry-after me
 
 - [ ] **Step 1: Full build check**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -20`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npm run build 2>&1 | tail -20`
 
 The build should succeed with no errors. Warnings are acceptable.
 
 - [ ] **Step 2: Check TypeScript strict mode**
 
-Run: `cd /Users/mor/.hive-worktrees/hive-electron/hive-electron--import-tickets && npx tsc --noEmit 2>&1 | tail -20`
+Run: `cd /Users/mor/.octob-worktrees/hive-electron/hive-electron--import-tickets && npx tsc --noEmit 2>&1 | tail -20`
 
 Fix any type errors that surface. Common issues:
 - Missing imports

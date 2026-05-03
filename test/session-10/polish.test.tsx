@@ -24,12 +24,12 @@ vi.mock('sonner', () => ({
 
 // Mock system ops
 const mockSystemOps = {
-  getLogDir: vi.fn().mockResolvedValue('/Users/test/.hive/logs'),
+  getLogDir: vi.fn().mockResolvedValue('/Users/test/.octob/logs'),
   getAppVersion: vi.fn().mockResolvedValue('1.0.0'),
   getAppPaths: vi.fn().mockResolvedValue({
-    userData: '/Users/test/.hive',
+    userData: '/Users/test/.octob',
     home: '/Users/test',
-    logs: '/Users/test/.hive/logs'
+    logs: '/Users/test/.octob/logs'
   })
 }
 
@@ -66,18 +66,18 @@ describe('Session 10: Error Handling & Polish', () => {
   describe('Logging System', () => {
     test('Log directory path is accessible via systemOps', async () => {
       const logDir = await window.systemOps.getLogDir()
-      expect(logDir).toBe('/Users/test/.hive/logs')
+      expect(logDir).toBe('/Users/test/.octob/logs')
     })
 
     test('App paths are accessible via systemOps', async () => {
       const paths = await window.systemOps.getAppPaths()
-      expect(paths.logs).toBe('/Users/test/.hive/logs')
+      expect(paths.logs).toBe('/Users/test/.octob/logs')
       expect(paths.home).toBe('/Users/test')
     })
 
-    test('Logs should be written to ~/.hive/logs/', async () => {
+    test('Logs should be written to ~/.octob/logs/', async () => {
       const logDir = await window.systemOps.getLogDir()
-      expect(logDir).toContain('.hive/logs')
+      expect(logDir).toContain('.octob/logs')
     })
   })
 

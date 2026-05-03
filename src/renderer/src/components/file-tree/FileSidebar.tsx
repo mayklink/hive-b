@@ -51,8 +51,8 @@ export function FileSidebar({
         setActiveTab(tab)
       }
     }
-    window.addEventListener('hive:right-sidebar-tab', handler)
-    return () => window.removeEventListener('hive:right-sidebar-tab', handler)
+    window.addEventListener('octob:right-sidebar-tab', handler)
+    return () => window.removeEventListener('octob:right-sidebar-tab', handler)
   }, [vimModeEnabled])
 
   // Switch away from comments tab if PR is detached

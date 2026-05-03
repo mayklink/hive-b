@@ -16,7 +16,7 @@ Two dispatch helpers in `src/server/resolvers/helpers/sdk-dispatch.ts`:
 
 1. **`withSdkDispatch(ctx, agentSessionId, opencodeFn, claudeFn)`** — Looks up agent SDK via `ctx.db.getAgentSdkForSession(agentSessionId)`. Routes `'claude-code'` sessions to `ctx.sdkManager.getImplementer('claude-code')`, everything else to `openCodeService`. Falls back to OpenCode if `sdkManager` or `db` is unavailable.
 
-2. **`withSdkDispatchByHiveSession(ctx, hiveSessionId, opencodeFn, claudeFn)`** — Looks up via `ctx.db.getSession(hiveSessionId)?.agent_sdk`. Used only by `opencodeConnect` since the agent session doesn't exist yet at connect time.
+2. **`withSdkDispatchByOctobSession(ctx, octobSessionId, opencodeFn, claudeFn)`** — Looks up via `ctx.db.getSession(octobSessionId)?.agent_sdk`. Used only by `opencodeConnect` since the agent session doesn't exist yet at connect time.
 
 Both wrap calls in try/catch and return `{ success: false, error }` on failure.
 
@@ -36,8 +36,8 @@ src/server/resolvers/
 
 | Mutation | Dispatch | Service Method |
 |----------|----------|----------------|
-| `opencodeConnect` | by hiveSessionId (getSession) | `connect(worktreePath, hiveSessionId)` |
-| `opencodeReconnect` | by opencodeSessionId | `reconnect(worktreePath, opencodeSessionId, hiveSessionId)` |
+| `opencodeConnect` | by octobSessionId (getSession) | `connect(worktreePath, octobSessionId)` |
+| `opencodeReconnect` | by opencodeSessionId | `reconnect(worktreePath, opencodeSessionId, octobSessionId)` |
 | `opencodeDisconnect` | by sessionId | `disconnect(worktreePath, sessionId)` |
 | `opencodePrompt` | by opencodeSessionId | `prompt(worktreePath, sessionId, parts, model)` |
 | `opencodeAbort` | by sessionId | `abort(worktreePath, sessionId)` |
@@ -49,8 +49,8 @@ src/server/resolvers/
 | `opencodeFork` | by opencodeSessionId | `forkSession(...)` |
 | `opencodeQuestionReply` | none (requestId-based) | `questionReply(requestId, answers, worktreePath)` |
 | `opencodeQuestionReject` | none (requestId-based) | `questionReject(requestId, worktreePath)` |
-| `opencodePlanApprove` | none (opencode only) | `planApprove(worktreePath, hiveSessionId, requestId)` |
-| `opencodePlanReject` | none (opencode only) | `planReject(worktreePath, hiveSessionId, feedback, requestId)` |
+| `opencodePlanApprove` | none (opencode only) | `planApprove(worktreePath, octobSessionId, requestId)` |
+| `opencodePlanReject` | none (opencode only) | `planReject(worktreePath, octobSessionId, feedback, requestId)` |
 | `opencodePermissionReply` | none (requestId-based) | `permissionReply(requestId, reply, worktreePath, message)` |
 
 ### Queries

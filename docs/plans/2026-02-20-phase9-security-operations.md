@@ -939,7 +939,7 @@ git commit -m "feat(server): add QR code pairing display on first run and key ro
 - Modify: `src/server/headless-bootstrap.ts` (add PID file write on startup, cleanup on exit)
 - Test: `test/server/pid-file.test.ts`
 
-Write `~/.hive/hive-headless.pid` on startup, detect stale PID files, and clean up on exit.
+Write `~/.octob/hive-headless.pid` on startup, detect stale PID files, and clean up on exit.
 
 **Step 1: Write the failing test**
 
@@ -1072,7 +1072,7 @@ After the server starts (after the `console.log` lines around line 115-116), add
 
 ```typescript
   // PID file management
-  const pidPath = join(homedir(), '.hive', 'hive-headless.pid')
+  const pidPath = join(homedir(), '.octob', 'hive-headless.pid')
   const pidStatus = checkStalePidFile(pidPath)
   if (pidStatus === 'running') {
     const existingPid = parseInt(
@@ -1126,7 +1126,7 @@ git commit -m "feat(server): add PID file management with stale detection"
 - Test: `test/server/status-file.test.ts`
 - Modify: `src/server/headless-bootstrap.ts` (add periodic status writer)
 
-Write `~/.hive/hive-headless.status.json` every 30 seconds with live server metrics.
+Write `~/.octob/hive-headless.status.json` every 30 seconds with live server metrics.
 
 **Step 1: Write the failing test**
 
@@ -1293,7 +1293,7 @@ After the PID file block, add:
 
 ```typescript
   // Status file writer
-  const statusPath = join(homedir(), '.hive', 'hive-headless.status.json')
+  const statusPath = join(homedir(), '.octob', 'hive-headless.status.json')
   const statusOpts = { port, version: app.getVersion() }
   writeStatusFile(statusPath, statusOpts)
   const statusInterval = setInterval(() => {

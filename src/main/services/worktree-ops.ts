@@ -262,7 +262,7 @@ export async function deleteWorktreeOp(
       if (forced.success) {
         primary = { success: true }
       } else {
-        log.error('Forced worktree cleanup did not remove folder; archiving Hive entry anyway', {
+        log.error('Forced worktree cleanup did not remove folder; archiving Octob entry anyway', {
           worktreePath: params.worktreePath,
           error: forced.error
         })
@@ -272,7 +272,7 @@ export async function deleteWorktreeOp(
     let warning: string | undefined
     if (!primary.success) {
       warning =
-        'Archived in Hive, but the worktree folder could not be fully deleted (another app may have files open). Close terminals or editors using that folder and delete it manually if it remains.'
+        'Archived in Octob, but the worktree folder could not be fully deleted (another app may have files open). Close terminals or editors using that folder and delete it manually if it remains.'
     }
 
     // Release any assigned port for this worktree
@@ -368,7 +368,7 @@ export async function syncWorktreesOp(
           continue
         }
 
-        // Mark as archived (worktree was removed outside of Hive)
+        // Mark as archived (worktree was removed outside of Octob)
         db.archiveWorktree(dbWorktree.id)
         continue
       }
@@ -389,7 +389,7 @@ export async function syncWorktreesOp(
               archive: false
             })
           } catch (e) {
-            log.warn('Could not delete orphaned worktree folder during sync; archived in Hive anyway', {
+            log.warn('Could not delete orphaned worktree folder during sync; archived in Octob anyway', {
               path: dbWorktree.path,
               error: e instanceof Error ? e.message : String(e)
             })

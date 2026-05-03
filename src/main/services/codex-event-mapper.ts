@@ -465,16 +465,16 @@ function formatTaskDescription(task: TaskInfo): string {
 
 /**
  * Maps a Codex app-server manager event into one or more OpenCodeStreamEvent
- * objects that the Hive renderer understands.
+ * objects that the Octob renderer understands.
  *
  * Returns an array because a single Codex notification may produce multiple
  * stream events (e.g. turn/completed → message.updated + session.status).
  */
 export function mapCodexEventToStreamEvents(
   event: CodexManagerEvent,
-  hiveSessionId: string
+  octobSessionId: string
 ): OpenCodeStreamEvent[] {
-  const events = mapCodexEventToStreamEventsInner(event, hiveSessionId)
+  const events = mapCodexEventToStreamEventsInner(event, octobSessionId)
 
   if (event.childThreadId) {
     for (const e of events) {
@@ -487,7 +487,7 @@ export function mapCodexEventToStreamEvents(
 
 function mapCodexEventToStreamEventsInner(
   event: CodexManagerEvent,
-  hiveSessionId: string
+  octobSessionId: string
 ): OpenCodeStreamEvent[] {
   // Attach Codex event ID for renderer-side dedup (seenCodexEventIds in
   // SessionView). Placed on stream event `data`; does NOT flow into canonical
@@ -521,7 +521,7 @@ function mapCodexEventToStreamEventsInner(
       return [
         {
           type: 'message.part.updated',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           data: annotateData({
             part: {
               type: 'tool',
@@ -547,7 +547,7 @@ function mapCodexEventToStreamEventsInner(
       return [
         {
           type: 'message.part.updated',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           data: annotateData({
             part: {
               type: 'tool',
@@ -570,7 +570,7 @@ function mapCodexEventToStreamEventsInner(
       return [
         {
           type: 'message.part.updated',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           data: annotateData({
             part: {
               type: 'tool',
@@ -606,7 +606,7 @@ function mapCodexEventToStreamEventsInner(
       return [
         {
           type: 'message.part.updated',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           data: annotateData({
             part: {
               type: 'tool',
@@ -625,7 +625,7 @@ function mapCodexEventToStreamEventsInner(
     return [
       {
         type: 'message.part.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: annotateData(
           streamKind === 'reasoning' || streamKind === 'reasoning_summary'
             ? toReasoningPart(delta.text)
@@ -640,7 +640,7 @@ function mapCodexEventToStreamEventsInner(
     return [
       {
         type: 'session.status',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: annotateData({ status: { type: 'busy' } }),
         statusPayload: { type: 'busy' }
       }
@@ -657,7 +657,7 @@ function mapCodexEventToStreamEventsInner(
     return [
       {
         type: 'message.part.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: annotateData({
           part: {
             type: 'tool',
@@ -681,7 +681,7 @@ function mapCodexEventToStreamEventsInner(
     if (info.status === 'failed') {
       events.push({
         type: 'session.error',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: annotateData({ error: info.error ?? 'Turn failed' })
       })
     }
@@ -690,7 +690,7 @@ function mapCodexEventToStreamEventsInner(
     if (info.usage || info.cost !== undefined) {
       events.push({
         type: 'message.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: annotateData({
           ...(info.usage ? { usage: info.usage } : {}),
           ...(info.cost !== undefined ? { cost: info.cost } : {})
@@ -701,7 +701,7 @@ function mapCodexEventToStreamEventsInner(
     // Always emit idle status on turn completion
     events.push({
       type: 'session.status',
-      sessionId: hiveSessionId,
+      sessionId: octobSessionId,
       data: annotateData({ status: { type: 'idle' } }),
       statusPayload: { type: 'idle' }
     })
@@ -717,7 +717,7 @@ function mapCodexEventToStreamEventsInner(
     return [
       {
         type: 'message.part.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: annotateData({
           part: {
             type: 'tool',
@@ -741,7 +741,7 @@ function mapCodexEventToStreamEventsInner(
     return [
       {
         type: 'message.part.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: annotateData({
           part: {
             type: 'tool',
@@ -765,7 +765,7 @@ function mapCodexEventToStreamEventsInner(
     return [
       {
         type: 'message.part.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: annotateData({
           part: {
             type: 'tool',
@@ -800,7 +800,7 @@ function mapCodexEventToStreamEventsInner(
     return [
       {
         type: 'message.part.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: annotateData({
           part: {
             type: 'subtask',
@@ -830,7 +830,7 @@ function mapCodexEventToStreamEventsInner(
       return [
         {
           type: 'session.error',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           data: { error: reason }
         }
       ]
@@ -841,7 +841,7 @@ function mapCodexEventToStreamEventsInner(
       return [
         {
           type: 'session.status',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           data: { status: { type: 'busy' } },
           statusPayload: { type: 'busy' }
         }
@@ -852,7 +852,7 @@ function mapCodexEventToStreamEventsInner(
       return [
         {
           type: 'session.status',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           data: { status: { type: 'idle' } },
           statusPayload: { type: 'idle' }
         }
@@ -870,7 +870,7 @@ function mapCodexEventToStreamEventsInner(
     return [
       {
         type: 'session.error',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: { error: message }
       }
     ]
@@ -886,7 +886,7 @@ function mapCodexEventToStreamEventsInner(
       return [
         {
           type: 'session.error',
-          sessionId: hiveSessionId,
+          sessionId: octobSessionId,
           data: { error: message }
         }
       ]
@@ -903,7 +903,7 @@ function mapCodexEventToStreamEventsInner(
     return [
       {
         type: 'session.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: { title, info: { title } }
       }
     ]
@@ -922,7 +922,7 @@ function mapCodexEventToStreamEventsInner(
     return [
       {
         type: 'message.part.updated',
-        sessionId: hiveSessionId,
+        sessionId: octobSessionId,
         data: annotateData({
           part: {
             type: 'tool',

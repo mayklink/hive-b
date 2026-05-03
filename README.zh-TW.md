@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>一款開源的 AI 代理協調器，實現跨專案的並行編碼。</strong></p>
   <p>平行執行 Claude Code、OpenCode 和 Codex 工作階段。單一視窗。隔離分支。零標籤頁混亂。</p>
   <p>

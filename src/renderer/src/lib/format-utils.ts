@@ -40,7 +40,7 @@ import { stripAnsi } from './ansi-utils'
 export const COMPLETION_WORDS = [
   'Swarmed',
   'Buzzed',
-  'Hived',
+  'Octobbed',
   'Brewed',
   'Waxed',
   'Honeyed',

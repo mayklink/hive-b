@@ -151,7 +151,7 @@ describe('CodexImplementer lifecycle', () => {
 
       const state = sessions.get(key)!
       expect(state.threadId).toBe('thread-stored')
-      expect(state.hiveSessionId).toBe('hive-session-2')
+      expect(state.octobSessionId).toBe('hive-session-2')
       expect(state.worktreePath).toBe('/test')
       expect(state.status).toBe('ready')
       expect(state.messages).toEqual([])
@@ -207,12 +207,12 @@ describe('CodexImplementer lifecycle', () => {
   // ── reconnect ───────────────────────────────────────────────────
 
   describe('reconnect', () => {
-    it('returns success for existing session with updated hiveSessionId', async () => {
+    it('returns success for existing session with updated octobSessionId', async () => {
       // Pre-populate a session
       const sessions = impl.getSessions()
       sessions.set('/test::thread-existing', {
         threadId: 'thread-existing',
-        hiveSessionId: 'old-hive-id',
+        octobSessionId: 'old-hive-id',
         worktreePath: '/test',
         status: 'ready',
         messages: []
@@ -223,16 +223,16 @@ describe('CodexImplementer lifecycle', () => {
       expect(result.success).toBe(true)
       expect(result.sessionStatus).toBe('idle')
 
-      // Verify hiveSessionId was updated
+      // Verify octobSessionId was updated
       const state = sessions.get('/test::thread-existing')!
-      expect(state.hiveSessionId).toBe('new-hive-id')
+      expect(state.octobSessionId).toBe('new-hive-id')
     })
 
     it('returns busy status for running session', async () => {
       const sessions = impl.getSessions()
       sessions.set('/test::thread-running', {
         threadId: 'thread-running',
-        hiveSessionId: 'hive-1',
+        octobSessionId: 'hive-1',
         worktreePath: '/test',
         status: 'running',
         messages: []
@@ -306,7 +306,7 @@ describe('CodexImplementer lifecycle', () => {
       const sessions = impl.getSessions()
       sessions.set('/test::thread-dc', {
         threadId: 'thread-dc',
-        hiveSessionId: 'hive-dc',
+        octobSessionId: 'hive-dc',
         worktreePath: '/test',
         status: 'ready',
         messages: []
@@ -337,14 +337,14 @@ describe('CodexImplementer lifecycle', () => {
       const sessions = impl.getSessions()
       sessions.set('/test::t1', {
         threadId: 't1',
-        hiveSessionId: 'h1',
+        octobSessionId: 'h1',
         worktreePath: '/test',
         status: 'ready',
         messages: []
       })
       sessions.set('/test::t2', {
         threadId: 't2',
-        hiveSessionId: 'h2',
+        octobSessionId: 'h2',
         worktreePath: '/test',
         status: 'ready',
         messages: []
@@ -442,14 +442,14 @@ describe('CodexImplementer lifecycle', () => {
       const sessions = impl.getSessions()
       sessions.set('/test::thread-keep', {
         threadId: 'thread-keep',
-        hiveSessionId: 'hive-keep',
+        octobSessionId: 'hive-keep',
         worktreePath: '/test',
         status: 'ready',
         messages: []
       })
       sessions.set('/test::thread-remove', {
         threadId: 'thread-remove',
-        hiveSessionId: 'hive-remove',
+        octobSessionId: 'hive-remove',
         worktreePath: '/test',
         status: 'ready',
         messages: []

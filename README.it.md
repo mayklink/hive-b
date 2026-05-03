@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>Un orchestratore di agenti IA open-source per la programmazione in parallelo tra progetti.</strong></p>
   <p>Esegui sessioni di Claude Code, OpenCode e Codex in parallelo. Una finestra. Branch isolati. Zero caos di schede.</p>
   <p>

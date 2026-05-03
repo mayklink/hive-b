@@ -245,7 +245,7 @@ export function MainPane({ children }: MainPaneProps): React.JSX.Element {
       return (
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
           <div className="text-center">
-            <p className="text-lg font-medium">Welcome to OctoB</p>
+            <p className="text-lg font-medium">Welcome to Octob</p>
             <p className="text-sm mt-2">Select a project or worktree to get started.</p>
           </div>
         </div>

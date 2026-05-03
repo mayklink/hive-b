@@ -1,15 +1,15 @@
 /**
  * Read ticket-import provider settings from localStorage.
- * Provider credentials are stored in a dedicated 'hive-provider-settings' key
+ * Provider credentials are stored in a dedicated 'octob-provider-settings' key
  * to avoid being overwritten by the Zustand useSettingsStore which persists
- * to the 'hive-settings' key with a partialize function.
+ * to the 'octob-settings' key with a partialize function.
  */
 
 const PROVIDER_SETTINGS_KEY = 'provider_settings'
 
 export function getProviderSettings(): Record<string, string> {
   try {
-    const raw = localStorage.getItem('hive-provider-settings')
+    const raw = localStorage.getItem('octob-provider-settings')
     if (raw) {
       const parsed = JSON.parse(raw) as Record<string, string>
       return { ...parsed }

@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="resources/icon.png" alt="Hive" width="128" />
-  <h1>Hive</h1>
+  <img src="resources/icon.png" alt="Octob" width="128" />
+  <h1>Octob</h1>
   <p><strong>プロジェクト横断の並列コーディングを実現するオープンソースAIエージェントオーケストレーター</strong></p>
   <p>Claude Code、OpenCode、Codexのセッションを並列実行。ひとつのウィンドウ。独立したブランチ。タブの混乱ゼロ。</p>
   <p>

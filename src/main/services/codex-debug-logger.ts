@@ -11,7 +11,7 @@ let resetPerSession = true
 
 function getLogFilePath(): string {
   if (!logFilePath) {
-    const logDir = join(homedir(), '.hive', 'logs')
+    const logDir = join(homedir(), '.octob', 'logs')
     if (!existsSync(logDir)) {
       mkdirSync(logDir, { recursive: true })
     }
