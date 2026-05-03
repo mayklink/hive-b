@@ -14,7 +14,8 @@ export const settings = {
     shortcuts: 'Shortcuts',
     advanced: 'Advanced',
     updates: 'Updates',
-    taskPrompts: 'Task prompts'
+    taskPrompts: 'Task prompts',
+    codeReviewPrompts: 'Code review prompts'
   },
   appearance: {
     heading: 'Appearance',
@@ -306,6 +307,25 @@ export const settings = {
       'With a saved template, Tab still switches Build / Plan for the session mode; the wording above does not swap automatically.',
     manageLink: 'Edit templates…',
     unnamed: 'Untitled'
+  },
+  codeReviewPrompts: {
+    heading: 'Code review prompts',
+    description:
+      'Instructions for the header Review action (AI branch review). Built-in presets remain available next to your own templates.',
+    structureHint:
+      'Hive appends the comparison branch and a suggested git diff command after your text.',
+    empty: 'No custom review templates yet.',
+    nameLabel: 'Name',
+    bodyLabel: 'Instruction',
+    namePlaceholder: 'e.g. Security review',
+    bodyPlaceholder:
+      'e.g. Review the diff for correctness, edge cases, and missing tests.',
+    add: 'New template',
+    delete: 'Remove template',
+    manageLink: 'Edit review prompts…',
+    unnamed: 'Untitled',
+    builtinGroup: 'Built-in',
+    customGroup: 'Custom'
   },
   integrations: {
     heading: 'Integrations',

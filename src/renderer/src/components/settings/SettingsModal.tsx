@@ -14,7 +14,8 @@ import {
   Sparkles,
   Plug,
   Bug,
-  ClipboardList
+  ClipboardList,
+  FileSearch
 } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useSettingsStore } from '@/stores/useSettingsStore'
@@ -31,6 +32,7 @@ import { SettingsIntegrations } from './SettingsIntegrations'
 import { SettingsAdvanced } from './SettingsAdvanced'
 import { SettingsPet } from './SettingsPet'
 import { SettingsTaskPrompts } from './SettingsTaskPrompts'
+import { SettingsCodeReviewPrompts } from './SettingsCodeReviewPrompts'
 import { cn } from '@/lib/utils'
 
 type SettingsSectionId =
@@ -38,6 +40,7 @@ type SettingsSectionId =
   | 'general'
   | 'models'
   | 'task-prompts'
+  | 'code-review-prompts'
   | 'pet'
   | 'editor'
   | 'terminal'
@@ -59,6 +62,11 @@ export function SettingsModal(): React.JSX.Element {
         { id: 'appearance' as const, label: t('settings.nav.appearance'), icon: Palette },
         { id: 'general' as const, label: t('settings.nav.general'), icon: Monitor },
         { id: 'task-prompts' as const, label: t('settings.nav.taskPrompts'), icon: ClipboardList },
+        {
+          id: 'code-review-prompts' as const,
+          label: t('settings.nav.codeReviewPrompts'),
+          icon: FileSearch
+        },
         { id: 'models' as const, label: t('settings.nav.models'), icon: Sparkles },
         { id: 'pet' as const, label: t('settings.nav.pet'), icon: Bug },
         { id: 'editor' as const, label: t('settings.nav.editor'), icon: Code },
@@ -126,6 +134,7 @@ export function SettingsModal(): React.JSX.Element {
             {activeSection === 'appearance' && <SettingsAppearance />}
             {activeSection === 'general' && <SettingsGeneral />}
             {activeSection === 'task-prompts' && <SettingsTaskPrompts />}
+            {activeSection === 'code-review-prompts' && <SettingsCodeReviewPrompts />}
             {activeSection === 'models' && <SettingsModels />}
             {activeSection === 'pet' && <SettingsPet />}
             {activeSection === 'editor' && <SettingsEditor />}

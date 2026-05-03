@@ -171,3 +171,35 @@ If no defects survive validation, state: "This code survived adversarial review.
   standard: `Please review the changes on the current branch.
 Focus on: bugs, logic errors, and code quality.`,
 }
+
+/** Persisted preset id prefix for Hive's three built-in review templates. */
+export const BUILTIN_REVIEW_PROMPT_PREFIX = 'builtin:'
+
+/** Default persisted selection (= built-in Standard). */
+export const DEFAULT_REVIEW_PROMPT_PRESET_ID = `${BUILTIN_REVIEW_PROMPT_PREFIX}${DEFAULT_REVIEW_PROMPT_TYPE}`
+
+export function reviewPromptPresetIdForBuiltin(type: ReviewPromptType): string {
+  return `${BUILTIN_REVIEW_PROMPT_PREFIX}${type}`
+}
+
+export function getBuiltinReviewPromptType(presetId: string): ReviewPromptType | null {
+  if (!presetId.startsWith(BUILTIN_REVIEW_PROMPT_PREFIX)) return null
+  const slug = presetId.slice(BUILTIN_REVIEW_PROMPT_PREFIX.length) as ReviewPromptType
+  if (slug === 'superpowers' || slug === 'adversarial' || slug === 'standard') return slug
+  return null
+}
+
+/**
+ * Opening prose for the Review command (branch/diff appendix is added by the lifecycle hook).
+ */
+export function resolveReviewPromptTemplateBody(
+  presetId: string,
+  customTemplates: Array<{ id: string; body: string }>
+): string {
+  const builtin = getBuiltinReviewPromptType(presetId)
+  if (builtin) return REVIEW_PROMPTS[builtin]
+  const row = customTemplates.find((x) => x.id === presetId)
+  const body = row?.body.trim()
+  if (body) return body
+  return REVIEW_PROMPTS[DEFAULT_REVIEW_PROMPT_TYPE]
+}

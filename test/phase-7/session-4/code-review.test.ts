@@ -185,6 +185,15 @@ describe('Session 4: Code Review', () => {
       expect(REVIEW_PROMPTS).toHaveProperty('standard')
     })
 
+    test('resolveReviewPromptTemplateBody uses custom template when id matches', async () => {
+      const { resolveReviewPromptTemplateBody } = await import(
+        '../../../src/renderer/src/constants/reviewPrompts'
+      )
+
+      const body = resolveReviewPromptTemplateBody('my-id', [{ id: 'my-id', name: 'Mine', body: '  Hello review  ' }])
+      expect(body).toBe('Hello review')
+    })
+
     test('default review prompt type is standard', async () => {
       const { DEFAULT_REVIEW_PROMPT_TYPE } = await import(
         '../../../src/renderer/src/constants/reviewPrompts'
@@ -193,19 +202,30 @@ describe('Session 4: Code Review', () => {
       expect(DEFAULT_REVIEW_PROMPT_TYPE).toBe('standard')
     })
 
-    test('settings reset restores standard review prompt type', async () => {
+    test('settings reset restores default built-in review preset', async () => {
       const { useSettingsStore } = await import('../../../src/renderer/src/stores/useSettingsStore')
+      const {
+        DEFAULT_REVIEW_PROMPT_PRESET_ID,
+        reviewPromptPresetIdForBuiltin
+      } = await import('../../../src/renderer/src/constants/reviewPrompts')
 
-      useSettingsStore.getState().updateSetting('reviewPromptType', 'superpowers')
-      expect(useSettingsStore.getState().reviewPromptType).toBe('superpowers')
+      useSettingsStore
+        .getState()
+        .updateSetting('reviewPromptPresetId', reviewPromptPresetIdForBuiltin('superpowers'))
+      expect(useSettingsStore.getState().reviewPromptPresetId).toBe(
+        reviewPromptPresetIdForBuiltin('superpowers')
+      )
 
       useSettingsStore.getState().resetToDefaults()
 
-      expect(useSettingsStore.getState().reviewPromptType).toBe('standard')
+      expect(useSettingsStore.getState().reviewPromptPresetId).toBe(DEFAULT_REVIEW_PROMPT_PRESET_ID)
     })
 
     test('loading persisted superpowers review prompt preserves existing user preference', async () => {
       const { useSettingsStore } = await import('../../../src/renderer/src/stores/useSettingsStore')
+      const { reviewPromptPresetIdForBuiltin } = await import(
+        '../../../src/renderer/src/constants/reviewPrompts'
+      )
 
       mockDb.setting.get.mockResolvedValueOnce(JSON.stringify({
         reviewPromptType: 'superpowers'
@@ -213,7 +233,9 @@ describe('Session 4: Code Review', () => {
 
       await useSettingsStore.getState().loadFromDatabase()
 
-      expect(useSettingsStore.getState().reviewPromptType).toBe('superpowers')
+      expect(useSettingsStore.getState().reviewPromptPresetId).toBe(
+        reviewPromptPresetIdForBuiltin('superpowers')
+      )
     })
 
     test('each prompt type produces a non-empty string', async () => {

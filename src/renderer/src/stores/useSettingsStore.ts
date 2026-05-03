@@ -3,7 +3,12 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { APP_SETTINGS_DB_KEY } from '@shared/types/settings'
 import type { UsageProvider } from '@shared/types/usage'
 import type { PetSettings } from '@shared/types/pet'
-import type { ReviewPromptType } from '@/constants/reviewPrompts'
+import {
+  DEFAULT_REVIEW_PROMPT_PRESET_ID,
+  getBuiltinReviewPromptType,
+  reviewPromptPresetIdForBuiltin,
+  type ReviewPromptType
+} from '@/constants/reviewPrompts'
 
 // ==========================================
 // Types
@@ -154,8 +159,10 @@ export interface AppSettings {
   codexJsonlLoggingEnabled: boolean
   codexJsonlResetPerSession: boolean
 
-  // Review
-  reviewPromptType: ReviewPromptType
+  // Code review (header Review → AI branch review)
+  /** `builtin:${type}` for built-ins, otherwise a UUID of an entry in `codeReviewPromptTemplates`. */
+  reviewPromptPresetId: string
+  codeReviewPromptTemplates: TaskSessionPromptTemplate[]
 
   // Kanban / Start Session
   /** User-defined instructional prompts combined with structured ticket XML. */
@@ -235,7 +242,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   perfDiagnosticsEnabled: false,
   codexJsonlLoggingEnabled: false,
   codexJsonlResetPerSession: true,
-  reviewPromptType: 'standard',
+  reviewPromptPresetId: DEFAULT_REVIEW_PROMPT_PRESET_ID,
+  codeReviewPromptTemplates: [],
   taskSessionPromptTemplates: [],
   lastTaskSessionPromptTemplateId: null,
   _boardModeMigratedToStickyTab: false
@@ -293,10 +301,10 @@ async function loadSettingsFromDatabase(): Promise<AppSettings | null> {
       const value = await window.db.setting.get(APP_SETTINGS_DB_KEY)
       if (value) {
         const parsed = JSON.parse(value) as Record<string, unknown>
-        const rawTemplates = parsed.taskSessionPromptTemplates
-        const normalizedTemplates =
-          Array.isArray(rawTemplates) ?
-            rawTemplates.filter(
+        const rawTaskTemplates = parsed.taskSessionPromptTemplates
+        const normalizedTaskTemplates =
+          Array.isArray(rawTaskTemplates) ?
+            rawTaskTemplates.filter(
               (row): row is TaskSessionPromptTemplate =>
                 !!row &&
                 typeof row === 'object' &&
@@ -305,11 +313,42 @@ async function loadSettingsFromDatabase(): Promise<AppSettings | null> {
                 typeof (row as TaskSessionPromptTemplate).body === 'string'
             )
           : undefined
+
+        const rawCodeReviewTemplates = parsed.codeReviewPromptTemplates
+        const normalizedCodeReviewTemplates =
+          Array.isArray(rawCodeReviewTemplates) ?
+            rawCodeReviewTemplates.filter(
+              (row): row is TaskSessionPromptTemplate =>
+                !!row &&
+                typeof row === 'object' &&
+                typeof (row as TaskSessionPromptTemplate).id === 'string' &&
+                typeof (row as TaskSessionPromptTemplate).name === 'string' &&
+                typeof (row as TaskSessionPromptTemplate).body === 'string'
+            )
+          : undefined
+
+        let migratedReviewPresetId: string | undefined
+        if (typeof parsed.reviewPromptPresetId === 'string' && parsed.reviewPromptPresetId.length > 0) {
+          migratedReviewPresetId = parsed.reviewPromptPresetId as string
+        } else if (
+          parsed.reviewPromptType === 'superpowers' ||
+          parsed.reviewPromptType === 'adversarial' ||
+          parsed.reviewPromptType === 'standard'
+        ) {
+          migratedReviewPresetId = reviewPromptPresetIdForBuiltin(parsed.reviewPromptType as ReviewPromptType)
+        }
+
         const result = {
           ...DEFAULT_SETTINGS,
           ...parsed,
-          ...(normalizedTemplates !== undefined ?
-            { taskSessionPromptTemplates: normalizedTemplates }
+          ...(normalizedTaskTemplates !== undefined ?
+            { taskSessionPromptTemplates: normalizedTaskTemplates }
+          : {}),
+          ...(normalizedCodeReviewTemplates !== undefined ?
+            { codeReviewPromptTemplates: normalizedCodeReviewTemplates }
+          : {}),
+          ...(migratedReviewPresetId !== undefined ?
+            { reviewPromptPresetId: migratedReviewPresetId }
           : {}),
           // Deep-merge commandFilter so new fields (e.g. `enabled`) always have defaults
           // even for users whose saved settings pre-date those fields being added.
@@ -321,6 +360,16 @@ async function loadSettingsFromDatabase(): Promise<AppSettings | null> {
             ...DEFAULT_SETTINGS.pet,
             ...(parsed.pet || {})
           }
+        }
+
+        delete (result as Record<string, unknown>).reviewPromptType
+
+        const validBuiltinReview = getBuiltinReviewPromptType(result.reviewPromptPresetId) !== null
+        const validCustomReview = result.codeReviewPromptTemplates.some(
+          (t) => t.id === result.reviewPromptPresetId
+        )
+        if (!validBuiltinReview && !validCustomReview) {
+          result.reviewPromptPresetId = DEFAULT_REVIEW_PROMPT_PRESET_ID
         }
 
         // Migrate legacy showUsageIndicator boolean
@@ -413,7 +462,8 @@ function extractSettings(state: SettingsState): AppSettings {
     perfDiagnosticsEnabled: state.perfDiagnosticsEnabled,
     codexJsonlLoggingEnabled: state.codexJsonlLoggingEnabled,
     codexJsonlResetPerSession: state.codexJsonlResetPerSession,
-    reviewPromptType: state.reviewPromptType,
+    reviewPromptPresetId: state.reviewPromptPresetId,
+    codeReviewPromptTemplates: state.codeReviewPromptTemplates,
     taskSessionPromptTemplates: state.taskSessionPromptTemplates,
     lastTaskSessionPromptTemplateId: state.lastTaskSessionPromptTemplateId,
     _boardModeMigratedToStickyTab: state._boardModeMigratedToStickyTab
@@ -701,7 +751,8 @@ export const useSettingsStore = create<SettingsState>()(
         perfDiagnosticsEnabled: state.perfDiagnosticsEnabled,
         codexJsonlLoggingEnabled: state.codexJsonlLoggingEnabled,
         codexJsonlResetPerSession: state.codexJsonlResetPerSession,
-        reviewPromptType: state.reviewPromptType,
+        reviewPromptPresetId: state.reviewPromptPresetId,
+        codeReviewPromptTemplates: state.codeReviewPromptTemplates,
         taskSessionPromptTemplates: state.taskSessionPromptTemplates,
         lastTaskSessionPromptTemplateId: state.lastTaskSessionPromptTemplateId,
         _boardModeMigratedToStickyTab: state._boardModeMigratedToStickyTab

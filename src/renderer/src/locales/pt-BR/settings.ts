@@ -14,7 +14,8 @@ export const settings = {
     shortcuts: 'Atalhos',
     advanced: 'Avançado',
     updates: 'Atualizações',
-    taskPrompts: 'Prompts de tarefa'
+    taskPrompts: 'Prompts de tarefa',
+    codeReviewPrompts: 'Prompts de code review'
   },
   appearance: {
     heading: 'Aparência',
@@ -313,6 +314,25 @@ export const settings = {
       'Com um modelo salvo, Tab ainda alterna Build / Plan para o modo da sessão; o texto acima não troca automaticamente.',
     manageLink: 'Editar modelos…',
     unnamed: 'Sem nome'
+  },
+  codeReviewPrompts: {
+    heading: 'Prompts de code review',
+    description:
+      'Instruções para o botão Review do cabeçalho (revisão de branch com IA). Os presets embutidos continuam disponíveis junto aos seus modelos.',
+    structureHint:
+      'O Hive acrescenta o branch de comparação e um comando git diff sugerido depois do seu texto.',
+    empty: 'Nenhum modelo de review personalizado ainda.',
+    nameLabel: 'Nome',
+    bodyLabel: 'Instrução',
+    namePlaceholder: 'ex.: Review de segurança',
+    bodyPlaceholder:
+      'ex.: Revise o diff quanto à correção, casos extremos e testes faltando.',
+    add: 'Novo modelo',
+    delete: 'Remover modelo',
+    manageLink: 'Editar prompts de review…',
+    unnamed: 'Sem nome',
+    builtinGroup: 'Incorporados',
+    customGroup: 'Personalizados'
   },
   integrations: {
     heading: 'Integrações',

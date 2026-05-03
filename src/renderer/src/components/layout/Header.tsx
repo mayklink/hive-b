@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState, useMemo, useRef } from 'react'
+import React, { useCallback, useEffect, useState, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { isMac } from '@/lib/platform'
 import {
   PanelRightClose,
@@ -26,7 +27,9 @@ import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
-  DropdownMenuItem
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuLabel
 } from '@/components/ui/dropdown-menu'
 import { Popover, PopoverTrigger, PopoverContent, PopoverAnchor } from '@/components/ui/popover'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
@@ -41,7 +44,11 @@ import { cn } from '@/lib/utils'
 import { useLayoutStore } from '@/stores/useLayoutStore'
 import { useSessionHistoryStore } from '@/stores/useSessionHistoryStore'
 import { useSettingsStore } from '@/stores/useSettingsStore'
-import { REVIEW_PROMPT_LABELS, type ReviewPromptType } from '@/constants/reviewPrompts'
+import {
+  REVIEW_PROMPT_LABELS,
+  reviewPromptPresetIdForBuiltin,
+  type ReviewPromptType
+} from '@/constants/reviewPrompts'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useWorktreeStore } from '@/stores/useWorktreeStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
@@ -84,6 +91,7 @@ function isConflictFixActiveStatus(status: string | null): boolean {
 }
 
 export function Header(): React.JSX.Element {
+  const { t } = useTranslation()
   const { rightSidebarCollapsed, toggleRightSidebar } = useLayoutStore()
   const { openPanel: openSessionHistory } = useSessionHistoryStore()
   const openSettings = useSettingsStore((s) => s.openSettings)
@@ -111,7 +119,8 @@ export function Header(): React.JSX.Element {
   const vimModeEnabled = useSettingsStore((s) => s.vimModeEnabled)
   const mergeConflictMode = useSettingsStore((s) => s.mergeConflictMode)
   const boardMode = useSettingsStore((s) => s.boardMode)
-  const currentReviewPromptType = useSettingsStore((s) => s.reviewPromptType)
+  const reviewPromptPresetId = useSettingsStore((s) => s.reviewPromptPresetId)
+  const codeReviewPromptTemplates = useSettingsStore((s) => s.codeReviewPromptTemplates ?? [])
   const updateSetting = useSettingsStore((s) => s.updateSetting)
   const keepAwakeEnabled = useSettingsStore((s) => s.keepAwakeEnabled)
   const streamingCount = useWorktreeStatusStore((state) =>
@@ -512,25 +521,65 @@ export function Header(): React.JSX.Element {
                     <ChevronDown className="h-3 w-3" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {(Object.keys(REVIEW_PROMPT_LABELS) as ReviewPromptType[]).map((type) => (
-                    <DropdownMenuItem
-                      key={type}
-                      onClick={() => {
-                        updateSetting('reviewPromptType', type)
-                        pinAndActivate(() => lifecycle.createCodeReview())
-                      }}
-                      data-testid={`review-prompt-${type}`}
-                    >
-                      {currentReviewPromptType === type && (
-                        <Check className="h-3.5 w-3.5 mr-2" />
-                      )}
-                      {currentReviewPromptType !== type && (
-                        <span className="w-3.5 mr-2" />
-                      )}
-                      {REVIEW_PROMPT_LABELS[type]}
-                    </DropdownMenuItem>
-                  ))}
+                <DropdownMenuContent align="end" className="max-h-[min(24rem,70vh)] overflow-y-auto">
+                  <DropdownMenuLabel className="text-[11px] text-muted-foreground font-normal uppercase tracking-wide">
+                    {t('settings.codeReviewPrompts.builtinGroup')}
+                  </DropdownMenuLabel>
+                  {(Object.keys(REVIEW_PROMPT_LABELS) as ReviewPromptType[]).map((type) => {
+                    const presetId = reviewPromptPresetIdForBuiltin(type)
+                    return (
+                      <DropdownMenuItem
+                        key={type}
+                        onClick={() => {
+                          updateSetting('reviewPromptPresetId', presetId)
+                          pinAndActivate(() => lifecycle.createCodeReview())
+                        }}
+                        data-testid={`review-prompt-${type}`}
+                      >
+                        {reviewPromptPresetId === presetId && (
+                          <Check className="h-3.5 w-3.5 mr-2" />
+                        )}
+                        {reviewPromptPresetId !== presetId && (
+                          <span className="w-3.5 mr-2" />
+                        )}
+                        {REVIEW_PROMPT_LABELS[type]}
+                      </DropdownMenuItem>
+                    )
+                  })}
+                  {codeReviewPromptTemplates.length > 0 ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel className="text-[11px] text-muted-foreground font-normal uppercase tracking-wide">
+                        {t('settings.codeReviewPrompts.customGroup')}
+                      </DropdownMenuLabel>
+                      {codeReviewPromptTemplates.map((tpl) => (
+                        <DropdownMenuItem
+                          key={tpl.id}
+                          onClick={() => {
+                            updateSetting('reviewPromptPresetId', tpl.id)
+                            pinAndActivate(() => lifecycle.createCodeReview())
+                          }}
+                          data-testid={`review-prompt-custom-${tpl.id}`}
+                        >
+                          {reviewPromptPresetId === tpl.id && (
+                            <Check className="h-3.5 w-3.5 mr-2" />
+                          )}
+                          {reviewPromptPresetId !== tpl.id && (
+                            <span className="w-3.5 mr-2" />
+                          )}
+                          {tpl.name.trim() || t('settings.codeReviewPrompts.unnamed')}
+                        </DropdownMenuItem>
+                      ))}
+                    </>
+                  ) : null}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => openSettings('code-review-prompts')}
+                    data-testid="review-prompt-edit-templates"
+                  >
+                    <span className="w-3.5 mr-2" />
+                    {t('settings.codeReviewPrompts.manageLink')}
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>

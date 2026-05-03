@@ -5,7 +5,10 @@ import { useSessionStore } from '@/stores/useSessionStore'
 import { useProjectStore } from '@/stores/useProjectStore'
 import { useWorktreeStatusStore } from '@/stores/useWorktreeStatusStore'
 import { toast } from '@/lib/toast'
-import { REVIEW_PROMPTS, DEFAULT_REVIEW_PROMPT_TYPE } from '@/constants/reviewPrompts'
+import {
+  DEFAULT_REVIEW_PROMPT_PRESET_ID,
+  resolveReviewPromptTemplateBody
+} from '@/constants/reviewPrompts'
 import { useSettingsStore, resolveModelForSdk } from '@/stores/useSettingsStore'
 import { messageSendTimes, userExplicitSendTimes, lastSendMode } from '@/lib/message-send-times'
 import { snapshotTokenBaseline } from '@/lib/token-baselines'
@@ -192,8 +195,9 @@ export function useLifecycleActions(worktreeId: string | null): LifecycleActions
     const target = targetBranch || currentReviewTarget || currentBranchInfo?.tracking || 'origin/main'
     const branchName = currentBranchInfo?.name || 'unknown'
 
-    const promptType = useSettingsStore.getState().reviewPromptType || DEFAULT_REVIEW_PROMPT_TYPE
-    const reviewTemplate = REVIEW_PROMPTS[promptType]
+    const settings = useSettingsStore.getState()
+    const presetId = settings.reviewPromptPresetId?.trim() || DEFAULT_REVIEW_PROMPT_PRESET_ID
+    const reviewTemplate = resolveReviewPromptTemplateBody(presetId, settings.codeReviewPromptTemplates ?? [])
 
     const prompt = [
       reviewTemplate,
