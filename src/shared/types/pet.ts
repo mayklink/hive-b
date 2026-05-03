@@ -21,6 +21,7 @@ export interface PetManifest {
   author?: string
   assets: Record<PetState, string>
   lottieAssets?: Partial<Record<PetState, string>>
+  lottieScale?: Partial<Record<PetState, number>>
   animations?: Partial<
     Record<
       PetState,

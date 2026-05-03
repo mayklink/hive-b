@@ -74,7 +74,7 @@ button {
 .pet-lottie-canvas {
   position: absolute;
   inset: 0;
-  transform: scale(2.15);
+  transform: scale(var(--pet-lottie-scale, 1));
   transform-origin: center;
 }
 

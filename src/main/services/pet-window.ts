@@ -39,7 +39,36 @@ const BEE_MANIFEST: PetManifest = {
   lottieAssets: {
     working: 'assets/honey-bee.lottie'
   },
+  lottieScale: {
+    working: 2.15
+  },
   defaultSize: 'M'
+}
+
+const CORGI_MANIFEST: PetManifest = {
+  id: 'corgi',
+  name: 'Corgi',
+  version: '1.0.0',
+  author: 'Hive',
+  assets: {
+    idle: 'assets/corgi-static.png',
+    working: 'assets/corgi-static.png',
+    question: 'assets/corgi-static.png',
+    permission: 'assets/corgi-static.png',
+    plan_ready: 'assets/corgi-static.png'
+  },
+  lottieAssets: {
+    working: 'assets/corgi-anim.lottie'
+  },
+  lottieScale: {
+    working: 1.55
+  },
+  defaultSize: 'M'
+}
+
+const PET_MANIFESTS: Record<string, PetManifest> = {
+  bee: BEE_MANIFEST,
+  corgi: CORGI_MANIFEST
 }
 
 const PET_SIZE_PX: Record<PetSize, number> = {
@@ -169,7 +198,7 @@ export function getPetConfig(): {
     position: petWindow?.getPosition()
       ? { x: petWindow.getPosition()[0], y: petWindow.getPosition()[1] }
       : loadPetPosition(),
-    manifest: BEE_MANIFEST
+    manifest: PET_MANIFESTS[latestSettings.petId] ?? BEE_MANIFEST
   }
 }
 

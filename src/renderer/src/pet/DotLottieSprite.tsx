@@ -29,11 +29,13 @@ function canvasHasVisiblePixels(canvas: HTMLCanvasElement): boolean {
 export function DotLottieSprite({
   src,
   fallbackSrc,
+  scale,
   size,
   state
 }: {
   src: string
   fallbackSrc: string
+  scale: number
   size: number
   state: string
 }): React.JSX.Element {
@@ -98,6 +100,7 @@ export function DotLottieSprite({
       <canvas
         ref={canvasRef}
         className="pet-lottie-canvas"
+        style={{ '--pet-lottie-scale': scale } as React.CSSProperties}
         width={size}
         height={size}
         data-testid={`pet-lottie-${state}`}

@@ -66,6 +66,7 @@ export function PetSprite({
   const size = SIZE_PX[settings.size]
   const overlay = overlayForState(state)
   const lottieSrc = state === 'working' ? pet.resolvedLottieAssets?.working : undefined
+  const lottieScale = state === 'working' ? (pet.lottieScale?.working ?? 1) : 1
   const activeAnimation = lottieSrc ? {} : animationForState(state)
 
   return (
@@ -90,6 +91,7 @@ export function PetSprite({
           <DotLottieSprite
             src={lottieSrc}
             fallbackSrc={pet.resolvedAssets[state]}
+            scale={lottieScale}
             size={size}
             state={state}
           />

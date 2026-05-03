@@ -62,6 +62,17 @@ describe('pet Lottie rendering', () => {
     const pet = getPet('bee')
 
     expect(pet.resolvedLottieAssets?.working).toContain('honey-bee')
+    expect(pet.lottieScale?.working).toBe(2.15)
+  })
+
+  it('resolves static and working-state Lottie assets for the corgi pet', () => {
+    const pet = getPet('corgi')
+
+    expect(pet.name).toBe('Corgi')
+    expect(pet.resolvedAssets.idle).toContain('corgi-static')
+    expect(pet.resolvedAssets.question).toContain('corgi-static')
+    expect(pet.resolvedLottieAssets?.working).toContain('corgi-anim')
+    expect(pet.lottieScale?.working).toBe(1.55)
   })
 
   it('renders Lottie only for working and keeps other states on the PNG sprite', async () => {
@@ -85,6 +96,9 @@ describe('pet Lottie rendering', () => {
       },
       resolvedLottieAssets: {
         working: '/honey-bee.lottie'
+      },
+      lottieScale: {
+        working: 2.15
       }
     } satisfies LoadedPet
 
@@ -102,6 +116,9 @@ describe('pet Lottie rendering', () => {
     )
 
     expect(screen.getByTestId('pet-lottie-working')).toBeInTheDocument()
+    expect(screen.getByTestId('pet-lottie-working')).toHaveStyle({
+      '--pet-lottie-scale': '2.15'
+    })
     expect(container.querySelector('img.pet-lottie-fallback')).toBeInTheDocument()
     await waitFor(() => expect(DotLottie).toHaveBeenCalledTimes(1))
 
@@ -134,5 +151,47 @@ describe('pet Lottie rendering', () => {
 
     expect(screen.queryByTestId('pet-lottie-working')).not.toBeInTheDocument()
     expect(container.querySelector('img')).toBeInTheDocument()
+  })
+
+  it('uses the corgi Lottie for working and the static corgi for other states', async () => {
+    const pet = getPet('corgi')
+
+    const { container, rerender } = render(
+      <PetSprite
+        pet={pet}
+        state="working"
+        settings={{ ...settings, petId: 'corgi' }}
+        onPointerDown={vi.fn()}
+        onMouseEnter={vi.fn()}
+        onMouseLeave={vi.fn()}
+        onClick={vi.fn()}
+        onContextMenu={vi.fn()}
+      />
+    )
+
+    expect(screen.getByTestId('pet-lottie-working')).toBeInTheDocument()
+    expect(screen.getByTestId('pet-lottie-working')).toHaveStyle({
+      '--pet-lottie-scale': '1.55'
+    })
+    expect(container.querySelector('img.pet-lottie-fallback')?.getAttribute('src')).toContain(
+      'corgi-static'
+    )
+    await waitFor(() => expect(DotLottie).toHaveBeenCalledTimes(1))
+
+    rerender(
+      <PetSprite
+        pet={pet}
+        state="permission"
+        settings={{ ...settings, petId: 'corgi' }}
+        onPointerDown={vi.fn()}
+        onMouseEnter={vi.fn()}
+        onMouseLeave={vi.fn()}
+        onClick={vi.fn()}
+        onContextMenu={vi.fn()}
+      />
+    )
+
+    expect(screen.queryByTestId('pet-lottie-working')).not.toBeInTheDocument()
+    expect(container.querySelector('img')?.getAttribute('src')).toContain('corgi-static')
   })
 })
