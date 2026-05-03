@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Loader2, Search, GitBranch, GitPullRequest, Globe, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -9,6 +10,7 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 interface BranchInfo {
   name: string
@@ -39,6 +41,7 @@ export function BranchPickerDialog({
   projectPath,
   onSelect
 }: BranchPickerDialogProps): React.JSX.Element {
+  const { t } = useTranslation()
   const [branches, setBranches] = useState<BranchInfo[]>([])
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState('')
@@ -134,14 +137,40 @@ export function BranchPickerDialog({
     onSelect(pr.headRefName, pr.number)
   }
 
+  const trimmedFilter = filter.trim()
+  const canUseTypedBranchRef =
+    activeTab === 'branches' &&
+    trimmedFilter.length > 0 &&
+    !loading &&
+    !error &&
+    filteredBranches.length === 0
+
+  const confirmTypedBranchRef = useCallback((): void => {
+    if (!trimmedFilter) return
+    onSelect(trimmedFilter)
+  }, [trimmedFilter, onSelect])
+
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>): void => {
+      if (e.key !== 'Enter' || activeTab !== 'branches') return
+      e.preventDefault()
+      if (filteredBranches.length === 1) {
+        onSelect(filteredBranches[0].name)
+        return
+      }
+      if (filteredBranches.length === 0 && trimmedFilter) {
+        confirmTypedBranchRef()
+      }
+    },
+    [activeTab, filteredBranches, trimmedFilter, confirmTypedBranchRef, onSelect]
+  )
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>New Workspace</DialogTitle>
-          <DialogDescription>
-            Select a branch or pull request to create a new workspace from.
-          </DialogDescription>
+          <DialogDescription>{t('common.branchPickerTypedRefHelp')}</DialogDescription>
         </DialogHeader>
 
         {/* Tab bar */}
@@ -183,8 +212,10 @@ export function BranchPickerDialog({
             }
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
             className="pl-9"
             autoFocus
+            data-testid="branch-picker-search"
           />
         </div>
 
@@ -199,8 +230,24 @@ export function BranchPickerDialog({
             ) : error ? (
               <div className="px-4 py-8 text-center text-sm text-destructive">{error}</div>
             ) : filteredBranches.length === 0 ? (
-              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                {filter ? 'No branches match your filter' : 'No branches found'}
+              <div className="px-4 py-8 text-center space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  {filter ? 'No branches match your filter' : 'No branches found'}
+                </p>
+                {canUseTypedBranchRef ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="max-w-full"
+                    onClick={confirmTypedBranchRef}
+                    data-testid="branch-picker-use-typed-ref"
+                  >
+                    <span className="truncate">
+                      {t('common.createWorkspaceFromRef', { ref: trimmedFilter })}
+                    </span>
+                  </Button>
+                ) : null}
               </div>
             ) : (
               <div className="py-1">

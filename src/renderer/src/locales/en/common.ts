@@ -4,5 +4,10 @@ export const common = {
   connecting: 'Connecting...',
   projects: 'Projects',
   selectWorktrees: 'Select worktrees',
-  optional: '(optional)'
+  optional: '(optional)',
+  newWorkspaceQuick: 'Quick new workspace',
+  newWorkspaceFromBranch: 'From branch or name…',
+  createWorkspaceFromRef: 'Create workspace from “{{ref}}”',
+  branchPickerTypedRefHelp:
+    'Pick from the list, or type a branch or ref (for example origin/feature-x) and confirm below if it does not appear.'
 }

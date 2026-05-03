@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { revealLabel } from '@/lib/platform'
 import {
   ChevronRight,
@@ -38,6 +39,12 @@ import {
   ContextMenuSubContent,
   ContextMenuCheckboxItem
 } from '@/components/ui/context-menu'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import {
   useProjectStore,
   useWorktreeStore,
@@ -94,6 +101,7 @@ export function ProjectItem({
   onDrop,
   onDragEnd
 }: ProjectItemProps): React.JSX.Element {
+  const { t } = useTranslation()
   const {
     selectedProjectId,
     expandedProjectIds,
@@ -265,14 +273,6 @@ export function ProjectItem({
     }
   }, [isCreatingWorktree, createWorktree, project, autoPullBeforeWorktree])
 
-  const handleCreateWorktree = useCallback(
-    async (e: React.MouseEvent): Promise<void> => {
-      e.stopPropagation()
-      await doCreateWorktree()
-    },
-    [doCreateWorktree]
-  )
-
   useEffect(() => {
     const handler = (e: Event): void => {
       const ce = e as CustomEvent<{ projectId: string }>
@@ -431,26 +431,49 @@ export function ProjectItem({
                 />
               )}
 
-            {/* Create Worktree Button */}
+            {/* Create worktree: quick default or pick branch / type ref */}
             {!isEditing && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className={cn('h-5 w-5 p-0 cursor-pointer', 'hover:bg-accent')}
-                onClick={handleCreateWorktree}
-                onContextMenu={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setBranchPickerOpen(true)
-                }}
-                disabled={isCreatingWorktree}
-              >
-                {isCreatingWorktree ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Plus className="h-3.5 w-3.5" />
-                )}
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={cn('h-5 w-5 p-0 cursor-pointer', 'hover:bg-accent')}
+                    onClick={(e) => e.stopPropagation()}
+                    onContextMenu={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      setBranchPickerOpen(true)
+                    }}
+                    disabled={isCreatingWorktree}
+                    data-testid={`project-add-worktree-${project.id}`}
+                  >
+                    {isCreatingWorktree ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Plus className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void doCreateWorktree()
+                    }}
+                  >
+                    {t('common.newWorkspaceQuick')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setBranchPickerOpen(true)
+                    }}
+                  >
+                    {t('common.newWorkspaceFromBranch')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </ContextMenuTrigger>
