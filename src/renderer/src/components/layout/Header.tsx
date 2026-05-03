@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { KanbanIcon } from '@/components/kanban/KanbanIcon'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -235,6 +236,38 @@ export function Header(): React.JSX.Element {
       cancelled = true
     }
   }, [conflictFixFlow, conflictFixSessionStatus])
+
+  // Branch target pickers (review / PR base) — searchable popovers
+  const [reviewBranchPickerOpen, setReviewBranchPickerOpen] = useState(false)
+  const [reviewBranchSearch, setReviewBranchSearch] = useState('')
+  const [prBranchPickerOpen, setPrBranchPickerOpen] = useState(false)
+  const [prBranchSearch, setPrBranchSearch] = useState('')
+  const reviewBranchSearchRef = useRef<HTMLInputElement>(null)
+  const prBranchSearchRef = useRef<HTMLInputElement>(null)
+
+  const filteredReviewBranches = useMemo(() => {
+    const q = reviewBranchSearch.trim().toLowerCase()
+    if (!q) return remoteBranches
+    return remoteBranches.filter((b) => b.name.toLowerCase().includes(q))
+  }, [remoteBranches, reviewBranchSearch])
+
+  const filteredPrBranches = useMemo(() => {
+    const q = prBranchSearch.trim().toLowerCase()
+    if (!q) return remoteBranches
+    return remoteBranches.filter((b) => b.name.toLowerCase().includes(q))
+  }, [remoteBranches, prBranchSearch])
+
+  useEffect(() => {
+    if (!reviewBranchPickerOpen) return
+    const t = window.setTimeout(() => reviewBranchSearchRef.current?.focus(), 0)
+    return () => window.clearTimeout(t)
+  }, [reviewBranchPickerOpen])
+
+  useEffect(() => {
+    if (!prBranchPickerOpen) return
+    const t = window.setTimeout(() => prBranchSearchRef.current?.focus(), 0)
+    return () => window.clearTimeout(t)
+  }, [prBranchPickerOpen])
 
   // PR picker popover state (UI-specific to Header)
   const [prPickerOpen, setPrPickerOpen] = useState(false)
@@ -583,8 +616,14 @@ export function Header(): React.JSX.Element {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            <Popover
+              open={reviewBranchPickerOpen}
+              onOpenChange={(open) => {
+                setReviewBranchPickerOpen(open)
+                if (!open) setReviewBranchSearch('')
+              }}
+            >
+              <PopoverTrigger asChild>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -594,23 +633,59 @@ export function Header(): React.JSX.Element {
                   vs {reviewTargetBranch || branchInfo?.tracking || 'origin/main'}
                   <ChevronDown className="h-3 w-3 ml-1" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="max-h-60 overflow-y-auto">
-                {remoteBranches.length === 0 ? (
-                  <DropdownMenuItem disabled>No remote branches</DropdownMenuItem>
-                ) : (
-                  remoteBranches.map((branch) => (
-                    <DropdownMenuItem
-                      key={branch.name}
-                      onClick={() => lifecycle.setReviewTargetBranch(branch.name)}
-                      data-testid={`review-target-branch-${branch.name}`}
-                    >
-                      {branch.name}
-                    </DropdownMenuItem>
-                  ))
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="w-72 p-0"
+                onOpenAutoFocus={(e) => {
+                  e.preventDefault()
+                  reviewBranchSearchRef.current?.focus()
+                }}
+              >
+                <div className="p-2 border-b border-border">
+                  <Input
+                    ref={reviewBranchSearchRef}
+                    type="search"
+                    value={reviewBranchSearch}
+                    onChange={(e) => setReviewBranchSearch(e.target.value)}
+                    placeholder={t('layout.branchPickerSearchPlaceholder')}
+                    className="h-8 text-xs"
+                    data-testid="review-target-branch-search"
+                  />
+                </div>
+                <div className="max-h-60 overflow-y-auto p-1">
+                  {remoteBranches.length === 0 ? (
+                    <div className="px-2 py-3 text-xs text-muted-foreground text-center">
+                      No remote branches
+                    </div>
+                  ) : filteredReviewBranches.length === 0 ? (
+                    <div className="px-2 py-3 text-xs text-muted-foreground text-center">
+                      {t('layout.branchPickerNoMatches')}
+                    </div>
+                  ) : (
+                    filteredReviewBranches.map((branch) => (
+                      <button
+                        key={branch.name}
+                        type="button"
+                        className={cn(
+                          'w-full text-left px-2 py-1.5 text-xs rounded-sm',
+                          'hover:bg-accent transition-colors',
+                          (reviewTargetBranch || branchInfo?.tracking || 'origin/main') ===
+                            branch.name && 'bg-accent/60'
+                        )}
+                        onClick={() => {
+                          lifecycle.setReviewTargetBranch(branch.name)
+                          setReviewBranchPickerOpen(false)
+                        }}
+                        data-testid={`review-target-branch-${branch.name}`}
+                      >
+                        {branch.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </>
         )}
         {/* PR Badge with Popover Picker — shown when a PR is attached */}
@@ -795,8 +870,15 @@ export function Header(): React.JSX.Element {
                 )}
               </div>
             </PopoverContent>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            <Popover
+              modal={false}
+              open={prBranchPickerOpen}
+              onOpenChange={(open) => {
+                setPrBranchPickerOpen(open)
+                if (!open) setPrBranchSearch('')
+              }}
+            >
+              <PopoverTrigger asChild>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -806,23 +888,59 @@ export function Header(): React.JSX.Element {
                   → {prTargetBranch || branchInfo?.tracking || 'origin/main'}
                   <ChevronDown className="h-3 w-3 ml-1" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="max-h-60 overflow-y-auto">
-                {remoteBranches.length === 0 ? (
-                  <DropdownMenuItem disabled>No remote branches</DropdownMenuItem>
-                ) : (
-                  remoteBranches.map((branch) => (
-                    <DropdownMenuItem
-                      key={branch.name}
-                      onClick={() => lifecycle.setPrTargetBranch(branch.name)}
-                      data-testid={`pr-target-branch-${branch.name}`}
-                    >
-                      {branch.name}
-                    </DropdownMenuItem>
-                  ))
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="w-72 p-0"
+                onOpenAutoFocus={(e) => {
+                  e.preventDefault()
+                  prBranchSearchRef.current?.focus()
+                }}
+              >
+                <div className="p-2 border-b border-border">
+                  <Input
+                    ref={prBranchSearchRef}
+                    type="search"
+                    value={prBranchSearch}
+                    onChange={(e) => setPrBranchSearch(e.target.value)}
+                    placeholder={t('layout.branchPickerSearchPlaceholder')}
+                    className="h-8 text-xs"
+                    data-testid="pr-target-branch-search"
+                  />
+                </div>
+                <div className="max-h-60 overflow-y-auto p-1">
+                  {remoteBranches.length === 0 ? (
+                    <div className="px-2 py-3 text-xs text-muted-foreground text-center">
+                      No remote branches
+                    </div>
+                  ) : filteredPrBranches.length === 0 ? (
+                    <div className="px-2 py-3 text-xs text-muted-foreground text-center">
+                      {t('layout.branchPickerNoMatches')}
+                    </div>
+                  ) : (
+                    filteredPrBranches.map((branch) => (
+                      <button
+                        key={branch.name}
+                        type="button"
+                        className={cn(
+                          'w-full text-left px-2 py-1.5 text-xs rounded-sm',
+                          'hover:bg-accent transition-colors',
+                          (prTargetBranch || branchInfo?.tracking || 'origin/main') === branch.name &&
+                            'bg-accent/60'
+                        )}
+                        onClick={() => {
+                          lifecycle.setPrTargetBranch(branch.name)
+                          setPrBranchPickerOpen(false)
+                        }}
+                        data-testid={`pr-target-branch-${branch.name}`}
+                      >
+                        {branch.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </Popover>
         )}
         {boardMode === 'toggle' && (
