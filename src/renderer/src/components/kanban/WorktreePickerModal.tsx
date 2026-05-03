@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react'
-import { Hammer, Map, Sparkles, Plus, GitBranch, Send, ChevronDown, Loader2, Search } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
+import { Hammer, Map, Plus, GitBranch, Send, ChevronDown, Loader2, Search } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -85,8 +86,7 @@ function swapModePrefix(text: string, fromMode: PickerMode, toMode: PickerMode):
   return text                                        // prefix not found: don't touch
 }
 
-function buildPrompt(mode: PickerMode, ticket: KanbanTicket): string {
-  const prefix = getModePrefix(mode)
+function getTicketXmlBlock(ticket: KanbanTicket): string {
   const description = ticket.description ?? ''
   const attachments = (ticket.attachments ?? []) as Array<{ type: string; url: string; label: string }>
 
@@ -103,7 +103,17 @@ function buildPrompt(mode: PickerMode, ticket: KanbanTicket): string {
     attachmentsXml = `\n<attachments>\n${items.join('\n')}\n</attachments>`
   }
 
-  return `${prefix}\n\n<ticket title="${ticket.title}">${description}${attachmentsXml}</ticket>`
+  return `<ticket title="${ticket.title}">${description}${attachmentsXml}</ticket>`
+}
+
+function buildPrompt(mode: PickerMode, ticket: KanbanTicket): string {
+  return `${getModePrefix(mode)}\n\n${getTicketXmlBlock(ticket)}`
+}
+
+function combineTaskPromptBodyWithTicket(templateBody: string, ticket: KanbanTicket): string {
+  const trimmed = templateBody.trim()
+  const prelude = trimmed.length > 0 ? trimmed : getModePrefix('build')
+  return `${prelude}\n\n${getTicketXmlBlock(ticket)}`
 }
 
 // ── Component ───────────────────────────────────────────────────────
@@ -117,12 +127,14 @@ export function WorktreePickerModal({
   connectionId,
   saveConfigOnly = false
 }: WorktreePickerModalProps) {
+  const { t } = useTranslation()
   const isConnectionMode = !!connectionId
   const [mode, setMode] = useState<PickerMode>('build')
   const [superArmed, setSuperArmed] = useState(false)
   const [selectedWorktreeId, setSelectedWorktreeId] = useState<string | null>(null)
   const [isNewWorktree, setIsNewWorktree] = useState(false)
   const [promptText, setPromptText] = useState('')
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
   const promptRef = useRef<HTMLTextAreaElement>(null)
   const [sourceBranch, setSourceBranch] = useState<string | null>(null) // null = default
@@ -177,6 +189,8 @@ export function WorktreePickerModal({
   const codexFastMode = useSettingsStore((s) => s.codexFastMode)
   const codexFastModeAccepted = useSettingsStore((s) => s.codexFastModeAccepted)
   const updateSetting = useSettingsStore((s) => s.updateSetting)
+  const openSettingsModal = useSettingsStore((s) => s.openSettings)
+  const taskPromptTemplates = useSettingsStore((s) => s.taskSessionPromptTemplates ?? [])
   const defaultSdkNormalized = defaultAgentSdk === 'terminal' ? 'opencode' : defaultAgentSdk
   const agentSdk = selectedSdk ?? defaultSdkNormalized
 
@@ -188,6 +202,32 @@ export function WorktreePickerModal({
     // Priority 2: per-provider / global default
     return resolveModelForSdk(agentSdk) ?? null
   }, [mode, agentSdk])
+
+  const handleTaskPromptTemplateChange = useCallback(
+    (nextId: string) => {
+      if (nextId === '') {
+        setSelectedTemplateId(null)
+        setPromptText(buildPrompt(mode, ticket))
+        updateSetting('lastTaskSessionPromptTemplateId', null)
+        return
+      }
+      const row = taskPromptTemplates.find((x) => x.id === nextId)
+      if (!row) return
+      setSelectedTemplateId(nextId)
+      setPromptText(combineTaskPromptBodyWithTicket(row.body, ticket))
+      updateSetting('lastTaskSessionPromptTemplateId', nextId)
+    },
+    [taskPromptTemplates, ticket, mode, updateSetting]
+  )
+
+  useEffect(() => {
+    if (!open || selectedTemplateId === null) return
+    const exists = taskPromptTemplates.some((row) => row.id === selectedTemplateId)
+    if (!exists) {
+      setSelectedTemplateId(null)
+      setPromptText(buildPrompt(mode, ticket))
+    }
+  }, [open, selectedTemplateId, taskPromptTemplates, mode, ticket])
 
   // ── Count in-progress tickets per worktree ──────────────────────
   const ticketCountByWorktree = useMemo(() => {
@@ -229,7 +269,20 @@ export function WorktreePickerModal({
       // Default to "New worktree" — it's the most common choice when starting work
       setSelectedWorktreeId(null)
       setIsNewWorktree(true)
-      setPromptText(buildPrompt('build', ticket))
+      const { lastTaskSessionPromptTemplateId, taskSessionPromptTemplates } =
+        useSettingsStore.getState()
+      const list = taskSessionPromptTemplates ?? []
+      const match =
+        typeof lastTaskSessionPromptTemplateId === 'string' ?
+          list.find((row) => row.id === lastTaskSessionPromptTemplateId)
+        : undefined
+      if (match) {
+        setSelectedTemplateId(match.id)
+        setPromptText(combineTaskPromptBodyWithTicket(match.body, ticket))
+      } else {
+        setSelectedTemplateId(null)
+        setPromptText(buildPrompt('build', ticket))
+      }
       setIsSending(false)
       setSelectedModel(null)
       setSelectedSdk(null)
@@ -682,9 +735,7 @@ export function WorktreePickerModal({
     mode,
     promptText,
     updateTicket,
-    ticket.id,
-    ticket.title,
-    ticket.project_id,
+    ticket,
     onSendComplete,
     onOpenChange,
     preAssignOnly,
@@ -994,6 +1045,43 @@ export function WorktreePickerModal({
           {/* ── Prompt preview / editor (hidden in pre-assign mode) ── */}
           {!preAssignOnly && (
             <div className="space-y-2">
+              <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
+                <label
+                  htmlFor="wt-picker-prompt-template"
+                  className="text-xs font-medium uppercase tracking-wider text-muted-foreground shrink-0"
+                >
+                  {t('settings.taskPrompts.pickerLabel')}
+                </label>
+                <div className="flex flex-wrap items-center gap-2 min-w-0 flex-1 justify-end">
+                  <select
+                    id="wt-picker-prompt-template"
+                    data-testid="wt-picker-prompt-template"
+                    className={cn(
+                      'flex h-8 min-w-0 sm:max-w-[240px] flex-1 rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                    )}
+                    value={selectedTemplateId ?? ''}
+                    onChange={(e) => handleTaskPromptTemplateChange(e.target.value)}
+                  >
+                    <option value="">{t('settings.taskPrompts.pickerDefault')}</option>
+                    {taskPromptTemplates.map((row) => (
+                      <option key={row.id} value={row.id}>
+                        {row.name.trim() || t('settings.taskPrompts.unnamed')}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    data-testid="wt-picker-open-templates-settings"
+                    className="text-xs text-muted-foreground hover:text-foreground underline shrink-0"
+                    onClick={() => openSettingsModal('task-prompts')}
+                  >
+                    {t('settings.taskPrompts.manageLink')}
+                  </button>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                {t('settings.taskPrompts.pickerHintPlan')}
+              </p>
               <label
                 htmlFor="wt-picker-prompt-input"
                 className="text-xs font-medium uppercase tracking-wider text-muted-foreground"

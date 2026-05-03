@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Settings,
   Palette,
@@ -12,7 +13,8 @@ import {
   Wrench,
   Sparkles,
   Plug,
-  Bug
+  Bug,
+  ClipboardList
 } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { useSettingsStore } from '@/stores/useSettingsStore'
@@ -28,26 +30,48 @@ import { SettingsPrivacy } from './SettingsPrivacy'
 import { SettingsIntegrations } from './SettingsIntegrations'
 import { SettingsAdvanced } from './SettingsAdvanced'
 import { SettingsPet } from './SettingsPet'
+import { SettingsTaskPrompts } from './SettingsTaskPrompts'
 import { cn } from '@/lib/utils'
 
-const SECTIONS = [
-  { id: 'appearance', label: 'Appearance', icon: Palette },
-  { id: 'general', label: 'General', icon: Monitor },
-  { id: 'models', label: 'Models', icon: Sparkles },
-  { id: 'pet', label: 'Pet', icon: Bug },
-  { id: 'editor', label: 'Editor', icon: Code },
-  { id: 'terminal', label: 'Terminal', icon: Terminal },
-  { id: 'integrations', label: 'Integrations', icon: Plug },
-  { id: 'security', label: 'Security', icon: Shield },
-  { id: 'privacy', label: 'Privacy', icon: Eye },
-  { id: 'shortcuts', label: 'Shortcuts', icon: Keyboard },
-  { id: 'advanced', label: 'Advanced', icon: Wrench },
-  { id: 'updates', label: 'Updates', icon: Download }
-] as const
+type SettingsSectionId =
+  | 'appearance'
+  | 'general'
+  | 'models'
+  | 'task-prompts'
+  | 'pet'
+  | 'editor'
+  | 'terminal'
+  | 'integrations'
+  | 'security'
+  | 'privacy'
+  | 'shortcuts'
+  | 'advanced'
+  | 'updates'
 
 export function SettingsModal(): React.JSX.Element {
+  const { t } = useTranslation()
   const { isOpen, activeSection, closeSettings, openSettings, setActiveSection } =
     useSettingsStore()
+
+  const sections = useMemo(
+    () =>
+      [
+        { id: 'appearance' as const, label: t('settings.nav.appearance'), icon: Palette },
+        { id: 'general' as const, label: t('settings.nav.general'), icon: Monitor },
+        { id: 'task-prompts' as const, label: t('settings.nav.taskPrompts'), icon: ClipboardList },
+        { id: 'models' as const, label: t('settings.nav.models'), icon: Sparkles },
+        { id: 'pet' as const, label: t('settings.nav.pet'), icon: Bug },
+        { id: 'editor' as const, label: t('settings.nav.editor'), icon: Code },
+        { id: 'terminal' as const, label: t('settings.nav.terminal'), icon: Terminal },
+        { id: 'integrations' as const, label: t('settings.nav.integrations'), icon: Plug },
+        { id: 'security' as const, label: t('settings.nav.security'), icon: Shield },
+        { id: 'privacy' as const, label: t('settings.nav.privacy'), icon: Eye },
+        { id: 'shortcuts' as const, label: t('settings.nav.shortcuts'), icon: Keyboard },
+        { id: 'advanced' as const, label: t('settings.nav.advanced'), icon: Wrench },
+        { id: 'updates' as const, label: t('settings.nav.updates'), icon: Download }
+      ] satisfies ReadonlyArray<{ id: SettingsSectionId; label: string; icon: typeof Palette }>,
+    [t]
+  )
 
   // Listen for the custom event dispatched by keyboard shortcut handler
   useEffect(() => {
@@ -74,9 +98,9 @@ export function SettingsModal(): React.JSX.Element {
           <nav className="w-48 border-r bg-muted/30 p-3 flex flex-col gap-1 shrink-0">
             <div className="flex items-center gap-2 px-2 py-1.5 mb-2">
               <Settings className="h-4 w-4 text-muted-foreground" />
-              <DialogTitle className="text-sm font-semibold">Settings</DialogTitle>
+              <DialogTitle className="text-sm font-semibold">{t('settings.title')}</DialogTitle>
             </div>
-            {SECTIONS.map((section) => {
+            {sections.map((section) => {
               const Icon = section.icon
               return (
                 <button
@@ -101,6 +125,7 @@ export function SettingsModal(): React.JSX.Element {
           <div className="flex-1 overflow-y-auto p-6">
             {activeSection === 'appearance' && <SettingsAppearance />}
             {activeSection === 'general' && <SettingsGeneral />}
+            {activeSection === 'task-prompts' && <SettingsTaskPrompts />}
             {activeSection === 'models' && <SettingsModels />}
             {activeSection === 'pet' && <SettingsPet />}
             {activeSection === 'editor' && <SettingsEditor />}

@@ -397,15 +397,15 @@ else
 fi
 
 info "Installing dependencies..."
-pnpm install --frozen-lockfile
+yarn install:ci
 ok "Dependencies installed"
 
 info "Building native addon..."
-pnpm build:native
+yarn build:native
 ok "ghostty.node built"
 
 info "Building Electron app..."
-pnpm build
+yarn build
 ok "Electron build complete"
 
 # ── Phase 4: Package + Sign + Notarize + Publish ─────────────────
@@ -419,10 +419,10 @@ GH_TOKEN=$(gh auth token)
 WIN_BUILD_OK=false
 if $DRY_RUN; then
   warn "[DRY RUN] Skipping electron-builder publish"
-  warn "[DRY RUN] Would run: pnpm exec electron-builder --mac --publish always -c.publish.channel=canary"
-  warn "[DRY RUN] Would run: pnpm exec electron-builder --win --publish always -c.publish.channel=canary"
+  warn "[DRY RUN] Would run: yarn electron-builder --mac --publish always -c.publish.channel=canary"
+  warn "[DRY RUN] Would run: yarn electron-builder --win --publish always -c.publish.channel=canary"
 else
-  pnpm exec electron-builder --mac --publish always -c.publish.channel=canary
+  yarn electron-builder --mac --publish always -c.publish.channel=canary
   ok "macOS assets uploaded to GitHub Releases"
 
   # ── Phase 4.5: Windows build ──────────────────────────────────────
@@ -432,7 +432,7 @@ else
     info "Packaging Windows canary build..."
     info "This may take a few minutes."
     # --config.npmRebuild=false: skip native module rebuild (we prepared Windows binaries manually)
-    if pnpm exec electron-builder --win --publish always -c.publish.channel=canary --config.npmRebuild=false; then
+    if yarn electron-builder --win --publish always -c.publish.channel=canary --config.npmRebuild=false; then
       WIN_BUILD_OK=true
       ok "Windows assets uploaded to GitHub Releases"
     else

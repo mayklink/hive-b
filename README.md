@@ -12,7 +12,7 @@
     <a href="#"><img src="https://img.shields.io/badge/macOS-supported-000000?style=flat-square&logo=apple&logoColor=white" alt="macOS" /></a>
     <a href="#"><img src="https://img.shields.io/badge/Windows-supported-0078D4?style=flat-square&logo=windows&logoColor=white" alt="Windows" /></a>
     <a href="#"><img src="https://img.shields.io/badge/Linux-supported-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux" /></a>
-    <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js" /></a>
+    <a href="https://nodejs.org"><img src="https://img.shields.io/badge/node-%3E%3D20.20-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node.js" /></a>
     <a href="https://www.electronjs.org/"><img src="https://img.shields.io/badge/electron-41-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron" /></a>
     <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/typescript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" /></a>
@@ -260,18 +260,32 @@ Want to influence the roadmap? [Join the discussion](https://github.com/morapelk
 
 ### Prerequisites
 
-- **Node.js** 20+
-- **pnpm** 9+
+- **Node.js** 20.20+ (see `.nvmrc`; `posthog-node` and other deps require ≥20.20.0)
+- **Yarn** 1.x (Classic)
 - **Git** 2.20+ (worktree support)
+- **Windows** (native addons for Electron — **SQLite DB + embedded terminal**): install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with workload **Desktop development with C++,** then **`yarn rebuild:app-deps`**. Without that step, `yarn install` can still finish but `yarn dev` may crash (`NODE_MODULE_VERSION` / `better_sqlite3.node`). Optionally **`yarn install:no-scripts`** skips `postinstall` entirely until you install the toolchain.
 
 ### Setup
 
 ```bash
 git clone https://github.com/anomalyco/hive.git
 cd hive
-pnpm install
-pnpm dev
+
+# Match project Node version (requires nvm; skip if already on Node ≥20.20)
+nvm install
+nvm use
+
+yarn install
+
+# Windows: after Visual Studio Build Tools, uncomment and run once (native modules must target Electron):
+# yarn rebuild:app-deps
+
+yarn dev
 ```
+
+### Troubleshooting
+
+- **`better_sqlite3.node` … NODE_MODULE_VERSION / `ERR_DLOPEN_FAILED`:** `yarn dev` / `yarn build` run **`@electron/rebuild --force`** so `better-sqlite3` targets Electron (often via prebuild — no MSVC needed). **`node-pty`** may still need **Visual Studio Build Tools (C++)** on Windows; until then the app runs but the **embedded terminal tab** shows an error until you run **`yarn rebuild:app-deps`**. State is stored in **`node_modules/.hive-electron-native-fingerprint`** (full key or `|pty-unavailable`).
 
 ### Ghostty Terminal (Optional)
 
@@ -302,17 +316,22 @@ If `libghostty` is not available, Hive still builds and runs -- the Ghostty term
 
 ### Commands
 
-| Command           | Description           |
-| ----------------- | --------------------- |
-| `pnpm dev`        | Start with hot reload |
-| `pnpm build`      | Production build      |
-| `pnpm lint`       | ESLint check          |
-| `pnpm lint:fix`   | ESLint auto-fix       |
-| `pnpm format`     | Prettier format       |
-| `pnpm test`       | Run all tests         |
-| `pnpm test:watch` | Watch mode            |
-| `pnpm test:e2e`   | Playwright E2E tests  |
-| `pnpm build:mac`  | Package for macOS     |
+| Command                 | Description                                                |
+| ----------------------- | ---------------------------------------------------------- |
+| `yarn install`          | Install dependencies                                       |
+| `yarn install:ci`       | Install with `--frozen-lockfile` (CI / reproducible builds) |
+| `yarn install:no-scripts` | Install without `postinstall` (e.g. no VS Build Tools yet) |
+| `yarn rebuild:app-deps` | Rebuild Electron natives (`@electron/rebuild`); run after `install:no-scripts` or MSVC install |
+| `yarn dev`              | Start with hot reload                                       |
+| `yarn build`            | Production build                                            |
+| `yarn lint`             | ESLint check                                                |
+| `yarn lint:fix`         | ESLint auto-fix                                             |
+| `yarn format`           | Prettier format                                             |
+| `yarn check`            | Lint + unit tests                                           |
+| `yarn test`             | Run all tests                                               |
+| `yarn test:watch`       | Watch mode                                                  |
+| `yarn test:e2e`         | Playwright E2E tests                                        |
+| `yarn build:mac`        | Package for macOS                                           |
 
 ### Architecture
 
@@ -414,7 +433,7 @@ Before contributing, please read our [Contributing Guidelines](CONTRIBUTING.md) 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Run tests (`pnpm test`) and linting (`pnpm lint`)
+4. Run tests (`yarn test`) and linting (`yarn lint`)
 5. Commit with a descriptive message
 6. Push to your fork
 7. Open a Pull Request

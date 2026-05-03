@@ -546,6 +546,7 @@ declare global {
       }) => Promise<{
         success: boolean
         error?: string
+        warning?: string
       }>
       sync: (params: { projectId: string; projectPath: string }) => Promise<{
         success: boolean

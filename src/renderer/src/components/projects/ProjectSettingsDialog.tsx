@@ -185,7 +185,7 @@ export function ProjectSettingsDialog({
             <Textarea
               value={setupScript}
               onChange={(e) => setSetupScript(e.target.value)}
-              placeholder={'pnpm install\npnpm run build'}
+              placeholder={'yarn install\nyarn build'}
               rows={4}
               className="font-mono text-sm resize-y"
             />
@@ -200,7 +200,7 @@ export function ProjectSettingsDialog({
             <Textarea
               value={runScript}
               onChange={(e) => setRunScript(e.target.value)}
-              placeholder={'pnpm run dev'}
+              placeholder={'yarn dev'}
               rows={4}
               className="font-mono text-sm resize-y"
             />
@@ -215,7 +215,7 @@ export function ProjectSettingsDialog({
             <Textarea
               value={archiveScript}
               onChange={(e) => setArchiveScript(e.target.value)}
-              placeholder={'pnpm run clean'}
+              placeholder={'yarn run clean'}
               rows={4}
               className="font-mono text-sm resize-y"
             />

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { createPortal } from 'react-dom'
 import { Header } from './Header'
 import { LeftSidebar } from './LeftSidebar'
@@ -119,6 +120,7 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps): React.JSX.Element {
+  const { t } = useTranslation()
   // Register all keyboard shortcuts centrally
   useKeyboardShortcuts()
   // Vim-style modal navigation (hjkl, panel shortcuts, file tab cycling)
@@ -141,72 +143,72 @@ export function AppLayout({ children }: AppLayoutProps): React.JSX.Element {
   // Drag-and-drop from Finder
   const activeSessionId = useSessionStore((s) => s.activeSessionId)
 
-  const handleFileDrop = useCallback((files: FileList) => {
-    const sessionId = useSessionStore.getState().activeSessionId
-    if (!sessionId) {
-      toast.warning('Open a session to attach files')
-      return
-    }
-
-    const allFiles = Array.from(files)
-
-    // Filter out directories (in Electron, directories have type '' and size 0)
-    const validFiles = allFiles.filter((f) => {
-      if (f.type === '' && f.size === 0) {
-        return false
+  const handleFileDrop = useCallback(
+    (files: FileList) => {
+      const sessionId = useSessionStore.getState().activeSessionId
+      if (!sessionId) {
+        toast.warning(t('app.openSessionToAttach'))
+        return
       }
-      return true
-    })
 
-    if (validFiles.length < allFiles.length) {
-      toast.warning('Folders cannot be attached. Drop individual files instead.')
-    }
+      const allFiles = Array.from(files)
 
-    if (validFiles.length === 0) return
+      const validFiles = allFiles.filter((f) => {
+        if (f.type === '' && f.size === 0) {
+          return false
+        }
+        return true
+      })
 
-    // Truncate to max
-    const filesToProcess =
-      validFiles.length > MAX_ATTACHMENTS
-        ? (toast.warning(`Maximum ${MAX_ATTACHMENTS} files per drop`),
-          validFiles.slice(0, MAX_ATTACHMENTS))
-        : validFiles
+      if (validFiles.length < allFiles.length) {
+        toast.warning(t('app.foldersCannotAttach'))
+      }
 
-    // Process files
-    const promises = filesToProcess.map((file) => {
-      if (isImageMime(file.type)) {
-        return new Promise<Omit<Attachment, 'id'>>((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onload = () => {
-            resolve({
-              kind: 'data' as const,
-              name: file.name,
-              mime: file.type,
-              dataUrl: reader.result as string
-            })
-          }
-          reader.onerror = () => {
-            reject(new Error(`Failed to read file: ${file.name}`))
-          }
-          reader.readAsDataURL(file)
+      if (validFiles.length === 0) return
+
+      const filesToProcess =
+        validFiles.length > MAX_ATTACHMENTS
+          ? (toast.warning(t('app.maxFilesPerDrop', { max: MAX_ATTACHMENTS })),
+            validFiles.slice(0, MAX_ATTACHMENTS))
+          : validFiles
+
+      const promises = filesToProcess.map((file) => {
+        if (isImageMime(file.type)) {
+          return new Promise<Omit<Attachment, 'id'>>((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onload = () => {
+              resolve({
+                kind: 'data' as const,
+                name: file.name,
+                mime: file.type,
+                dataUrl: reader.result as string
+              })
+            }
+            reader.onerror = () => {
+              reject(new Error(`Failed to read file: ${file.name}`))
+            }
+            reader.readAsDataURL(file)
+          })
+        }
+        return Promise.resolve({
+          kind: 'path' as const,
+          name: file.name,
+          mime: file.type || 'application/octet-stream',
+          filePath: window.fileOps.getPathForFile(file)
+        } as Omit<Attachment, 'id'>)
+      })
+
+      Promise.all(promises)
+        .then((items) => {
+          useDropAttachmentStore.getState().push(items)
         })
-      }
-      return Promise.resolve({
-        kind: 'path' as const,
-        name: file.name,
-        mime: file.type || 'application/octet-stream',
-        filePath: window.fileOps.getPathForFile(file)
-      } as Omit<Attachment, 'id'>)
-    })
-
-    Promise.all(promises)
-      .then((items) => {
-        useDropAttachmentStore.getState().push(items)
-      })
-      .catch((err) => {
-        console.error('Failed to process dropped files:', err)
-        toast.error('Failed to read one or more dropped files')
-      })
-  }, [])
+        .catch((err) => {
+          console.error('Failed to process dropped files:', err)
+          toast.error(t('app.dropReadFailed'))
+        })
+    },
+    [t]
+  )
 
   const { isDragging } = useDropZone({ onDrop: handleFileDrop })
 

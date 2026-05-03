@@ -5,7 +5,6 @@
   "main": "./out/main/index.js",
   "author": "morapelker <morapelker@users.noreply.github.com>",
   "license": "MIT",
-  "packageManager": "pnpm@10.24.0",
   "homepage": "https://github.com/morapelker/hive#readme",
   "repository": {
     "type": "git",
@@ -27,30 +26,25 @@
     "git-management",
     "productivity"
   ],
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "better-sqlite3",
-      "electron",
-      "esbuild",
-      "msw",
-      "node-pty"
-    ]
-  },
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "electron-vite build",
-    "preview": "electron-vite preview",
-    "start": "electron-vite preview",
-    "postinstall": "electron-builder install-app-deps",
-    "build:unpack": "pnpm run build && electron-builder --dir",
-    "build:win": "pnpm run build && electron-builder --win",
-    "build:mac": "test -f .env.signing && . ./.env.signing; pnpm run build && electron-builder --mac",
-    "build:mac:unsigned": "CSC_IDENTITY_AUTO_DISCOVERY=false pnpm run build && electron-builder --mac",
-    "build:linux": "pnpm run build && electron-builder --linux",
+    "dev": "node scripts/ensure-electron-native-modules.cjs && electron-vite dev",
+    "build": "node scripts/ensure-electron-native-modules.cjs && electron-vite build",
+    "preview": "node scripts/ensure-electron-native-modules.cjs && electron-vite preview",
+    "start": "node scripts/ensure-electron-native-modules.cjs && electron-vite preview",
+    "postinstall": "node scripts/run-install-app-deps.cjs",
+    "install:ci": "yarn install --frozen-lockfile",
+    "install:no-scripts": "yarn install --ignore-scripts",
+    "rebuild:app-deps": "node scripts/run-electron-native-rebuild.cjs",
+    "build:unpack": "electron-vite build && electron-builder --dir",
+    "build:win": "electron-vite build && electron-builder --win",
+    "build:mac": "test -f .env.signing && . ./.env.signing; electron-vite build && electron-builder --mac",
+    "build:mac:unsigned": "CSC_IDENTITY_AUTO_DISCOVERY=false electron-vite build && electron-builder --mac",
+    "build:linux": "electron-vite build && electron-builder --linux",
     "lint": "eslint . --ext .ts,.tsx",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
-    "probe:codex-app-server": "pnpm exec tsc -p tsconfig.scripts.json --outDir dist/scripts-probe && node dist/scripts-probe/scripts/codex-app-server-probe.js",
+    "check": "eslint . --ext .ts,.tsx && vitest run",
+    "probe:codex-app-server": "tsc -p tsconfig.scripts.json --outDir dist/scripts-probe && node dist/scripts-probe/scripts/codex-app-server-probe.js",
     "codex:generate-schemas": "rm -rf src/shared/codex-schemas && codex app-server generate-ts --out src/shared/codex-schemas",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -106,6 +100,7 @@
     "codemirror": "^6.0.2",
     "diff2html": "^3.4.56",
     "electron-updater": "^6.8.3",
+    "i18next": "^24.2.3",
     "highlight.js": "^11.11.1",
     "lucide-react": "^0.468.0",
     "monaco-editor": "^0.55.1",
@@ -117,6 +112,7 @@
     "radix-ui": "^1.4.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-i18next": "^15.4.1",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^16.1.0",
     "remark-gfm": "^4.0.1",
@@ -163,5 +159,8 @@
   },
   "optionalDependencies": {
     "fsevents": "2.3.3"
+  },
+  "engines": {
+    "node": "^20.20.0 || >=22.22.0"
   }
 }

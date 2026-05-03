@@ -1,5 +1,6 @@
 import { existsSync } from 'fs'
 import { execSync } from 'child_process'
+import { join } from 'path'
 import { platform } from 'os'
 
 export interface DetectedApp {
@@ -34,7 +35,13 @@ export function detectEditors(): DetectedApp[] {
         currentPlatform === 'darwin'
           ? ['/usr/local/bin/cursor', '/Applications/Cursor.app/Contents/Resources/app/bin/cursor']
           : currentPlatform === 'win32'
-            ? ['cursor.cmd', 'cursor']
+            ? [
+                ...(process.env.LOCALAPPDATA
+                  ? [join(process.env.LOCALAPPDATA, 'Programs', 'cursor', 'Cursor.exe')]
+                  : []),
+                'cursor.cmd',
+                'cursor'
+              ]
             : ['/usr/bin/cursor', '/opt/cursor/cursor', 'cursor']
     },
     {

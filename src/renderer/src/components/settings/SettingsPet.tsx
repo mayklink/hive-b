@@ -1,19 +1,26 @@
 import { Bug, Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import type { PetSettings, PetSize } from '@shared/types/pet'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { listPets } from '@/pet/registry'
 import { useSettingsStore } from '@/stores/useSettingsStore'
-
-const SIZE_OPTIONS: Array<{ id: PetSize; label: string; description: string }> = [
-  { id: 'S', label: 'S', description: '64 px' },
-  { id: 'M', label: 'M', description: '96 px' },
-  { id: 'L', label: 'L', description: '128 px' }
-]
+import { useMemo } from 'react'
 
 export function SettingsPet(): React.JSX.Element {
+  const { t } = useTranslation()
   const { pet, updateSetting } = useSettingsStore()
   const pets = listPets()
+
+  const sizeOptions = useMemo(
+    () =>
+      [
+        { id: 'S' as const, label: 'S', description: t('settings.pet.sizePx64') },
+        { id: 'M' as const, label: 'M', description: t('settings.pet.sizePx96') },
+        { id: 'L' as const, label: 'L', description: t('settings.pet.sizePx128') }
+      ] satisfies ReadonlyArray<{ id: PetSize; label: string; description: string }>,
+    [t]
+  )
 
   const updatePet = (partial: Partial<PetSettings>): void => {
     updateSetting('pet', { ...pet, ...partial })
@@ -22,18 +29,14 @@ export function SettingsPet(): React.JSX.Element {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-base font-medium mb-1">Pet</h3>
-        <p className="text-sm text-muted-foreground">
-          Ambient desktop status for the worktree that needs the most attention
-        </p>
+        <h3 className="text-base font-medium mb-1">{t('settings.pet.heading')}</h3>
+        <p className="text-sm text-muted-foreground">{t('settings.pet.description')}</p>
       </div>
 
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Enable pet</label>
-          <p className="text-xs text-muted-foreground">
-            Shows a transparent always-on-top overlay on macOS
-          </p>
+          <label className="text-sm font-medium">{t('settings.pet.enable')}</label>
+          <p className="text-xs text-muted-foreground">{t('settings.pet.enableHint')}</p>
         </div>
         <button
           role="switch"
@@ -55,7 +58,7 @@ export function SettingsPet(): React.JSX.Element {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Character</label>
+        <label className="text-sm font-medium">{t('settings.pet.character')}</label>
         <select
           value={pet.petId}
           onChange={(event) => updatePet({ petId: event.target.value })}
@@ -71,13 +74,14 @@ export function SettingsPet(): React.JSX.Element {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Size</label>
+        <label className="text-sm font-medium">{t('settings.pet.size')}</label>
         <div className="grid grid-cols-3 gap-2">
-          {SIZE_OPTIONS.map((option) => {
+          {sizeOptions.map((option) => {
             const selected = pet.size === option.id
             return (
               <button
                 key={option.id}
+                type="button"
                 onClick={() => updatePet({ size: option.id })}
                 className={cn(
                   'flex items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors',
@@ -100,7 +104,7 @@ export function SettingsPet(): React.JSX.Element {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="text-sm font-medium">Opacity</label>
+          <label className="text-sm font-medium">{t('settings.pet.opacity')}</label>
           <span className="text-xs text-muted-foreground">{Math.round(pet.opacity * 100)}%</span>
         </div>
         <input
@@ -124,7 +128,7 @@ export function SettingsPet(): React.JSX.Element {
           data-testid="show-pet-button"
         >
           <Bug className="h-4 w-4" />
-          Show pet
+          {t('settings.pet.showPet')}
         </Button>
       )}
     </div>

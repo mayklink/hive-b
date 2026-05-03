@@ -322,6 +322,7 @@ const worktreeOps = {
   }): Promise<{
     success: boolean
     error?: string
+    warning?: string
   }> => ipcRenderer.invoke('worktree:delete', params),
 
   // Sync worktrees with actual git state

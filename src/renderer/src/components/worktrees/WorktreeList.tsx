@@ -14,8 +14,7 @@ interface WorktreeListProps {
 }
 
 export function WorktreeList({ project }: WorktreeListProps): React.JSX.Element {
-  const { getWorktreesForProject, loadWorktrees, syncWorktrees, reorderWorktrees } =
-    useWorktreeStore()
+  const { getWorktreesForProject, syncWorktrees, reorderWorktrees } = useWorktreeStore()
 
   const worktrees = getWorktreesForProject(project.id)
 
@@ -27,12 +26,10 @@ export function WorktreeList({ project }: WorktreeListProps): React.JSX.Element 
   const [draggedWorktreeId, setDraggedWorktreeId] = useState<string | null>(null)
   const [dragOverWorktreeId, setDragOverWorktreeId] = useState<string | null>(null)
 
-  // Load and sync worktrees on mount
+  // Sync with git first (heals orphaned folders), then load — avoids flashing broken paths in git IPC
   useEffect(() => {
-    loadWorktrees(project.id)
-    // Sync with git state
-    syncWorktrees(project.id, project.path)
-  }, [project.id, project.path, loadWorktrees, syncWorktrees])
+    void syncWorktrees(project.id, project.path)
+  }, [project.id, project.path, syncWorktrees])
 
   const handleDragStart = useCallback((e: React.DragEvent, worktreeId: string) => {
     setDraggedWorktreeId(worktreeId)

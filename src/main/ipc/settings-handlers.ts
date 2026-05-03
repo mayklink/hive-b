@@ -10,6 +10,37 @@ import { APP_SETTINGS_DB_KEY } from '@shared/types/settings'
 
 const log = createLogger({ component: 'SettingsHandlers' })
 
+/**
+ * Windows: `cmd /c start ...` opens the editor but often leaves a console window visible.
+ * Prefer spawning `Cursor.exe` / other `.exe` directly; use `shell: true` without `detached`
+ * for `.cmd` shims (avoids EINVAL from `detached` + `shell` and keeps the window hidden).
+ */
+function spawnEditorDetached(command: string, args: string[]): void {
+  if (platform() === 'win32') {
+    if (/\.exe$/i.test(command)) {
+      const child = spawn(command, args, {
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: true
+      })
+      child.on('error', () => {})
+      child.unref()
+      return
+    }
+    const child = spawn(command, args, {
+      shell: true,
+      stdio: 'ignore',
+      windowsHide: true
+    })
+    child.on('error', () => {})
+    child.unref()
+    return
+  }
+  const child = spawn(command, args, { detached: true, stdio: 'ignore' })
+  child.on('error', () => {})
+  child.unref()
+}
+
 function resolveEditorCommand(
   editorId: string,
   customCommand?: string
@@ -153,7 +184,7 @@ export function openPathWithPreferredEditor(
     return Promise.resolve({ success: false, error: resolved.error })
   }
   try {
-    spawn(resolved.command, [path], { detached: true, stdio: 'ignore' })
+    spawnEditorDetached(resolved.command, [path])
     return Promise.resolve({ success: true })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
@@ -238,7 +269,7 @@ export function registerSettingsHandlers(): void {
           return { success: false, error: resolved.error }
         }
 
-        spawn(resolved.command, [worktreePath], { detached: true, stdio: 'ignore' })
+        spawnEditorDetached(resolved.command, [worktreePath])
         telemetryService.track('worktree_opened_in_editor')
         return { success: true }
       } catch (error) {

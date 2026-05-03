@@ -1,5 +1,5 @@
 import { existsSync } from 'fs'
-import { basename } from 'path'
+import { basename, join } from 'path'
 import { createGitService, isAutoNamedBranch } from './git-service'
 import { type BreedType } from './breed-names'
 import { normalizeWorktreePath } from './path-utils'
@@ -10,6 +10,11 @@ import type { DatabaseService } from '../db/database'
 import { APP_SETTINGS_DB_KEY } from '@shared/types/settings'
 
 const log = createLogger({ component: 'WorktreeOps' })
+
+/** True if `path` looks like a linked git worktree / checkout (file or dir `.git`). */
+function worktreeDirectoryHasGitMetadata(worktreePath: string): boolean {
+  return existsSync(join(worktreePath, '.git'))
+}
 
 // ── Parameter types ─────────────────────────────────────────────
 
@@ -81,6 +86,7 @@ export interface WorktreeResult {
 export interface SimpleResult {
   success: boolean
   error?: string
+  warning?: string
 }
 
 function getImportedWorktreeName(branch: string, worktreePath: string): string {
@@ -240,26 +246,42 @@ export async function deleteWorktreeOp(
 
     const gitService = createGitService(params.projectPath)
 
-    let result
-    if (params.archive) {
-      // Archive: remove worktree AND delete branch
-      result = await gitService.archiveWorktree(params.worktreePath, params.branchName)
-    } else {
-      // Unbranch: remove worktree but keep branch
-      result = await gitService.removeWorktree(params.worktreePath)
+    let primary = params.archive
+      ? await gitService.archiveWorktree(params.worktreePath, params.branchName)
+      : await gitService.removeWorktree(params.worktreePath)
+
+    if (!primary.success) {
+      log.warn('Primary worktree removal failed; attempting forced cleanup', {
+        worktreeId: params.worktreeId,
+        error: primary.error
+      })
+      const forced = await gitService.forceFinalizeWorktreeRemoval(params.worktreePath, {
+        branchName: params.branchName,
+        archive: params.archive
+      })
+      if (forced.success) {
+        primary = { success: true }
+      } else {
+        log.error('Forced worktree cleanup did not remove folder; archiving Hive entry anyway', {
+          worktreePath: params.worktreePath,
+          error: forced.error
+        })
+      }
     }
 
-    if (!result.success) {
-      return result
+    let warning: string | undefined
+    if (!primary.success) {
+      warning =
+        'Archived in Hive, but the worktree folder could not be fully deleted (another app may have files open). Close terminals or editors using that folder and delete it manually if it remains.'
     }
 
     // Release any assigned port for this worktree
     releasePort(params.worktreePath)
 
-    // Update database - archive the worktree record
+    // Always archive in DB when the user asked to archive/delete — avoids orphaned UI sessions
     db.archiveWorktree(params.worktreeId)
 
-    return { success: true }
+    return warning ? { success: true, warning } : { success: true }
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     return {
@@ -351,6 +373,32 @@ export async function syncWorktreesOp(
         continue
       }
 
+      // Folder still exists but git does not register this path — typical broken archive (EPERM / partial git cleanup)
+      if (!gitWorktreePaths.has(normalizedDbWorktreePath) && existsSync(dbWorktree.path)) {
+        if (dbWorktree.is_default) {
+          continue
+        }
+        if (!worktreeDirectoryHasGitMetadata(dbWorktree.path)) {
+          log.warn('Archiving orphaned worktree folder (exists on disk but not a git checkout)', {
+            worktreeId: dbWorktree.id,
+            path: dbWorktree.path
+          })
+          try {
+            await gitService.forceFinalizeWorktreeRemoval(dbWorktree.path, {
+              branchName: dbWorktree.branch_name || undefined,
+              archive: false
+            })
+          } catch (e) {
+            log.warn('Could not delete orphaned worktree folder during sync; archived in Hive anyway', {
+              path: dbWorktree.path,
+              error: e instanceof Error ? e.message : String(e)
+            })
+          }
+          releasePort(dbWorktree.path)
+          db.archiveWorktree(dbWorktree.id)
+          continue
+        }
+      }
       // Sync branch name if git reports a different one.
       // branch_name is always updated to match git (source of truth).
       // Display name is only updated when it's a breed/city placeholder or

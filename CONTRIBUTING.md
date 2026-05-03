@@ -39,19 +39,29 @@ Please read and follow our [Code of Conduct](CODE_OF_CONDUCT.md). We are committ
 
 ### Prerequisites
 
-- **Node.js** 20.0.0 or higher
-- **pnpm** 9.0.0 or higher
+- **Node.js** 20.20.0 or higher (see `.nvmrc` — `nvm use` / `fnm use`)
+- **Yarn** 1.22+ (Classic)
 - **Git** 2.20.0 or higher (for worktree support)
 - **macOS** (currently the only supported platform)
 
 ### Installation
 
 ```bash
-# Install dependencies
-pnpm install
+# Align Node with the repo (.nvmrc lists 20.20.0+)
+nvm install
+nvm use
 
-# Start development mode with hot reload
-pnpm dev
+# Standard install (runs postinstall: Electron native addons)
+yarn install
+
+# Matches CI — fails if yarn.lock does not satisfy package.json exactly
+yarn install:ci
+
+# When postinstall fails (e.g. no C++ toolchain on Windows yet): JS-only install.
+# Install Visual Studio Build Tools, then run: yarn rebuild:app-deps
+yarn install:no-scripts
+
+yarn dev
 ```
 
 ### Optional: Ghostty Terminal Setup
@@ -149,24 +159,28 @@ src/
 
 ```bash
 # Development
-pnpm dev              # Start dev server with hot reload
-pnpm build            # Build for production
-pnpm preview          # Preview production build
+yarn dev              # Start dev server with hot reload
+yarn build            # Build for production
+yarn preview          # Preview production build
 
 # Testing
-pnpm test             # Run all tests
-pnpm test:watch       # Run tests in watch mode
-pnpm test:e2e         # Run E2E tests
+yarn test             # Run all tests
+yarn test:watch       # Run tests in watch mode
+yarn test:e2e         # Run E2E tests
 
 # Code Quality
-pnpm lint             # Check for linting errors
-pnpm lint:fix         # Auto-fix linting errors
-pnpm format           # Format code with Prettier
+yarn check            # ESLint + unit tests (recommended before commits)
+yarn lint             # Lint only
+yarn lint:fix         # Auto-fix linting errors
+yarn format           # Format code with Prettier
+
+# Native addons (after yarn install:no-scripts)
+yarn rebuild:app-deps # @electron/rebuild (better-sqlite3 + node-pty for Electron)
 
 # Build & Package
-pnpm build:mac        # Build for macOS
-pnpm build:win        # Build for Windows
-pnpm build:linux      # Build for Linux
+yarn build:mac        # Build for macOS
+yarn build:win        # Build for Windows
+yarn build:linux      # Build for Linux
 ```
 
 ## Code Style
@@ -179,7 +193,7 @@ We use ESLint and Prettier to maintain consistent code style:
 - **100 character** line length
 - **No trailing commas**
 
-Run `pnpm format` before committing to ensure your code follows our style guide.
+Run `yarn format` before committing to ensure your code follows our style guide.
 
 ### TypeScript Guidelines
 
@@ -202,16 +216,16 @@ Run `pnpm format` before committing to ensure your code follows our style guide.
 
 ```bash
 # Run all tests
-pnpm test
+yarn test
 
 # Run tests in watch mode
-pnpm test:watch
+yarn test:watch
 
-# Run specific test file
-pnpm vitest run src/renderer/src/components/Button.test.tsx
+# Run specific test file (args after -- go to vitest)
+yarn test -- src/renderer/src/components/Button.test.tsx
 
 # Run E2E tests
-pnpm test:e2e
+yarn test:e2e
 ```
 
 ### Writing Tests
@@ -244,9 +258,9 @@ pnpm test:e2e
 
 5. **Run tests and linting**:
    ```bash
-   pnpm test
-   pnpm lint
-   pnpm format
+   yarn test
+   yarn lint
+   yarn format
    ```
 
 6. **Commit your changes** with a descriptive message:

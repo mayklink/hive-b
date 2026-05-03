@@ -50,7 +50,19 @@ export interface CommandFilterSettings {
   enterToApprove: boolean
 }
 
+export type UiLocale = 'en' | 'pt-BR'
+
+/** Saved instructional text prepended before the ticket XML block in Start Session. */
+export interface TaskSessionPromptTemplate {
+  id: string
+  name: string
+  body: string
+}
+
 export interface AppSettings {
+  // Locale
+  uiLocale: UiLocale
+
   // General
   autoStartSession: boolean
   autoPullBeforeWorktree: boolean
@@ -145,11 +157,18 @@ export interface AppSettings {
   // Review
   reviewPromptType: ReviewPromptType
 
+  // Kanban / Start Session
+  /** User-defined instructional prompts combined with structured ticket XML. */
+  taskSessionPromptTemplates: TaskSessionPromptTemplate[]
+  /** Starts the picker with this template applied when valid; null uses built-in prefixes. */
+  lastTaskSessionPromptTemplateId: string | null
+
   // Migration flags
   _boardModeMigratedToStickyTab?: boolean
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
+  uiLocale: 'en',
   autoStartSession: true,
   autoPullBeforeWorktree: true,
   breedType: 'dogs',
@@ -217,6 +236,8 @@ const DEFAULT_SETTINGS: AppSettings = {
   codexJsonlLoggingEnabled: false,
   codexJsonlResetPerSession: true,
   reviewPromptType: 'standard',
+  taskSessionPromptTemplates: [],
+  lastTaskSessionPromptTemplateId: null,
   _boardModeMigratedToStickyTab: false
 }
 
@@ -271,10 +292,25 @@ async function loadSettingsFromDatabase(): Promise<AppSettings | null> {
     if (typeof window !== 'undefined' && window.db?.setting) {
       const value = await window.db.setting.get(APP_SETTINGS_DB_KEY)
       if (value) {
-        const parsed = JSON.parse(value)
+        const parsed = JSON.parse(value) as Record<string, unknown>
+        const rawTemplates = parsed.taskSessionPromptTemplates
+        const normalizedTemplates =
+          Array.isArray(rawTemplates) ?
+            rawTemplates.filter(
+              (row): row is TaskSessionPromptTemplate =>
+                !!row &&
+                typeof row === 'object' &&
+                typeof (row as TaskSessionPromptTemplate).id === 'string' &&
+                typeof (row as TaskSessionPromptTemplate).name === 'string' &&
+                typeof (row as TaskSessionPromptTemplate).body === 'string'
+            )
+          : undefined
         const result = {
           ...DEFAULT_SETTINGS,
           ...parsed,
+          ...(normalizedTemplates !== undefined ?
+            { taskSessionPromptTemplates: normalizedTemplates }
+          : {}),
           // Deep-merge commandFilter so new fields (e.g. `enabled`) always have defaults
           // even for users whose saved settings pre-date those fields being added.
           commandFilter: {
@@ -307,6 +343,20 @@ async function loadSettingsFromDatabase(): Promise<AppSettings | null> {
           result._boardModeMigratedToStickyTab = true
         }
 
+        if (result.uiLocale !== 'en' && result.uiLocale !== 'pt-BR') {
+          result.uiLocale = DEFAULT_SETTINGS.uiLocale
+        }
+
+        if (
+          typeof result.lastTaskSessionPromptTemplateId === 'string' &&
+          result.lastTaskSessionPromptTemplateId.length > 0 &&
+          !result.taskSessionPromptTemplates.some(
+            (t) => t.id === result.lastTaskSessionPromptTemplateId
+          )
+        ) {
+          result.lastTaskSessionPromptTemplateId = null
+        }
+
         return result
       }
     }
@@ -318,6 +368,7 @@ async function loadSettingsFromDatabase(): Promise<AppSettings | null> {
 
 function extractSettings(state: SettingsState): AppSettings {
   return {
+    uiLocale: state.uiLocale,
     autoStartSession: state.autoStartSession,
     autoPullBeforeWorktree: state.autoPullBeforeWorktree,
     breedType: state.breedType,
@@ -363,6 +414,8 @@ function extractSettings(state: SettingsState): AppSettings {
     codexJsonlLoggingEnabled: state.codexJsonlLoggingEnabled,
     codexJsonlResetPerSession: state.codexJsonlResetPerSession,
     reviewPromptType: state.reviewPromptType,
+    taskSessionPromptTemplates: state.taskSessionPromptTemplates,
+    lastTaskSessionPromptTemplateId: state.lastTaskSessionPromptTemplateId,
     _boardModeMigratedToStickyTab: state._boardModeMigratedToStickyTab
   }
 }
@@ -602,6 +655,7 @@ export const useSettingsStore = create<SettingsState>()(
       name: 'hive-settings',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
+        uiLocale: state.uiLocale,
         autoStartSession: state.autoStartSession,
         autoPullBeforeWorktree: state.autoPullBeforeWorktree,
         breedType: state.breedType,
@@ -648,6 +702,8 @@ export const useSettingsStore = create<SettingsState>()(
         codexJsonlLoggingEnabled: state.codexJsonlLoggingEnabled,
         codexJsonlResetPerSession: state.codexJsonlResetPerSession,
         reviewPromptType: state.reviewPromptType,
+        taskSessionPromptTemplates: state.taskSessionPromptTemplates,
+        lastTaskSessionPromptTemplateId: state.lastTaskSessionPromptTemplateId,
         _boardModeMigratedToStickyTab: state._boardModeMigratedToStickyTab
       })
     }

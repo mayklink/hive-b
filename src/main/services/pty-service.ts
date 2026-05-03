@@ -1,7 +1,33 @@
-import * as pty from 'node-pty'
+import type { IPty } from 'node-pty'
 import { createLogger } from './logger'
 
 const log = createLogger({ component: 'PtyService' })
+
+/** Cached after first load attempt (lazy require avoids crashing app startup without a built node-pty). */
+let nodePty: typeof import('node-pty') | null | undefined
+
+function loadNodePty(): typeof import('node-pty') {
+  if (nodePty !== undefined) {
+    if (nodePty === null) {
+      throw new Error(
+        'Embedded terminal is unavailable (node-pty failed to load). On Windows install Visual Studio Build Tools (Desktop development with C++), then run: yarn rebuild:app-deps'
+      )
+    }
+    return nodePty
+  }
+  try {
+    nodePty = require('node-pty') as typeof import('node-pty')
+    return nodePty
+  } catch (err) {
+    nodePty = null
+    log.warn('node-pty failed to load (embedded terminal disabled)', {
+      detail: err instanceof Error ? err.message : String(err)
+    })
+    throw new Error(
+      'Embedded terminal is unavailable (node-pty failed to load). On Windows install Visual Studio Build Tools (Desktop development with C++), then run: yarn rebuild:app-deps'
+    )
+  }
+}
 
 /**
  * Terminal backend type.
@@ -15,7 +41,7 @@ const log = createLogger({ component: 'PtyService' })
 export type TerminalBackend = 'node-pty' | 'ghostty'
 
 interface PtyInstance {
-  pty: pty.IPty
+  pty: IPty
   cwd: string
   backend: TerminalBackend
   dataListeners: Array<(data: string) => void>
@@ -72,7 +98,7 @@ class PtyService {
 
     log.info('Creating PTY', { id, shell, cwd: opts.cwd, cols, rows })
 
-    const ptyProcess = pty.spawn(shell, [], {
+    const ptyProcess = loadNodePty().spawn(shell, [], {
       name: 'xterm-256color',
       cols,
       rows,

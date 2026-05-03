@@ -54,9 +54,9 @@ Fixes #(issue number)
 ## Checklist
 <!-- Check all that apply -->
 - [ ] My code follows the project's code style
-- [ ] I have run `pnpm lint` and fixed any issues
-- [ ] I have run `pnpm format` to format my code
-- [ ] I have run `pnpm test` and all tests pass
+- [ ] I have run `yarn lint` and fixed any issues
+- [ ] I have run `yarn format` to format my code
+- [ ] I have run `yarn test` and all tests pass
 - [ ] I have added tests that prove my fix/feature works
 - [ ] I have updated the documentation (if needed)
 - [ ] I have added comments to complex code sections

@@ -476,6 +476,9 @@ export const useWorktreeStore = create<WorktreeState>((set, get) => ({
       if (!result.success) {
         return { success: false, error: result.error || 'Failed to archive worktree' }
       }
+      if (result.warning) {
+        toast.warning(result.warning)
+      }
 
       // 5. Clean up any connections referencing this worktree
       try {
@@ -580,6 +583,9 @@ export const useWorktreeStore = create<WorktreeState>((set, get) => ({
       if (!result.success) {
         return { success: false, error: result.error || 'Failed to unbranch worktree' }
       }
+      if (result.warning) {
+        toast.warning(result.warning)
+      }
 
       // Clean up any connections referencing this worktree
       try {
@@ -679,10 +685,10 @@ export const useWorktreeStore = create<WorktreeState>((set, get) => ({
   syncWorktrees: async (projectId: string, projectPath: string) => {
     try {
       await window.worktreeOps.sync({ projectId, projectPath })
-      // Reload worktrees after sync
-      await get().loadWorktrees(projectId)
     } catch {
       // Ignore sync errors
+    } finally {
+      await get().loadWorktrees(projectId)
     }
   },
 

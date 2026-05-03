@@ -135,5 +135,5 @@ done
 
 echo ""
 ok "Windows native binaries are in place"
-info "You can now run: pnpm exec electron-builder --win --config.npmRebuild=false"
+info "You can now run: yarn electron-builder --win --config.npmRebuild=false"
 info "After building, run: bash scripts/prepare-win-deps.sh --restore"

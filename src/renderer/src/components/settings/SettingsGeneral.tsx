@@ -1,6 +1,6 @@
 import { useThemeStore } from '@/stores/useThemeStore'
 import { DEFAULT_THEME_ID } from '@/lib/themes'
-import { useSettingsStore } from '@/stores/useSettingsStore'
+import { useSettingsStore, type UiLocale } from '@/stores/useSettingsStore'
 import { RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -10,10 +10,13 @@ import type { UsageProvider } from '@shared/types/usage'
 import claudeIcon from '@/assets/model-icons/claude.svg'
 import openaiIcon from '@/assets/model-icons/openai.svg'
 import { isAgentSdkAvailable } from '@/lib/agent-sdk-availability'
+import { useTranslation } from 'react-i18next'
 
 export function SettingsGeneral(): React.JSX.Element {
+  const { t } = useTranslation()
   const { setTheme } = useThemeStore()
   const {
+    uiLocale,
     autoStartSession,
     autoPullBeforeWorktree,
     boardMode,
@@ -39,7 +42,7 @@ export function SettingsGeneral(): React.JSX.Element {
     resetToDefaults()
     resetShortcuts()
     setTheme(DEFAULT_THEME_ID)
-    toast.success('All settings reset to defaults')
+    toast.success(t('settings.general.resetAllToast'))
   }
 
   const toggleProvider = (provider: UsageProvider): void => {
@@ -50,6 +53,10 @@ export function SettingsGeneral(): React.JSX.Element {
     updateSetting('usageIndicatorProviders', updated)
   }
 
+  const setLocale = (locale: UiLocale): void => {
+    updateSetting('uiLocale', locale)
+  }
+
   const opencodeAvailable = isAgentSdkAvailable('opencode', availableAgentSdks)
   const claudeAvailable = isAgentSdkAvailable('claude-code', availableAgentSdks)
   const codexAvailable = isAgentSdkAvailable('codex', availableAgentSdks)
@@ -57,17 +64,48 @@ export function SettingsGeneral(): React.JSX.Element {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-base font-medium mb-1">General</h3>
-        <p className="text-sm text-muted-foreground">Basic application settings</p>
+        <h3 className="text-base font-medium mb-1">{t('settings.general.heading')}</h3>
+        <p className="text-sm text-muted-foreground">{t('settings.general.description')}</p>
+      </div>
+
+      <div className="space-y-2 pb-4 border-b">
+        <label className="text-sm font-medium">{t('settings.general.language')}</label>
+        <p className="text-xs text-muted-foreground">{t('settings.general.languageHint')}</p>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setLocale('en')}
+            className={cn(
+              'px-3 py-1.5 rounded-md text-sm border transition-colors',
+              uiLocale === 'en'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent/50'
+            )}
+            data-testid="ui-locale-en"
+          >
+            {t('settings.general.langEnglish')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setLocale('pt-BR')}
+            className={cn(
+              'px-3 py-1.5 rounded-md text-sm border transition-colors',
+              uiLocale === 'pt-BR'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent/50'
+            )}
+            data-testid="ui-locale-pt-BR"
+          >
+            {t('settings.general.langPortuguese')}
+          </button>
+        </div>
       </div>
 
       {/* Auto-start session */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Auto-start session</label>
-          <p className="text-xs text-muted-foreground">
-            Automatically create a session when selecting a worktree with none
-          </p>
+          <label className="text-sm font-medium">{t('settings.general.autoStartSession')}</label>
+          <p className="text-xs text-muted-foreground">{t('settings.general.autoStartSessionHint')}</p>
         </div>
         <button
           role="switch"
@@ -91,10 +129,8 @@ export function SettingsGeneral(): React.JSX.Element {
       {/* Auto-pull before worktree creation */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Auto-pull before worktree creation</label>
-          <p className="text-xs text-muted-foreground">
-            Automatically pull from origin before creating worktrees to ensure they're up-to-date
-          </p>
+          <label className="text-sm font-medium">{t('settings.general.autoPull')}</label>
+          <p className="text-xs text-muted-foreground">{t('settings.general.autoPullHint')}</p>
         </div>
         <button
           role="switch"
@@ -117,10 +153,8 @@ export function SettingsGeneral(): React.JSX.Element {
 
       {/* Board Mode */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">Board Mode</label>
-        <p className="text-xs text-muted-foreground">
-          Choose how the Kanban board is accessed.
-        </p>
+        <label className="text-sm font-medium">{t('settings.general.boardMode')}</label>
+        <p className="text-xs text-muted-foreground">{t('settings.general.boardModeHint')}</p>
         <div className="flex gap-2">
           <button
             onClick={() => updateSetting('boardMode', 'toggle')}
@@ -132,7 +166,7 @@ export function SettingsGeneral(): React.JSX.Element {
             )}
             data-testid="board-mode-toggle"
           >
-            Toggle
+            {t('settings.general.boardToggle')}
           </button>
           <button
             onClick={() => updateSetting('boardMode', 'sticky-tab')}
@@ -144,17 +178,15 @@ export function SettingsGeneral(): React.JSX.Element {
             )}
             data-testid="board-mode-sticky-tab"
           >
-            Sticky Tab
+            {t('settings.general.boardStickyTab')}
           </button>
         </div>
       </div>
 
       {/* Follow-up ticket trigger */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">Follow-up Ticket Trigger</label>
-        <p className="text-xs text-muted-foreground">
-          When should blocked tickets auto-launch? When all blockers reach this column.
-        </p>
+        <label className="text-sm font-medium">{t('settings.general.followUpTrigger')}</label>
+        <p className="text-xs text-muted-foreground">{t('settings.general.followUpTriggerHint')}</p>
         <div className="flex gap-2">
           <button
             onClick={() => updateSetting('followUpTriggerColumn', 'review')}
@@ -166,7 +198,7 @@ export function SettingsGeneral(): React.JSX.Element {
             )}
             data-testid="follow-up-trigger-review"
           >
-            Review
+            {t('settings.general.review')}
           </button>
           <button
             onClick={() => updateSetting('followUpTriggerColumn', 'done')}
@@ -178,7 +210,7 @@ export function SettingsGeneral(): React.JSX.Element {
             )}
             data-testid="follow-up-trigger-done"
           >
-            Done
+            {t('settings.general.done')}
           </button>
         </div>
       </div>
@@ -186,10 +218,8 @@ export function SettingsGeneral(): React.JSX.Element {
       {/* Vim mode */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Vim mode</label>
-          <p className="text-xs text-muted-foreground">
-            Enable vim-style keyboard navigation with hints, hjkl scrolling, and mode switching
-          </p>
+          <label className="text-sm font-medium">{t('settings.general.vimMode')}</label>
+          <p className="text-xs text-muted-foreground">{t('settings.general.vimModeHint')}</p>
         </div>
         <button
           role="switch"
@@ -213,10 +243,8 @@ export function SettingsGeneral(): React.JSX.Element {
       {/* Keep computer awake during sessions */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Keep computer awake during sessions</label>
-          <p className="text-xs text-muted-foreground">
-            Prevent your computer from sleeping while any worktree has an AI session actively running.
-          </p>
+          <label className="text-sm font-medium">{t('settings.general.keepAwake')}</label>
+          <p className="text-xs text-muted-foreground">{t('settings.general.keepAwakeHint')}</p>
         </div>
         <button
           role="switch"
@@ -239,10 +267,8 @@ export function SettingsGeneral(): React.JSX.Element {
 
       {/* Merge conflict mode */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">Merge conflict mode</label>
-        <p className="text-xs text-muted-foreground">
-          Choose which mode to use when fixing merge conflicts with AI
-        </p>
+        <label className="text-sm font-medium">{t('settings.general.mergeConflictMode')}</label>
+        <p className="text-xs text-muted-foreground">{t('settings.general.mergeConflictHint')}</p>
         <div className="flex gap-2">
           <button
             onClick={() => updateSetting('mergeConflictMode', 'build')}
@@ -254,7 +280,7 @@ export function SettingsGeneral(): React.JSX.Element {
             )}
             data-testid="merge-conflict-mode-build"
           >
-            Build
+            {t('settings.general.modeBuild')}
           </button>
           <button
             onClick={() => updateSetting('mergeConflictMode', 'plan')}
@@ -266,7 +292,7 @@ export function SettingsGeneral(): React.JSX.Element {
             )}
             data-testid="merge-conflict-mode-plan"
           >
-            Plan
+            {t('settings.general.modePlan')}
           </button>
           <button
             onClick={() => updateSetting('mergeConflictMode', 'always-ask')}
@@ -278,7 +304,7 @@ export function SettingsGeneral(): React.JSX.Element {
             )}
             data-testid="merge-conflict-mode-always-ask"
           >
-            Always Ask
+            {t('settings.general.alwaysAsk')}
           </button>
         </div>
       </div>
@@ -286,10 +312,8 @@ export function SettingsGeneral(): React.JSX.Element {
       {/* Tips */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Show tips</label>
-          <p className="text-xs text-muted-foreground">
-            Show helpful tips when discovering new features
-          </p>
+          <label className="text-sm font-medium">{t('settings.general.showTips')}</label>
+          <p className="text-xs text-muted-foreground">{t('settings.general.showTipsHint')}</p>
         </div>
         <button
           role="switch"
@@ -313,10 +337,8 @@ export function SettingsGeneral(): React.JSX.Element {
       {/* Model icons */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Model icons</label>
-          <p className="text-xs text-muted-foreground">
-            Show the model icon (Claude, OpenAI) next to the worktree status
-          </p>
+          <label className="text-sm font-medium">{t('settings.general.modelIcons')}</label>
+          <p className="text-xs text-muted-foreground">{t('settings.general.modelIconsHint')}</p>
         </div>
         <button
           role="switch"
@@ -340,9 +362,9 @@ export function SettingsGeneral(): React.JSX.Element {
       {/* Show model provider */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Show model provider</label>
+          <label className="text-sm font-medium">{t('settings.general.showModelProvider')}</label>
           <p className="text-xs text-muted-foreground">
-            Display the provider name (e.g. ANTHROPIC) next to the model in the selector pill
+            {t('settings.general.showModelProviderHint')}
           </p>
         </div>
         <button
@@ -366,10 +388,8 @@ export function SettingsGeneral(): React.JSX.Element {
 
       {/* Usage indicator */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">Usage indicator</label>
-        <p className="text-xs text-muted-foreground">
-          Choose how usage is displayed. Current agent auto-detects from the active session. Specific providers lets you pin which usage bars always show.
-        </p>
+        <label className="text-sm font-medium">{t('settings.general.usageIndicator')}</label>
+        <p className="text-xs text-muted-foreground">{t('settings.general.usageIndicatorHint')}</p>
         <div className="flex gap-2">
           <button
             onClick={() => updateSetting('usageIndicatorMode', 'current-agent')}
@@ -381,7 +401,7 @@ export function SettingsGeneral(): React.JSX.Element {
             )}
             data-testid="usage-indicator-mode-current-agent"
           >
-            Current agent
+            {t('settings.general.currentAgent')}
           </button>
           <button
             onClick={() => updateSetting('usageIndicatorMode', 'specific-providers')}
@@ -393,7 +413,7 @@ export function SettingsGeneral(): React.JSX.Element {
             )}
             data-testid="usage-indicator-mode-specific-providers"
           >
-            Specific providers
+            {t('settings.general.specificProviders')}
           </button>
         </div>
         {usageIndicatorMode === 'specific-providers' && (
@@ -430,7 +450,7 @@ export function SettingsGeneral(): React.JSX.Element {
             </button>
             {usageIndicatorProviders.length === 0 && (
               <p className="text-xs text-muted-foreground/70 italic">
-                Select at least one provider, or switch to Current agent mode.
+                {t('settings.general.usageProviderPick')}
               </p>
             )}
           </div>
@@ -439,11 +459,8 @@ export function SettingsGeneral(): React.JSX.Element {
 
       {/* Default Agent SDK */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">AI Provider</label>
-        <p className="text-xs text-muted-foreground">
-          Choose which AI coding agent to use for new sessions. Existing sessions keep their
-          original provider.
-        </p>
+        <label className="text-sm font-medium">{t('settings.general.aiProvider')}</label>
+        <p className="text-xs text-muted-foreground">{t('settings.general.aiProviderHint')}</p>
         <div className="flex gap-2">
           <button
             onClick={() => updateSetting('defaultAgentSdk', 'opencode')}
@@ -455,7 +472,7 @@ export function SettingsGeneral(): React.JSX.Element {
                 : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent/50'
             )}
             data-testid="agent-sdk-opencode"
-            title={!opencodeAvailable ? 'OpenCode is not currently available' : undefined}
+            title={!opencodeAvailable ? t('settings.general.opencodeUnavailable') : undefined}
           >
             OpenCode
           </button>
@@ -469,7 +486,7 @@ export function SettingsGeneral(): React.JSX.Element {
                 : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent/50'
             )}
             data-testid="agent-sdk-claude-code"
-            title={!claudeAvailable ? 'Claude Code is not currently available' : undefined}
+            title={!claudeAvailable ? t('settings.general.claudeUnavailable') : undefined}
           >
             Claude Code
           </button>
@@ -483,7 +500,7 @@ export function SettingsGeneral(): React.JSX.Element {
                 : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent/50'
             )}
             data-testid="agent-sdk-codex"
-            title={!codexAvailable ? 'Codex is not currently available' : undefined}
+            title={!codexAvailable ? t('settings.general.codexUnavailable') : undefined}
           >
             Codex
           </button>
@@ -502,13 +519,12 @@ export function SettingsGeneral(): React.JSX.Element {
         </div>
         {availableAgentSdks && (!opencodeAvailable || !claudeAvailable || !codexAvailable) && (
           <p className="text-xs text-muted-foreground/70 italic">
-            Unavailable providers are disabled until their CLI is installed and launchable from
-            Hive.
+            {t('settings.general.providersDisabledHint')}
           </p>
         )}
         {defaultAgentSdk === 'terminal' && (
           <p className="text-xs text-muted-foreground/70 italic">
-            Opens a terminal window. Run any AI tool manually (claude, aider, cursor, etc.)
+            {t('settings.general.terminalManualHint')}
           </p>
         )}
       </div>
@@ -516,10 +532,8 @@ export function SettingsGeneral(): React.JSX.Element {
       {/* Strip @ from file mentions */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Strip @ from file mentions</label>
-          <p className="text-xs text-muted-foreground">
-            Remove the @ symbol from file references inserted via the file picker before sending
-          </p>
+          <label className="text-sm font-medium">{t('settings.general.stripAtMentions')}</label>
+          <p className="text-xs text-muted-foreground">{t('settings.general.stripAtMentionsHint')}</p>
         </div>
         <button
           role="switch"
@@ -542,10 +556,8 @@ export function SettingsGeneral(): React.JSX.Element {
 
       {/* Branch naming */}
       <div className="space-y-2">
-        <label className="text-sm font-medium">Branch Naming</label>
-        <p className="text-xs text-muted-foreground">
-          Choose the naming theme for auto-generated worktree branches
-        </p>
+        <label className="text-sm font-medium">{t('settings.general.branchNaming')}</label>
+        <p className="text-xs text-muted-foreground">{t('settings.general.branchNamingHint')}</p>
         <div className="flex gap-2">
           <button
             onClick={() => updateSetting('breedType', 'dogs')}
@@ -557,7 +569,7 @@ export function SettingsGeneral(): React.JSX.Element {
             )}
             data-testid="breed-type-dogs"
           >
-            Dogs
+            {t('settings.general.dogs')}
           </button>
           <button
             onClick={() => updateSetting('breedType', 'cats')}
@@ -569,7 +581,7 @@ export function SettingsGeneral(): React.JSX.Element {
             )}
             data-testid="breed-type-cats"
           >
-            Cats
+            {t('settings.general.cats')}
           </button>
         </div>
       </div>
@@ -584,11 +596,9 @@ export function SettingsGeneral(): React.JSX.Element {
           data-testid="reset-all-settings"
         >
           <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-          Reset All to Defaults
+          {t('settings.general.resetAll')}
         </Button>
-        <p className="text-xs text-muted-foreground mt-1">
-          This will reset all settings, theme, and keyboard shortcuts to their defaults.
-        </p>
+        <p className="text-xs text-muted-foreground mt-1">{t('settings.general.resetAllHint')}</p>
       </div>
     </div>
   )

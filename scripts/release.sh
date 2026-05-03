@@ -342,15 +342,15 @@ else
 fi
 
 info "Installing dependencies..."
-pnpm install --frozen-lockfile
+yarn install:ci
 ok "Dependencies installed"
 
 info "Building native addon..."
-pnpm build:native
+yarn build:native
 ok "ghostty.node built"
 
 info "Building Electron app..."
-pnpm build
+yarn build
 ok "Electron build complete"
 
 # ── Phase 4: Package + Sign + Notarize + Publish ─────────────────
@@ -361,7 +361,7 @@ info "This will take several minutes (notarization is slow)."
 export GH_TOKEN
 GH_TOKEN=$(gh auth token)
 
-pnpm exec electron-builder --mac --publish always
+yarn electron-builder --mac --publish always
 
 ok "Assets uploaded to GitHub Releases"
 
@@ -379,7 +379,7 @@ if bash "$SCRIPT_DIR/prepare-win-deps.sh"; then
   info "Packaging Windows build..."
   info "This may take a few minutes."
   # --config.npmRebuild=false: skip native module rebuild (we prepared Windows binaries manually)
-  if pnpm exec electron-builder --win --publish always --config.npmRebuild=false; then
+  if yarn electron-builder --win --publish always --config.npmRebuild=false; then
     WIN_BUILD_OK=true
     ok "Windows assets uploaded to GitHub Releases"
 
@@ -410,7 +410,7 @@ if bash "$SCRIPT_DIR/prepare-linux-deps.sh"; then
   info "Packaging Linux build..."
   info "This may take a few minutes."
   # --config.npmRebuild=false: skip native module rebuild (we prepared Linux binaries manually)
-  if pnpm exec electron-builder --linux --publish always --config.npmRebuild=false; then
+  if yarn electron-builder --linux --publish always --config.npmRebuild=false; then
     LINUX_BUILD_OK=true
     ok "Linux assets uploaded to GitHub Releases"
 

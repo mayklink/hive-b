@@ -1,10 +1,20 @@
 import simpleGit, { SimpleGit, BranchSummary } from 'simple-git'
 import { app } from 'electron'
-import { join, basename, dirname } from 'path'
-import { existsSync, mkdirSync, rmSync, cpSync, writeFileSync, unlinkSync, readdirSync } from 'fs'
+import { join, basename, dirname, normalize, resolve } from 'path'
+import {
+  existsSync,
+  mkdirSync,
+  cpSync,
+  writeFileSync,
+  unlinkSync,
+  readdirSync,
+  readFileSync,
+  rmSync
+} from 'fs'
+import { rm } from 'fs/promises'
 import { execFile } from 'child_process'
 import { promisify } from 'util'
-import { tmpdir } from 'os'
+import { platform, tmpdir } from 'os'
 import { getImageMimeType } from '@shared/types/file-utils'
 import {
   selectUniqueBreedName,
@@ -17,6 +27,45 @@ import { normalizeWorktreePath } from './path-utils'
 
 const execFileAsync = promisify(execFile)
 const log = createLogger({ component: 'GitService' })
+
+/** Windows: EPERM during recursive delete is common while editors/AV briefly lock files. */
+async function removeFilesystemTreeAggressive(worktreePath: string): Promise<void> {
+  if (!existsSync(worktreePath)) return
+
+  const isWin = platform() === 'win32'
+  const outerAttempts = isWin ? 6 : 2
+
+  let lastErr: unknown
+  for (let i = 0; i < outerAttempts; i++) {
+    try {
+      await rm(worktreePath, {
+        recursive: true,
+        force: true,
+        ...(isWin ? { maxRetries: 10, retryDelay: 200 } : {})
+      })
+      return
+    } catch (e) {
+      lastErr = e
+      if (isWin && i < outerAttempts - 1) {
+        await new Promise<void>((resolve) => setTimeout(resolve, 300 * (i + 1)))
+      }
+    }
+  }
+
+  if (isWin) {
+    try {
+      await execFileAsync('cmd.exe', ['/c', 'rd', '/s', '/q', worktreePath], {
+        windowsHide: true,
+        timeout: 120_000
+      })
+      if (!existsSync(worktreePath)) return
+    } catch (e) {
+      lastErr = e
+    }
+  }
+
+  throw lastErr instanceof Error ? lastErr : new Error(String(lastErr))
+}
 
 export interface WorktreeInfo {
   path: string
@@ -130,6 +179,115 @@ export class GitService {
   constructor(repoPath: string) {
     this.repoPath = repoPath
     this.git = simpleGit(repoPath)
+  }
+
+  private normalizePathForWorktreeMatch(worktreePath: string): string {
+    try {
+      const n = normalizeWorktreePath(worktreePath)
+      return platform() === 'win32' ? n.toLowerCase() : n
+    } catch {
+      const n = normalize(resolve(worktreePath))
+      return platform() === 'win32' ? n.toLowerCase() : n
+    }
+  }
+
+  /**
+   * Removes `.git/worktrees/<id>/` admin dirs that still point at this worktree path.
+   * Needed after partial failures (orphan folders without `.git`, stale locks, etc.).
+   */
+  private removeStaleGitWorktreeAdminDirs(worktreePath: string): void {
+    const target = this.normalizePathForWorktreeMatch(worktreePath)
+    const adminRoot = join(this.repoPath, '.git', 'worktrees')
+    if (!existsSync(adminRoot)) return
+
+    for (const entry of readdirSync(adminRoot)) {
+      const adminDir = join(adminRoot, entry)
+      const gitdirFile = join(adminDir, 'gitdir')
+      if (!existsSync(gitdirFile)) continue
+      try {
+        const raw = readFileSync(gitdirFile, 'utf8').trim()
+        const wtRoot = dirname(normalize(raw))
+        if (this.normalizePathForWorktreeMatch(wtRoot) === target) {
+          log.info('Removing stale git worktree admin dir', { adminDir, worktreePath })
+          rmSync(adminDir, { recursive: true, force: true })
+        }
+      } catch (e) {
+        log.warn('Failed to inspect/remove worktree admin dir', {
+          adminDir,
+          error: e instanceof Error ? e.message : String(e)
+        })
+      }
+    }
+  }
+
+  /**
+   * Last-resort cleanup: strip admin dirs, retry git remove, aggressive FS delete, prune, optional branch deletion.
+   */
+  async forceFinalizeWorktreeRemoval(
+    worktreePath: string,
+    options: { branchName?: string; archive?: boolean }
+  ): Promise<DeleteWorktreeResult> {
+    log.warn('Force-finalizing worktree removal', { worktreePath, ...options })
+    try {
+      this.removeStaleGitWorktreeAdminDirs(worktreePath)
+    } catch (e) {
+      log.warn('Stale admin dir cleanup threw', { error: e instanceof Error ? e.message : String(e) })
+    }
+
+    const gitAttempts = platform() === 'win32' ? 5 : 2
+    for (let attempt = 0; attempt < gitAttempts; attempt++) {
+      try {
+        await this.git.raw(['worktree', 'remove', worktreePath, '--force'])
+        break
+      } catch {
+        if (attempt < gitAttempts - 1) {
+          await new Promise<void>((r) => setTimeout(r, 400 * (attempt + 1)))
+        }
+      }
+    }
+
+    try {
+      if (existsSync(worktreePath)) {
+        await removeFilesystemTreeAggressive(worktreePath)
+      }
+    } catch (e) {
+      log.warn('Aggressive filesystem removal failed during force-finalize', {
+        worktreePath,
+        error: e instanceof Error ? e.message : String(e)
+      })
+    }
+
+    try {
+      await this.git.raw(['worktree', 'prune'])
+    } catch (e) {
+      log.warn('worktree prune after force-finalize failed', {
+        error: e instanceof Error ? e.message : String(e)
+      })
+    }
+
+    if (options.archive && options.branchName) {
+      try {
+        await this.git.branch(['-D', options.branchName])
+      } catch (branchError) {
+        log.warn('Branch delete during force-finalize (may not exist)', {
+          branchName: options.branchName,
+          error: branchError instanceof Error ? branchError.message : String(branchError)
+        })
+      }
+      try {
+        await this.deleteRemoteTrackingBranch(options.branchName)
+      } catch {
+        // non-fatal
+      }
+    }
+
+    if (existsSync(worktreePath)) {
+      return {
+        success: false,
+        error: `Worktree folder still present after forced cleanup: ${worktreePath}`
+      }
+    }
+    return { success: true }
   }
 
   /**
@@ -368,31 +526,42 @@ export class GitService {
    * This is the "Unbranch" action
    */
   async removeWorktree(worktreePath: string): Promise<DeleteWorktreeResult> {
-    try {
-      // First try to remove via git
-      await this.git.raw(['worktree', 'remove', worktreePath, '--force'])
+    const gitAttempts = platform() === 'win32' ? 4 : 1
+    for (let attempt = 0; attempt < gitAttempts; attempt++) {
+      try {
+        await this.git.raw(['worktree', 'remove', worktreePath, '--force'])
+        return { success: true }
+      } catch {
+        if (attempt < gitAttempts - 1) {
+          await new Promise<void>((r) => setTimeout(r, 400 * (attempt + 1)))
+        }
+      }
+    }
 
+    this.removeStaleGitWorktreeAdminDirs(worktreePath)
+    try {
+      await this.git.raw(['worktree', 'remove', worktreePath, '--force'])
       return { success: true }
     } catch {
-      // If git worktree remove fails, try manual cleanup
-      try {
-        if (existsSync(worktreePath)) {
-          rmSync(worktreePath, { recursive: true, force: true })
-        }
-        // Prune stale worktree entries
-        await this.git.raw(['worktree', 'prune'])
-        return { success: true }
-      } catch (cleanupError) {
-        const message = cleanupError instanceof Error ? cleanupError.message : 'Unknown error'
-        log.error(
-          'Failed to remove worktree',
-          cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError)),
-          { worktreePath }
-        )
-        return {
-          success: false,
-          error: message
-        }
+      // Continue to filesystem cleanup
+    }
+
+    try {
+      if (existsSync(worktreePath)) {
+        await removeFilesystemTreeAggressive(worktreePath)
+      }
+      await this.git.raw(['worktree', 'prune'])
+      return { success: true }
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : 'Unknown error'
+      log.error(
+        'Failed to remove worktree',
+        cleanupError instanceof Error ? cleanupError : new Error(String(cleanupError)),
+        { worktreePath }
+      )
+      return {
+        success: false,
+        error: message
       }
     }
   }
@@ -643,9 +812,16 @@ export class GitService {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
-      log.error('Failed to get branch info', error instanceof Error ? error : new Error(message), {
-        repoPath: this.repoPath
-      })
+      const orphanPath = /not a git repository/i.test(message)
+      if (orphanPath) {
+        log.warn('Skipping branch info — path is not a git repository (orphan folder?)', {
+          repoPath: this.repoPath
+        })
+      } else {
+        log.error('Failed to get branch info', error instanceof Error ? error : new Error(message), {
+          repoPath: this.repoPath
+        })
+      }
       return { success: false, error: message }
     }
   }

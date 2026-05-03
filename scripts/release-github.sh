@@ -162,7 +162,7 @@ echo "    - Linux (x64)         — AppImage + deb + tar.gz"
 echo ""
 if $SKIP_FINALIZE; then
   echo "  The release will remain as a DRAFT (--no-finalize)."
-  echo "  When ready, run: pnpm release:finalize ${NEW_VERSION}"
+  echo "  When ready, run: yarn release:finalize ${NEW_VERSION}"
 else
   echo "  The release will be un-drafted automatically when all builds complete."
 fi

@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useShortcutStore } from '@/stores/useShortcutStore'
 import {
   DEFAULT_SHORTCUTS,
-  shortcutCategoryLabels,
   shortcutCategoryOrder,
   formatBinding,
   type KeyBinding,
@@ -15,7 +15,12 @@ import { RotateCcw, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
 
+function shortcutI18nId(shortcutId: string): string {
+  return shortcutId.replace(/:/g, '_')
+}
+
 export function SettingsShortcuts(): React.JSX.Element {
+  const { t } = useTranslation()
   const {
     customBindings,
     setCustomBinding,
@@ -32,10 +37,8 @@ export function SettingsShortcuts(): React.JSX.Element {
       e.preventDefault()
       e.stopPropagation()
 
-      // Ignore modifier-only presses
       if (['Control', 'Meta', 'Alt', 'Shift'].includes(e.key)) return
 
-      // Escape cancels recording
       if (e.key === 'Escape') {
         setRecordingId(null)
         setConflicts([])
@@ -48,9 +51,8 @@ export function SettingsShortcuts(): React.JSX.Element {
       if (e.altKey) modifiers.push('alt')
       if (e.shiftKey) modifiers.push('shift')
 
-      // Require at least one modifier for safety
       if (modifiers.length === 0) {
-        toast.error('Shortcuts must include at least one modifier key (Cmd/Ctrl/Alt/Shift)')
+        toast.error(t('shortcuts.toastModifierRequired'))
         return
       }
 
@@ -63,39 +65,34 @@ export function SettingsShortcuts(): React.JSX.Element {
       if (result.success) {
         setRecordingId(null)
         setConflicts([])
-        toast.success(`Shortcut updated to ${formatBinding(binding)}`)
+        toast.success(t('shortcuts.toastUpdated', { binding: formatBinding(binding) }))
       } else {
         setConflicts(result.conflicts || [])
       }
     },
-    [recordingId, setCustomBinding]
+    [recordingId, setCustomBinding, t]
   )
 
   const handleResetShortcut = (shortcutId: string): void => {
     removeCustomBinding(shortcutId)
-    toast.success('Shortcut reset to default')
+    toast.success(t('shortcuts.toastResetOne'))
   }
 
   const handleResetAll = (): void => {
     resetToDefaults()
-    toast.success('All shortcuts reset to defaults')
+    toast.success(t('shortcuts.toastResetAll'))
   }
 
   return (
     <div className="space-y-6" onKeyDown={handleKeyDown}>
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-base font-medium mb-1">Keyboard Shortcuts</h3>
-          <p className="text-sm text-muted-foreground">Customize keyboard shortcuts</p>
+          <h3 className="text-base font-medium mb-1">{t('shortcuts.title')}</h3>
+          <p className="text-sm text-muted-foreground">{t('shortcuts.subtitle')}</p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleResetAll}
-          data-testid="reset-all-shortcuts"
-        >
+        <Button variant="outline" size="sm" onClick={handleResetAll} data-testid="reset-all-shortcuts">
           <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-          Reset All
+          {t('shortcuts.resetAll')}
         </Button>
       </div>
 
@@ -103,13 +100,15 @@ export function SettingsShortcuts(): React.JSX.Element {
         <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/30 text-sm">
           <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium text-destructive">Shortcut conflict</p>
+            <p className="font-medium text-destructive">{t('shortcuts.conflictTitle')}</p>
             <p className="text-muted-foreground">
-              This binding is already used by:{' '}
+              {t('shortcuts.conflictBody')}{' '}
               {conflicts
                 .map((id) => {
                   const shortcut = DEFAULT_SHORTCUTS.find((s) => s.id === id)
-                  return shortcut?.label || id
+                  if (!shortcut) return id
+                  const sid = shortcutI18nId(shortcut.id)
+                  return t(`shortcuts.definitions.${sid}.label`, { defaultValue: shortcut.label })
                 })
                 .join(', ')}
             </p>
@@ -152,18 +151,23 @@ function ShortcutCategorySection({
   onStartRecording,
   onResetShortcut
 }: ShortcutCategorySectionProps): React.JSX.Element {
+  const { t } = useTranslation()
   const shortcuts = getShortcutsByCategory(category)
+  const categoryLabel = t(`shortcuts.categories.${category}`)
 
   return (
     <div>
-      <h4 className="text-sm font-medium text-muted-foreground mb-2">
-        {shortcutCategoryLabels[category]}
-      </h4>
+      <h4 className="text-sm font-medium text-muted-foreground mb-2">{categoryLabel}</h4>
       <div className="space-y-1">
         {shortcuts.map((shortcut) => {
           const isRecording = recordingId === shortcut.id
           const isCustomized = shortcut.id in customBindings
           const displayString = getDisplayString(shortcut.id)
+          const sid = shortcutI18nId(shortcut.id)
+          const label = t(`shortcuts.definitions.${sid}.label`, { defaultValue: shortcut.label })
+          const description = shortcut.description
+            ? t(`shortcuts.definitions.${sid}.description`, { defaultValue: shortcut.description })
+            : undefined
 
           return (
             <div
@@ -172,22 +176,24 @@ function ShortcutCategorySection({
               data-testid={`shortcut-${shortcut.id}`}
             >
               <div className="flex-1">
-                <span className="text-sm">{shortcut.label}</span>
-                {shortcut.description && (
-                  <span className="text-xs text-muted-foreground ml-2">{shortcut.description}</span>
+                <span className="text-sm">{label}</span>
+                {description && (
+                  <span className="text-xs text-muted-foreground ml-2">{description}</span>
                 )}
               </div>
               <div className="flex items-center gap-2">
                 {isCustomized && (
                   <button
+                    type="button"
                     onClick={() => onResetShortcut(shortcut.id)}
                     className="text-xs text-muted-foreground hover:text-foreground"
-                    title="Reset to default"
+                    title={t('shortcuts.resetToDefault')}
                   >
                     <RotateCcw className="h-3 w-3" />
                   </button>
                 )}
                 <button
+                  type="button"
                   onClick={() => onStartRecording(shortcut.id)}
                   className={cn(
                     'min-w-[100px] px-2.5 py-1 rounded border text-xs font-mono text-right transition-colors',
@@ -199,7 +205,7 @@ function ShortcutCategorySection({
                   )}
                   data-testid={`shortcut-binding-${shortcut.id}`}
                 >
-                  {isRecording ? 'Press keys...' : displayString}
+                  {isRecording ? t('shortcuts.pressKeys') : displayString}
                 </button>
               </div>
             </div>

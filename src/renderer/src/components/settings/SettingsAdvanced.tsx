@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSettingsStore } from '@/stores/useSettingsStore'
 import { Trash2, Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -7,69 +8,75 @@ import { toast } from '@/lib/toast'
 
 const POSIX_KEY_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/
 
-function validateKey(key: string, allKeys: string[], currentIndex: number): string | null {
-  if (!key) return null // Allow empty while editing
-  if (!POSIX_KEY_REGEX.test(key))
-    return 'Key must start with a letter or underscore and contain only letters, digits, and underscores'
+function validateKey(
+  key: string,
+  allKeys: string[],
+  currentIndex: number
+): 'invalid' | 'duplicate' | null {
+  if (!key) return null
+  if (!POSIX_KEY_REGEX.test(key)) return 'invalid'
   const isDuplicate = allKeys.some((k, i) => i !== currentIndex && k === key)
-  if (isDuplicate) return 'Duplicate key'
+  if (isDuplicate) return 'duplicate'
   return null
 }
 
 export function SettingsAdvanced(): React.JSX.Element {
-  // Local state for tracking validation errors per row
-  const [errors, setErrors] = useState<Record<number, string | null>>({})
+  const { t } = useTranslation()
+  const [errors, setErrors] = useState<Record<number, 'invalid' | 'duplicate' | null>>({})
 
-  // Store access
-  const { environmentVariables: rawEnvVars, perfDiagnosticsEnabled, codexJsonlLoggingEnabled, codexJsonlResetPerSession, updateSetting } = useSettingsStore()
+  const {
+    environmentVariables: rawEnvVars,
+    perfDiagnosticsEnabled,
+    codexJsonlLoggingEnabled,
+    codexJsonlResetPerSession,
+    updateSetting
+  } = useSettingsStore()
   const envVars = rawEnvVars ?? []
 
   const handlePerfDiagnosticsToggle = (): void => {
     const newValue = !perfDiagnosticsEnabled
     updateSetting('perfDiagnosticsEnabled', newValue)
     window.perfDiagnosticsOps.enable(newValue)
-    toast.success(newValue ? 'Performance diagnostics enabled' : 'Performance diagnostics disabled')
+    toast.success(newValue ? t('settings.advanced.toastPerfOn') : t('settings.advanced.toastPerfOff'))
   }
 
   const handleCodexJsonlLoggingToggle = (): void => {
     const newValue = !codexJsonlLoggingEnabled
     updateSetting('codexJsonlLoggingEnabled', newValue)
     window.codexDebugLoggerOps.configure(newValue, codexJsonlResetPerSession)
-    toast.success(newValue ? 'Codex JSONL logging enabled' : 'Codex JSONL logging disabled')
+    toast.success(newValue ? t('settings.advanced.toastCodexOn') : t('settings.advanced.toastCodexOff'))
   }
 
   const handleCodexJsonlResetToggle = (): void => {
     const newValue = !codexJsonlResetPerSession
     updateSetting('codexJsonlResetPerSession', newValue)
     window.codexDebugLoggerOps.configure(codexJsonlLoggingEnabled, newValue)
-    toast.success(newValue ? 'Log will reset each Codex session' : 'Log will append across sessions')
+    toast.success(
+      newValue ? t('settings.advanced.toastLogResetOn') : t('settings.advanced.toastLogResetOff')
+    )
   }
 
-  const handleAdd = () => {
+  const handleAdd = (): void => {
     updateSetting('environmentVariables', [...envVars, { key: '', value: '' }])
-    toast.success('Variable added')
+    toast.success(t('settings.advanced.toastVarAdd'))
   }
 
-  const handleRemove = (index: number) => {
+  const handleRemove = (index: number): void => {
     const updated = envVars.filter((_, i) => i !== index)
     updateSetting('environmentVariables', updated)
-    // Re-index errors: shift entries above the deleted index down by 1
-    const newErrors: Record<number, string | null> = {}
+    const newErrors: Record<number, 'invalid' | 'duplicate' | null> = {}
     for (const [k, v] of Object.entries(errors)) {
       const i = Number(k)
       if (i < index) newErrors[i] = v
       else if (i > index) newErrors[i - 1] = v
     }
     setErrors(newErrors)
-    toast.success('Variable removed')
+    toast.success(t('settings.advanced.toastVarRemove'))
   }
 
-  const handleChange = (index: number, field: 'key' | 'value', val: string) => {
-    const updated = envVars.map((entry, i) =>
-      i === index ? { ...entry, [field]: val } : entry
-    )
+  const handleChange = (index: number, field: 'key' | 'value', val: string): void => {
+    const updated = envVars.map((entry, i) => (i === index ? { ...entry, [field]: val } : entry))
 
-    // Validate key
     if (field === 'key') {
       const error = validateKey(
         val,
@@ -84,19 +91,15 @@ export function SettingsAdvanced(): React.JSX.Element {
 
   return (
     <div className="space-y-6" style={{ overflow: 'hidden' }}>
-      {/* Header */}
       <div>
-        <h3 className="text-base font-medium mb-1">Advanced</h3>
-        <p className="text-sm text-muted-foreground">Advanced configuration options</p>
+        <h3 className="text-base font-medium mb-1">{t('settings.advanced.heading')}</h3>
+        <p className="text-sm text-muted-foreground">{t('settings.advanced.description')}</p>
       </div>
 
-      {/* Performance Diagnostics toggle */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Performance Diagnostics</label>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Log CPU, memory, process, and handle metrics every 30s to ~/.hive/logs/perf-diagnostics.jsonl
-          </p>
+          <label className="text-sm font-medium">{t('settings.advanced.perfDiag')}</label>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('settings.advanced.perfDiagHint')}</p>
         </div>
         <button
           role="switch"
@@ -116,13 +119,10 @@ export function SettingsAdvanced(): React.JSX.Element {
         </button>
       </div>
 
-      {/* Codex JSONL Logging toggle */}
       <div className="flex items-center justify-between">
         <div>
-          <label className="text-sm font-medium">Codex JSONL Logging</label>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Log all Codex JSON-RPC messages to ~/.hive/logs/codex.jsonl
-          </p>
+          <label className="text-sm font-medium">{t('settings.advanced.codexLog')}</label>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('settings.advanced.codexLogHint')}</p>
         </div>
         <button
           role="switch"
@@ -142,13 +142,15 @@ export function SettingsAdvanced(): React.JSX.Element {
         </button>
       </div>
 
-      {/* Reset log each session sub-toggle */}
-      <div className={cn('flex items-center justify-between pl-4', !codexJsonlLoggingEnabled && 'opacity-50 pointer-events-none')}>
+      <div
+        className={cn(
+          'flex items-center justify-between pl-4',
+          !codexJsonlLoggingEnabled && 'opacity-50 pointer-events-none'
+        )}
+      >
         <div>
-          <label className="text-sm font-medium">Reset log each session</label>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Truncate the log file when a new Codex session starts. When off, logs append across sessions.
-          </p>
+          <label className="text-sm font-medium">{t('settings.advanced.resetLog')}</label>
+          <p className="text-xs text-muted-foreground mt-0.5">{t('settings.advanced.resetLogHint')}</p>
         </div>
         <button
           role="switch"
@@ -168,47 +170,38 @@ export function SettingsAdvanced(): React.JSX.Element {
         </button>
       </div>
 
-      {/* Environment Variables section */}
       <div className="space-y-3">
         <div>
-          <label className="text-sm font-medium">Environment Variables</label>
-          <p className="text-xs text-muted-foreground">
-            Define custom environment variables that will be injected into all new agent sessions.
-          </p>
+          <label className="text-sm font-medium">{t('settings.advanced.envVars')}</label>
+          <p className="text-xs text-muted-foreground">{t('settings.advanced.envVarsHint')}</p>
         </div>
 
-        {/* Empty state OR variable list */}
         {envVars.length === 0 ? (
           <div className="rounded-md border border-dashed border-border p-6 text-center">
-            <p className="text-sm text-muted-foreground mb-3">
-              No environment variables configured. Add variables to forward them to your agent
-              sessions.
-            </p>
+            <p className="text-sm text-muted-foreground mb-3">{t('settings.advanced.envEmpty')}</p>
             <Button size="sm" onClick={handleAdd} data-testid="add-env-var-empty">
               <Plus className="h-3.5 w-3.5 mr-1" />
-              Add Variable
+              {t('settings.advanced.addVar')}
             </Button>
           </div>
         ) : (
           <>
-            {/* Table header row */}
             <div className="flex items-center gap-2 px-1">
               <span
                 className="text-xs font-medium text-muted-foreground"
                 style={{ flex: '1 1 0', minWidth: 0 }}
               >
-                KEY
+                {t('settings.advanced.keyCol')}
               </span>
               <span
                 className="text-xs font-medium text-muted-foreground"
                 style={{ flex: '1 1 0', minWidth: 0 }}
               >
-                VALUE
+                {t('settings.advanced.valueCol')}
               </span>
-              <span className="w-8 shrink-0" /> {/* spacer for delete button */}
+              <span className="w-8 shrink-0" />
             </div>
 
-            {/* Variable rows */}
             <div className="space-y-2 max-h-64 overflow-y-auto" style={{ overflowX: 'hidden' }}>
               {envVars.map((entry, index) => {
                 const error = errors[index]
@@ -231,30 +224,39 @@ export function SettingsAdvanced(): React.JSX.Element {
                         type="text"
                         value={entry.value}
                         onChange={(e) => handleChange(index, 'value', e.target.value)}
-                        placeholder="value"
+                        placeholder={t('settings.advanced.placeholderValue')}
                         className="px-3 py-1.5 text-sm rounded-md border border-border bg-background"
                         style={{ flex: '1 1 0', minWidth: 0 }}
                         data-testid={`env-var-value-${index}`}
                       />
                       <button
+                        type="button"
                         onClick={() => handleRemove(index)}
                         className="shrink-0 text-destructive hover:text-destructive/80 transition-colors p-1"
-                        title="Remove variable"
+                        title={t('settings.advanced.removeVar')}
                         data-testid={`remove-env-var-${index}`}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
-                    {error && <p className="text-xs text-destructive mt-1 ml-1">{error}</p>}
+                    {error === 'invalid' && (
+                      <p className="text-xs text-destructive mt-1 ml-1">
+                        {t('settings.advanced.envInvalidKey')}
+                      </p>
+                    )}
+                    {error === 'duplicate' && (
+                      <p className="text-xs text-destructive mt-1 ml-1">
+                        {t('settings.advanced.envDupKey')}
+                      </p>
+                    )}
                   </div>
                 )
               })}
             </div>
 
-            {/* Add button */}
             <Button size="sm" variant="outline" onClick={handleAdd} data-testid="add-env-var">
               <Plus className="h-3.5 w-3.5 mr-1" />
-              Add Variable
+              {t('settings.advanced.addVar')}
             </Button>
           </>
         )}

@@ -6,6 +6,7 @@ import { useWorktreeStore } from '@/stores/useWorktreeStore'
 import { useConnectionStore } from '@/stores/useConnectionStore'
 import { useSettingsStore, type EditorOption, type TerminalOption } from '@/stores/useSettingsStore'
 import { useProjectStore } from '@/stores/useProjectStore'
+import { toast } from '@/lib/toast'
 
 function CursorIcon({ className }: { className?: string }): React.JSX.Element {
   return (
@@ -330,19 +331,19 @@ export function QuickActions(): React.JSX.Element | null {
     return null
   })()
 
-  // Use connection path when in connection mode, otherwise worktree path
-  const activePath = isConnectionMode
+  const selectedProject = useProjectStore((s) =>
+    s.selectedProjectId ? s.projects.find((p) => p.id === s.selectedProjectId) : null
+  )
+
+  // Worktree folder when selected; otherwise selected project root (so header actions work without picking a worktree row)
+  const quickActionsTargetPath = isConnectionMode
     ? (selectedConnection?.path ?? null)
-    : (selectedWorktree?.path ?? null)
+    : ((selectedWorktree?.path ?? null) ?? (selectedProject?.path ?? null))
   const branchName =
     !isConnectionMode && selectedWorktree?.branch_name && selectedWorktree.name !== '(no-worktree)'
       ? selectedWorktree.branch_name
       : null
-  const disabled = !activePath
-
-  const selectedProject = useProjectStore((s) =>
-    s.selectedProjectId ? s.projects.find((p) => p.id === s.selectedProjectId) : null
-  )
+  const disabled = !quickActionsTargetPath
   const isSwiftProject = selectedProject?.language === 'swift'
   const isKotlinOrJava =
     selectedProject?.language === 'kotlin' || selectedProject?.language === 'java'
@@ -354,7 +355,7 @@ export function QuickActions(): React.JSX.Element | null {
       setXcworkspacePath(null)
       return
     }
-    const searchPath = activePath || selectedProject?.path
+    const searchPath = quickActionsTargetPath
     if (!searchPath) {
       setXcworkspacePath(null)
       return
@@ -363,14 +364,14 @@ export function QuickActions(): React.JSX.Element | null {
       .findXcworkspace(searchPath)
       .then(setXcworkspacePath)
       .catch(() => setXcworkspacePath(null))
-  }, [isSwiftProject, activePath, selectedProject?.path, isConnectionMode])
+  }, [isSwiftProject, quickActionsTargetPath, selectedProject?.path, isConnectionMode])
 
   useEffect(() => {
     if (!isKotlinOrJava || isConnectionMode) {
       setIsAndroidProject(false)
       return
     }
-    const searchPath = activePath || selectedProject?.path
+    const searchPath = quickActionsTargetPath
     if (!searchPath) {
       setIsAndroidProject(false)
       return
@@ -379,32 +380,34 @@ export function QuickActions(): React.JSX.Element | null {
       .isAndroidProject(searchPath)
       .then(setIsAndroidProject)
       .catch(() => setIsAndroidProject(false))
-  }, [isKotlinOrJava, activePath, selectedProject?.path, isConnectionMode])
+  }, [isKotlinOrJava, quickActionsTargetPath, selectedProject?.path, isConnectionMode])
 
   const editorLabel = EDITOR_LABELS[defaultEditor]
   const terminalLabel = TERMINAL_LABELS[defaultTerminal]
 
   const handleOpenInEditor = useCallback(async () => {
-    if (!activePath) return
+    if (!quickActionsTargetPath) return
     try {
-      if (isConnectionMode) {
-        await window.connectionOps.openInEditor(activePath)
-      } else {
-        await window.worktreeOps.openInEditor(activePath)
+      const result = isConnectionMode
+        ? await window.connectionOps.openInEditor(quickActionsTargetPath)
+        : await window.worktreeOps.openInEditor(quickActionsTargetPath)
+      if (!result.success) {
+        toast.error(result.error ?? 'Failed to open editor')
       }
     } catch (error) {
       console.error('Open in editor failed:', error)
+      toast.error('Failed to open editor')
     }
-  }, [activePath, isConnectionMode])
+  }, [quickActionsTargetPath, isConnectionMode])
 
   const handleAction = useCallback(
     async (actionId: string) => {
-      if (!activePath) return
+      if (!quickActionsTargetPath) return
       try {
         if (actionId === 'editor') {
           await handleOpenInEditor()
         } else if (actionId === 'copy-path') {
-          await window.projectOps.copyToClipboard(activePath)
+          await window.projectOps.copyToClipboard(quickActionsTargetPath)
           setCopied(true)
           setTimeout(() => setCopied(false), 1500)
         } else if (actionId === 'copy-branch') {
@@ -413,21 +416,21 @@ export function QuickActions(): React.JSX.Element | null {
           setBranchCopied(true)
           setTimeout(() => setBranchCopied(false), 1500)
         } else if (actionId === 'finder') {
-          await window.projectOps.showInFolder(activePath)
+          await window.projectOps.showInFolder(quickActionsTargetPath)
         } else if (actionId === 'terminal') {
           await window.settingsOps.openWithTerminal(
-            activePath,
+            quickActionsTargetPath,
             defaultTerminal,
             defaultTerminal === 'custom' ? customTerminalCommand : undefined
           )
         } else {
-          await window.systemOps.openInApp(actionId, activePath)
+          await window.systemOps.openInApp(actionId, quickActionsTargetPath)
         }
       } catch (error) {
         console.error('Quick action failed:', error)
       }
     },
-    [activePath, branchName, defaultTerminal, customTerminalCommand, handleOpenInEditor]
+    [quickActionsTargetPath, branchName, defaultTerminal, customTerminalCommand, handleOpenInEditor]
   )
 
   return (
@@ -453,8 +456,7 @@ export function QuickActions(): React.JSX.Element | null {
           className="h-7 px-2 gap-1.5 text-xs cursor-pointer"
           disabled={disabled}
           onClick={() => {
-            const openPath = activePath || selectedProject?.path
-            if (openPath) window.systemOps.openInApp('android-studio', openPath)
+            if (quickActionsTargetPath) window.systemOps.openInApp('android-studio', quickActionsTargetPath)
           }}
           title="Open in Android Studio"
           data-testid="quick-action-android-studio"

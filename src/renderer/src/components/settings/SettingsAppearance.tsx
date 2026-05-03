@@ -2,6 +2,7 @@ import { THEME_PRESETS, ThemePreset } from '@/lib/themes'
 import { useThemeStore } from '@/stores/useThemeStore'
 import { cn } from '@/lib/utils'
 import { Check } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 interface ThemeCardProps {
   preset: ThemePreset
@@ -9,6 +10,7 @@ interface ThemeCardProps {
   onSelect: (id: string) => void
   onMouseEnter: (id: string) => void
   onMouseLeave: () => void
+  selectThemeLabel: (name: string) => string
 }
 
 function ThemeCard({
@@ -16,7 +18,8 @@ function ThemeCard({
   isActive,
   onSelect,
   onMouseEnter,
-  onMouseLeave
+  onMouseLeave,
+  selectThemeLabel
 }: ThemeCardProps): React.JSX.Element {
   const { background, sidebar, primary, 'muted-foreground': mutedFg } = preset.previewColors
 
@@ -31,22 +34,15 @@ function ThemeCard({
           ? 'border-primary ring-2 ring-primary/30 bg-primary/5'
           : 'border-border hover:border-muted-foreground/40'
       )}
-      aria-label={`Select ${preset.name} theme`}
+      aria-label={selectThemeLabel(preset.name)}
       aria-pressed={isActive}
       data-testid={`theme-card-${preset.id}`}
     >
-      {/* Preview swatch */}
       <div
         className="relative h-16 w-full overflow-hidden rounded-md"
         style={{ backgroundColor: background }}
       >
-        {/* Sidebar stripe — left edge */}
-        <div
-          className="absolute inset-y-0 left-0 w-[22%]"
-          style={{ backgroundColor: sidebar }}
-        />
-
-        {/* Simulated text lines in main area */}
+        <div className="absolute inset-y-0 left-0 w-[22%]" style={{ backgroundColor: sidebar }} />
         <div className="absolute inset-y-0 left-[26%] right-0 flex flex-col justify-center gap-[4px] pr-2">
           <div
             className="h-[5px] w-3/4 rounded-full opacity-40"
@@ -57,22 +53,16 @@ function ThemeCard({
             style={{ backgroundColor: mutedFg }}
           />
         </div>
-
-        {/* Primary accent dot — bottom-right of main area */}
         <div
           className="absolute bottom-2 right-2 h-[10px] w-[10px] rounded-full"
           style={{ backgroundColor: primary }}
         />
-
-        {/* Active check badge */}
         {isActive && (
           <div className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm">
             <Check className="h-3 w-3" />
           </div>
         )}
       </div>
-
-      {/* Preset name */}
       <span
         className={cn(
           'truncate text-center text-xs font-medium leading-none',
@@ -86,6 +76,7 @@ function ThemeCard({
 }
 
 export function SettingsAppearance(): React.JSX.Element {
+  const { t } = useTranslation()
   const themeId = useThemeStore((s) => s.themeId)
   const setTheme = useThemeStore((s) => s.setTheme)
   const previewTheme = useThemeStore((s) => s.previewTheme)
@@ -94,19 +85,18 @@ export function SettingsAppearance(): React.JSX.Element {
   const darkPresets = THEME_PRESETS.filter((p) => p.type === 'dark')
   const lightPresets = THEME_PRESETS.filter((p) => p.type === 'light')
 
+  const selectThemeLabel = (name: string): string => t('settings.selectTheme', { name })
+
   return (
     <div className="space-y-6" data-testid="settings-appearance">
       <div>
-        <h3 className="text-base font-medium mb-1">Appearance</h3>
-        <p className="text-sm text-muted-foreground">
-          Choose a theme preset. Hover to preview before selecting.
-        </p>
+        <h3 className="text-base font-medium mb-1">{t('settings.appearance.heading')}</h3>
+        <p className="text-sm text-muted-foreground">{t('settings.appearance.description')}</p>
       </div>
 
-      {/* Dark themes */}
       <section className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Dark Themes
+          {t('settings.appearance.darkThemes')}
         </h3>
         <div className="grid grid-cols-3 gap-3" data-testid="dark-themes-grid">
           {darkPresets.map((preset) => (
@@ -117,15 +107,15 @@ export function SettingsAppearance(): React.JSX.Element {
               onSelect={setTheme}
               onMouseEnter={previewTheme}
               onMouseLeave={cancelPreview}
+              selectThemeLabel={selectThemeLabel}
             />
           ))}
         </div>
       </section>
 
-      {/* Light themes */}
       <section className="space-y-2">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          Light Themes
+          {t('settings.appearance.lightThemes')}
         </h3>
         <div className="grid grid-cols-3 gap-3" data-testid="light-themes-grid">
           {lightPresets.map((preset) => (
@@ -136,6 +126,7 @@ export function SettingsAppearance(): React.JSX.Element {
               onSelect={setTheme}
               onMouseEnter={previewTheme}
               onMouseLeave={cancelPreview}
+              selectThemeLabel={selectThemeLabel}
             />
           ))}
         </div>

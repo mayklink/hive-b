@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { isMac as isMacPlatform, isWindows as isWindowsPlatform } from '@/lib/platform'
 import {
   useSettingsStore,
@@ -17,73 +18,60 @@ interface DetectedTerminal {
   available: boolean
 }
 
-const MAC_TERMINAL_OPTIONS: { id: TerminalOption; label: string }[] = [
-  { id: 'terminal', label: 'Terminal' },
-  { id: 'iterm', label: 'iTerm2' },
-  { id: 'warp', label: 'Warp' },
-  { id: 'alacritty', label: 'Alacritty' },
-  { id: 'kitty', label: 'kitty' },
-  { id: 'ghostty', label: 'Ghostty' },
-  { id: 'custom', label: 'Custom Command' }
+const MAC_TERMINAL_IDS: TerminalOption[] = [
+  'terminal',
+  'iterm',
+  'warp',
+  'alacritty',
+  'kitty',
+  'ghostty',
+  'custom'
 ]
 
-const WINDOWS_TERMINAL_OPTIONS: { id: TerminalOption; label: string }[] = [
-  { id: 'terminal', label: 'Windows Terminal' },
-  { id: 'powershell', label: 'PowerShell' },
-  { id: 'cmd', label: 'Command Prompt' },
-  { id: 'custom', label: 'Custom Command' }
+const WINDOWS_TERMINAL_IDS: TerminalOption[] = [
+  'terminal',
+  'powershell',
+  'cmd',
+  'custom'
 ]
 
-const LINUX_TERMINAL_OPTIONS: { id: TerminalOption; label: string }[] = [
-  { id: 'terminal', label: 'Default Terminal' },
-  { id: 'alacritty', label: 'Alacritty' },
-  { id: 'kitty', label: 'kitty' },
-  { id: 'custom', label: 'Custom Command' }
-]
+const LINUX_TERMINAL_IDS: TerminalOption[] = ['terminal', 'alacritty', 'kitty', 'custom']
 
-function getTerminalOptions(): { id: TerminalOption; label: string }[] {
-  if (isWindowsPlatform()) return WINDOWS_TERMINAL_OPTIONS
-  if (isMacPlatform()) return MAC_TERMINAL_OPTIONS
-  return LINUX_TERMINAL_OPTIONS
+function getTerminalIds(): TerminalOption[] {
+  if (isWindowsPlatform()) return WINDOWS_TERMINAL_IDS
+  if (isMacPlatform()) return MAC_TERMINAL_IDS
+  return LINUX_TERMINAL_IDS
 }
 
-const BACKEND_OPTIONS: {
-  id: EmbeddedTerminalBackend
-  label: string
-  description: string
-  macOnly?: boolean
-}[] = [
-  {
-    id: 'xterm',
-    label: 'Built-in (xterm.js)',
-    description: 'Cross-platform terminal emulator. Always available.'
-  },
-  {
-    id: 'ghostty',
-    label: 'Ghostty (native)',
-    description: 'Native Metal rendering on macOS. Requires Ghostty.',
-    macOnly: true
+function externalTerminalLabel(id: TerminalOption, t: (k: string) => string): string {
+  switch (id) {
+    case 'terminal':
+      if (isWindowsPlatform()) return t('settings.terminal.termWindows')
+      if (isMacPlatform()) return t('settings.terminal.termTerminal')
+      return t('settings.terminal.termDefaultLinux')
+    case 'iterm':
+      return t('settings.terminal.termITerm')
+    case 'warp':
+      return t('settings.terminal.termWarp')
+    case 'alacritty':
+      return t('settings.terminal.termAlacritty')
+    case 'kitty':
+      return t('settings.terminal.termKitty')
+    case 'ghostty':
+      return t('settings.terminal.termGhostty')
+    case 'powershell':
+      return t('settings.terminal.termPowerShell')
+    case 'cmd':
+      return t('settings.terminal.termCmd')
+    case 'custom':
+      return t('settings.terminal.customLabel')
+    default:
+      return id
   }
-]
-
-const POSITION_OPTIONS: {
-  id: TerminalPosition
-  label: string
-  description: string
-}[] = [
-  {
-    id: 'sidebar',
-    label: 'Sidebar',
-    description: 'Terminal appears as a tab alongside Setup and Run'
-  },
-  {
-    id: 'bottom',
-    label: 'Bottom panel',
-    description: 'Terminal gets a dedicated panel below the chat area'
-  }
-]
+}
 
 export function SettingsTerminal(): React.JSX.Element {
+  const { t } = useTranslation()
   const {
     defaultTerminal,
     customTerminalCommand,
@@ -96,6 +84,51 @@ export function SettingsTerminal(): React.JSX.Element {
   const [isDetecting, setIsDetecting] = useState(true)
   const [ghosttyAvailable, setGhosttyAvailable] = useState<boolean | null>(null)
   const [isMac, setIsMac] = useState(false)
+
+  const positionOptions = useMemo(
+    () =>
+      [
+        {
+          id: 'sidebar' as const,
+          label: t('settings.terminal.sidebar'),
+          description: t('settings.terminal.sidebarDesc')
+        },
+        {
+          id: 'bottom' as const,
+          label: t('settings.terminal.bottomPanel'),
+          description: t('settings.terminal.bottomDesc')
+        }
+      ] satisfies ReadonlyArray<{
+        id: TerminalPosition
+        label: string
+        description: string
+      }>,
+    [t]
+  )
+
+  const backendOptions = useMemo(
+    () =>
+      [
+        {
+          id: 'xterm' as const,
+          label: t('settings.terminal.backendXtermLabel'),
+          description: t('settings.terminal.backendXtermDesc'),
+          macOnly: false as boolean | undefined
+        },
+        {
+          id: 'ghostty' as const,
+          label: t('settings.terminal.backendGhosttyLabel'),
+          description: t('settings.terminal.backendGhosttyDesc'),
+          macOnly: true as boolean | undefined
+        }
+      ] satisfies ReadonlyArray<{
+        id: EmbeddedTerminalBackend
+        label: string
+        description: string
+        macOnly?: boolean
+      }>,
+    [t]
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -119,7 +152,6 @@ export function SettingsTerminal(): React.JSX.Element {
     }
   }, [])
 
-  // Check Ghostty availability and platform
   useEffect(() => {
     let cancelled = false
     async function checkGhostty(): Promise<void> {
@@ -154,19 +186,18 @@ export function SettingsTerminal(): React.JSX.Element {
     return false
   }
 
+  const externalPlaceholder = isMacPlatform()
+    ? t('settings.terminal.placeholderMac')
+    : t('settings.terminal.placeholderWin')
+
   return (
     <div className="space-y-8">
-      {/* Terminal Position */}
       <div>
-        <h3 className="text-base font-medium mb-1">Terminal Position</h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          Choose where the embedded terminal panel is displayed
-        </p>
-
+        <h3 className="text-base font-medium mb-1">{t('settings.terminal.positionHeading')}</h3>
+        <p className="text-sm text-muted-foreground mb-3">{t('settings.terminal.positionHint')}</p>
         <div className="space-y-1">
-          {POSITION_OPTIONS.map((opt) => {
+          {positionOptions.map((opt) => {
             const isSelected = terminalPosition === opt.id
-
             return (
               <button
                 key={opt.id}
@@ -192,18 +223,13 @@ export function SettingsTerminal(): React.JSX.Element {
         </div>
       </div>
 
-      {/* Embedded Terminal Backend */}
       <div>
-        <h3 className="text-base font-medium mb-1">Embedded Terminal</h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          Choose the rendering engine for the built-in terminal panel
-        </p>
-
+        <h3 className="text-base font-medium mb-1">{t('settings.terminal.embeddedHeading')}</h3>
+        <p className="text-sm text-muted-foreground mb-3">{t('settings.terminal.embeddedHint')}</p>
         <div className="space-y-1">
-          {BACKEND_OPTIONS.map((opt) => {
+          {backendOptions.map((opt) => {
             const selectable = canSelectBackend(opt.id)
             const isSelected = embeddedTerminalBackend === opt.id
-
             return (
               <button
                 key={opt.id}
@@ -226,10 +252,14 @@ export function SettingsTerminal(): React.JSX.Element {
                   <div className="flex items-center gap-2">
                     <span>{opt.label}</span>
                     {opt.macOnly && !isMac && (
-                      <span className="text-xs text-muted-foreground">(macOS only)</span>
+                      <span className="text-xs text-muted-foreground">
+                        {t('settings.terminal.macOsOnly')}
+                      </span>
                     )}
                     {opt.id === 'ghostty' && isMac && ghosttyAvailable === false && (
-                      <span className="text-xs text-muted-foreground">(not available)</span>
+                      <span className="text-xs text-muted-foreground">
+                        {t('settings.terminal.notAvailable')}
+                      </span>
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">{opt.description}</p>
@@ -244,14 +274,10 @@ export function SettingsTerminal(): React.JSX.Element {
           <>
             <div className="flex items-start gap-2 mt-3 p-2.5 rounded-md bg-blue-500/10 border border-blue-500/20 text-xs">
               <Info className="h-3.5 w-3.5 text-blue-500 shrink-0 mt-0.5" />
-              <p className="text-muted-foreground">
-                Ghostty renders via Metal for native performance. The terminal will restart when
-                switching backends. Colors and cursor style are read from your Ghostty config.
-              </p>
+              <p className="text-muted-foreground">{t('settings.terminal.ghosttyInfo')}</p>
             </div>
-
             <div className="mt-4 space-y-2">
-              <label className="text-sm font-medium">Font Size</label>
+              <label className="text-sm font-medium">{t('settings.terminal.fontSize')}</label>
               <div className="flex items-center gap-3">
                 <Input
                   type="number"
@@ -267,74 +293,68 @@ export function SettingsTerminal(): React.JSX.Element {
                   className="w-20 font-mono text-sm"
                   data-testid="ghostty-font-size"
                 />
-                <span className="text-xs text-muted-foreground">pt (8-32)</span>
+                <span className="text-xs text-muted-foreground">{t('settings.terminal.ptRange')}</span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Font size for the embedded Ghostty terminal. Restart the terminal for changes to
-                take effect.
-              </p>
+              <p className="text-xs text-muted-foreground">{t('settings.terminal.fontSizeHint')}</p>
             </div>
           </>
         )}
       </div>
 
-      {/* External Terminal (Open in Terminal) */}
       <div>
-        <h3 className="text-base font-medium mb-1">External Terminal</h3>
-        <p className="text-sm text-muted-foreground mb-3">
-          Choose which terminal to use for &quot;Open in Terminal&quot; actions
-        </p>
+        <h3 className="text-base font-medium mb-1">{t('settings.terminal.externalHeading')}</h3>
+        <p className="text-sm text-muted-foreground mb-3">{t('settings.terminal.externalHint')}</p>
 
         {isDetecting ? (
           <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Detecting installed terminals...
+            {t('settings.terminal.detecting')}
           </div>
         ) : (
           <div className="space-y-1">
-            {getTerminalOptions().map((opt) => {
-              const available = isAvailable(opt.id)
+            {getTerminalIds().map((id) => {
+              const available = isAvailable(id)
+              const label = externalTerminalLabel(id, t)
               return (
                 <button
-                  key={opt.id}
-                  onClick={() => updateSetting('defaultTerminal', opt.id)}
-                  disabled={!available && opt.id !== 'custom'}
+                  key={id}
+                  onClick={() => updateSetting('defaultTerminal', id)}
+                  disabled={!available && id !== 'custom'}
                   className={cn(
                     'w-full flex items-center justify-between px-3 py-2.5 rounded-md text-sm transition-colors text-left',
-                    defaultTerminal === opt.id
+                    defaultTerminal === id
                       ? 'bg-primary/10 border border-primary/30'
                       : 'hover:bg-accent/50 border border-transparent',
-                    !available && opt.id !== 'custom' && 'opacity-50 cursor-not-allowed'
+                    !available && id !== 'custom' && 'opacity-50 cursor-not-allowed'
                   )}
-                  data-testid={`terminal-${opt.id}`}
+                  data-testid={`terminal-${id}`}
                 >
                   <div className="flex items-center gap-2">
-                    <span>{opt.label}</span>
-                    {!available && opt.id !== 'custom' && (
-                      <span className="text-xs text-muted-foreground">(not found)</span>
+                    <span>{label}</span>
+                    {!available && id !== 'custom' && (
+                      <span className="text-xs text-muted-foreground">
+                        {t('settings.terminal.notFound')}
+                      </span>
                     )}
                   </div>
-                  {defaultTerminal === opt.id && <Check className="h-4 w-4 text-primary" />}
+                  {defaultTerminal === id && <Check className="h-4 w-4 text-primary" />}
                 </button>
               )
             })}
           </div>
         )}
 
-        {/* Custom command input */}
         {defaultTerminal === 'custom' && (
           <div className="space-y-2 mt-3">
-            <label className="text-sm font-medium">Custom Terminal Command</label>
+            <label className="text-sm font-medium">{t('settings.terminal.customCommand')}</label>
             <Input
               value={customTerminalCommand}
               onChange={(e) => updateSetting('customTerminalCommand', e.target.value)}
-              placeholder={isMacPlatform() ? 'e.g., /usr/local/bin/alacritty' : 'e.g., C:\\Program Files\\Alacritty\\alacritty.exe'}
+              placeholder={externalPlaceholder}
               className="font-mono text-sm"
               data-testid="custom-terminal-command"
             />
-            <p className="text-xs text-muted-foreground">
-              The command will be called with the worktree path as an argument.
-            </p>
+            <p className="text-xs text-muted-foreground">{t('settings.terminal.customHint')}</p>
           </div>
         )}
       </div>

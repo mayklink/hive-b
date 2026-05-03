@@ -5,7 +5,7 @@ on:
   # Also run when native deps change
   push:
     paths:
-      - 'pnpm-lock.yaml'
+      - 'yarn.lock'
     branches:
       - linux-release-artifact
 
@@ -18,8 +18,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -27,17 +25,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: pnpm
+          cache: yarn
 
       - name: Install dependencies (compiles native modules for Linux)
-        run: pnpm install --frozen-lockfile
+        run: yarn install:ci
 
       - name: Collect native .node binaries
         shell: bash
         run: |
           mkdir -p linux-natives
 
-          # better-sqlite3 (-L follows pnpm symlinks)
+          # better-sqlite3 (-L follows symlinks where present)
           SQLITE_NODE=$(find -L node_modules/better-sqlite3 -name "better_sqlite3.node" | head -1)
           if [ -n "$SQLITE_NODE" ]; then
             cp "$SQLITE_NODE" linux-natives/better_sqlite3.node

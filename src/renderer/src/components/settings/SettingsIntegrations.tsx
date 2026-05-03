@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Loader2, Check, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ProviderIcon } from '@/components/ui/provider-icon'
 import { toast } from 'sonner'
-import { saveProviderSettingsToDatabase, loadProviderSettingsFromDatabase } from '@/lib/provider-settings'
+import {
+  saveProviderSettingsToDatabase,
+  loadProviderSettingsFromDatabase
+} from '@/lib/provider-settings'
 
 interface ProviderInfo {
   id: string
@@ -20,7 +24,8 @@ interface SettingsFieldDef {
   placeholder?: string
 }
 
-export function SettingsIntegrations() {
+export function SettingsIntegrations(): React.JSX.Element {
+  const { t } = useTranslation()
   const [providers, setProviders] = useState<ProviderInfo[]>([])
   const [schemas, setSchemas] = useState<Record<string, SettingsFieldDef[]>>({})
   const [values, setValues] = useState<Record<string, string>>({})
@@ -36,7 +41,6 @@ export function SettingsIntegrations() {
       }
       setSchemas(schemaMap)
 
-      // Load saved values from dedicated provider-settings key (fast initial read)
       let saved: Record<string, string> = {}
       try {
         const raw = localStorage.getItem('hive-provider-settings')
@@ -54,7 +58,6 @@ export function SettingsIntegrations() {
         // ignore
       }
 
-      // Load from database (source of truth) and merge — DB wins over localStorage
       try {
         const dbSettings = await loadProviderSettingsFromDatabase()
         if (dbSettings) {
@@ -66,38 +69,31 @@ export function SettingsIntegrations() {
             }
           }
           setValues(merged)
-          // Sync localStorage from database so getProviderSettings() stays current
           localStorage.setItem('hive-provider-settings', JSON.stringify(merged))
         } else if (Object.keys(saved).length > 0) {
-          // No DB values yet — seed the database from localStorage
           await saveProviderSettingsToDatabase(saved)
         }
       } catch {
-        // ignore — localStorage values are already loaded
+        // ignore
       }
     })
   }, [])
 
-  const handleFieldChange = (key: string, value: string) => {
+  const handleFieldChange = (key: string, value: string): void => {
     setValues((prev) => {
       const updated = { ...prev, [key]: value }
-
-      // Persist to dedicated localStorage key (separate from Zustand's hive-settings)
       try {
         localStorage.setItem('hive-provider-settings', JSON.stringify(updated))
       } catch {
         // ignore
       }
-
-      // Persist to SQLite database (durable source of truth)
       saveProviderSettingsToDatabase(updated)
-
       return updated
     })
     setTestResult({})
   }
 
-  const handleTest = async (providerId: string) => {
+  const handleTest = async (providerId: string): Promise<void> => {
     setTesting(providerId)
     setTestResult((prev) => ({ ...prev, [providerId]: null }))
 
@@ -111,13 +107,18 @@ export function SettingsIntegrations() {
       const result = await window.ticketImport.authenticate(providerId, providerSettings)
       setTestResult((prev) => ({ ...prev, [providerId]: result.success }))
       if (result.success) {
-        toast.success(`${providers.find((p) => p.id === providerId)?.name}: Connected!`)
+        const name = providers.find((p) => p.id === providerId)?.name ?? providerId
+        toast.success(t('settings.integrations.connected', { name }))
       } else {
-        toast.error(result.error ?? 'Authentication failed')
+        toast.error(result.error ?? t('settings.integrations.authFailed'))
       }
     } catch (err) {
       setTestResult((prev) => ({ ...prev, [providerId]: false }))
-      toast.error(`Test failed: ${err instanceof Error ? err.message : String(err)}`)
+      toast.error(
+        t('settings.integrations.testFailed', {
+          message: err instanceof Error ? err.message : String(err)
+        })
+      )
     } finally {
       setTesting(null)
     }
@@ -126,10 +127,8 @@ export function SettingsIntegrations() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-sm font-medium mb-1">Integrations</h3>
-        <p className="text-xs text-muted-foreground">
-          Configure connections to external platforms for ticket import.
-        </p>
+        <h3 className="text-sm font-medium mb-1">{t('settings.integrations.heading')}</h3>
+        <p className="text-xs text-muted-foreground">{t('settings.integrations.description')}</p>
       </div>
 
       {providers.map((provider) => {
@@ -150,19 +149,19 @@ export function SettingsIntegrations() {
                   variant="outline"
                   size="sm"
                   disabled={testing !== null}
-                  onClick={() => handleTest(provider.id)}
+                  onClick={() => void handleTest(provider.id)}
                 >
                   {testing === provider.id ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
                   ) : null}
-                  Test connection
+                  {t('settings.integrations.testConnection')}
                 </Button>
               </div>
             </div>
 
             {fields.length === 0 ? (
               <p className="text-xs text-muted-foreground">
-                No configuration needed. Uses GitHub CLI authentication by default.
+                {t('settings.integrations.noConfigNeeded')}
               </p>
             ) : (
               fields.map((field) => (
@@ -170,7 +169,7 @@ export function SettingsIntegrations() {
                   <label className="text-xs font-medium text-muted-foreground">
                     {field.label}
                     {!field.required && (
-                      <span className="text-muted-foreground/50 ml-1">(optional)</span>
+                      <span className="text-muted-foreground/50 ml-1">{t('common.optional')}</span>
                     )}
                   </label>
                   <Input

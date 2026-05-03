@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSettingsStore, type EditorOption } from '@/stores/useSettingsStore'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -12,19 +13,24 @@ interface DetectedEditor {
   available: boolean
 }
 
-const EDITOR_OPTIONS: { id: EditorOption; label: string }[] = [
-  { id: 'vscode', label: 'Visual Studio Code' },
-  { id: 'cursor', label: 'Cursor' },
-  { id: 'sublime', label: 'Sublime Text' },
-  { id: 'webstorm', label: 'WebStorm' },
-  { id: 'zed', label: 'Zed' },
-  { id: 'custom', label: 'Custom Command' }
-]
-
 export function SettingsEditor(): React.JSX.Element {
+  const { t } = useTranslation()
   const { defaultEditor, customEditorCommand, updateSetting } = useSettingsStore()
   const [detectedEditors, setDetectedEditors] = useState<DetectedEditor[]>([])
   const [isDetecting, setIsDetecting] = useState(true)
+
+  const editorOptions = useMemo(
+    () =>
+      [
+        { id: 'vscode' as const, label: t('settings.editor.vscode') },
+        { id: 'cursor' as const, label: t('settings.editor.cursor') },
+        { id: 'sublime' as const, label: t('settings.editor.sublime') },
+        { id: 'webstorm' as const, label: t('settings.editor.webstorm') },
+        { id: 'zed' as const, label: t('settings.editor.zed') },
+        { id: 'custom' as const, label: t('settings.editor.customLabel') }
+      ] satisfies ReadonlyArray<{ id: EditorOption; label: string }>,
+    [t]
+  )
 
   useEffect(() => {
     let cancelled = false
@@ -54,23 +60,27 @@ export function SettingsEditor(): React.JSX.Element {
     return editor?.available ?? false
   }
 
+  const placeholder = isMac()
+    ? t('settings.editor.placeholderMac')
+    : isLinux()
+      ? t('settings.editor.placeholderLinux')
+      : t('settings.editor.placeholderWin')
+
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-base font-medium mb-1">Editor</h3>
-        <p className="text-sm text-muted-foreground">
-          Choose which editor to use for &quot;Open in Editor&quot; actions
-        </p>
+        <h3 className="text-base font-medium mb-1">{t('settings.editor.heading')}</h3>
+        <p className="text-sm text-muted-foreground">{t('settings.editor.description')}</p>
       </div>
 
       {isDetecting ? (
         <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Detecting installed editors...
+          {t('settings.editor.detecting')}
         </div>
       ) : (
         <div className="space-y-1">
-          {EDITOR_OPTIONS.map((opt) => {
+          {editorOptions.map((opt) => {
             const available = isAvailable(opt.id)
             return (
               <button
@@ -89,7 +99,7 @@ export function SettingsEditor(): React.JSX.Element {
                 <div className="flex items-center gap-2">
                   <span>{opt.label}</span>
                   {!available && opt.id !== 'custom' && (
-                    <span className="text-xs text-muted-foreground">(not found)</span>
+                    <span className="text-xs text-muted-foreground">{t('settings.editor.notFound')}</span>
                   )}
                 </div>
                 {defaultEditor === opt.id && <Check className="h-4 w-4 text-primary" />}
@@ -99,20 +109,17 @@ export function SettingsEditor(): React.JSX.Element {
         </div>
       )}
 
-      {/* Custom command input */}
       {defaultEditor === 'custom' && (
         <div className="space-y-2">
-          <label className="text-sm font-medium">Custom Editor Command</label>
+          <label className="text-sm font-medium">{t('settings.editor.customCommand')}</label>
           <Input
             value={customEditorCommand}
             onChange={(e) => updateSetting('customEditorCommand', e.target.value)}
-            placeholder={isMac() ? 'e.g., /usr/local/bin/code' : isLinux() ? 'e.g., /usr/bin/code' : 'e.g., C:\\Program Files\\Microsoft VS Code\\code.exe'}
+            placeholder={placeholder}
             className="font-mono text-sm"
             data-testid="custom-editor-command"
           />
-          <p className="text-xs text-muted-foreground">
-            The command will be called with the worktree path as an argument.
-          </p>
+          <p className="text-xs text-muted-foreground">{t('settings.editor.customHint')}</p>
         </div>
       )}
     </div>
