@@ -32,7 +32,7 @@ export function HatchCeremony({
         <span className="hatch-crack" />
       </motion.div>
       <motion.img
-        className="hatch-bee"
+        className="hatch-mascot"
         src={pet.resolvedAssets.idle}
         alt=""
         draggable={false}

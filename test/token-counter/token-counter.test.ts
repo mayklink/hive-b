@@ -151,13 +151,13 @@ describe('SessionStatusEntry tokenDelta metadata', () => {
   test('setSessionStatus stores tokenDelta in the entry', () => {
     useWorktreeStatusStore
       .getState()
-      .setSessionStatus('s1', 'completed', { word: 'Buzzed', durationMs: 5000, tokenDelta: 1234 })
+      .setSessionStatus('s1', 'completed', { word: 'Octobbed', durationMs: 5000, tokenDelta: 1234 })
 
     const entry = useWorktreeStatusStore.getState().sessionStatuses['s1']
     expect(entry).toEqual(
       expect.objectContaining({
         status: 'completed',
-        word: 'Buzzed',
+        word: 'Octobbed',
         durationMs: 5000,
         tokenDelta: 1234
       })

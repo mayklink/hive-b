@@ -46,5 +46,6 @@ export function listPets(): LoadedPet[] {
 }
 
 export function getPet(id: string): LoadedPet {
-  return pets.get(id) ?? pets.get('bee') ?? listPets()[0]
+  const normalizedId = id === 'bee' ? 'octob' : id
+  return pets.get(normalizedId) ?? pets.get('octob') ?? listPets()[0]
 }

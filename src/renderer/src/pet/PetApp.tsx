@@ -16,7 +16,7 @@ export function PetApp(): React.JSX.Element {
   const [hatching, setHatching] = useState(false)
   const latestStatusRef = useRef(DEFAULT_STATUS)
 
-  const pet = useMemo(() => getPet(settings?.petId ?? 'bee'), [settings?.petId])
+  const pet = useMemo(() => getPet(settings?.petId ?? 'octob'), [settings?.petId])
   const { isDraggingRef, wasDraggedRef, onPointerDown } = usePetDrag(position)
   const hover = usePetHover(isDraggingRef)
 

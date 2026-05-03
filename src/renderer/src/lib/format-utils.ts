@@ -38,23 +38,24 @@ export function formatTokenCount(n: number): string {
 import { stripAnsi } from './ansi-utils'
 
 export const COMPLETION_WORDS = [
-  'Swarmed',
-  'Buzzed',
   'Octobbed',
-  'Brewed',
-  'Waxed',
-  'Honeyed',
+  'Shipped',
+  'Wrapped',
+  'Inked',
   'Sealed',
-  'Capped',
-  'Foraged',
-  'Scouted',
-  'Sipped',
-  'Clustered',
-  'Nested',
-  'Scented',
-  'Pollinated',
-  'Gathered',
-  'Hummed'
+  'Nailed',
+  'Landed',
+  'Wired',
+  'Locked',
+  'Minted',
+  'Crafted',
+  'Forged',
+  'Patched',
+  'Brewed',
+  'Spliced',
+  'Tuned',
+  'Packed',
+  'Docked'
 ]
 
 const DEV_SERVER_URL_PATTERN = /https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0):\d{3,5}\/?/

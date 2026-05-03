@@ -5,7 +5,7 @@ import { MessageRenderer } from './MessageRenderer'
 import { QueuedMessageBubble } from './QueuedMessageBubble'
 import type { OpenCodeMessage } from './SessionView'
 import { formatCompletionDuration } from '@/lib/format-utils'
-import beeIcon from '@/assets/bee.png'
+import octobMascotIcon from '@/pet/registry/octob/assets/octob.png'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -341,7 +341,7 @@ export const VirtualizedMessageList = memo(
               style={{ color: '#C15F3C' }}
               data-testid="completion-badge"
             >
-              <img src={beeIcon} alt="bee" className="h-7 w-7" />
+              <img src={octobMascotIcon} alt="" className="h-7 w-7" />
               <span className="font-medium">
                 {completionEntry?.word ?? 'Worked'} for{' '}
                 {formatCompletionDuration(completionEntry?.durationMs ?? 0)}

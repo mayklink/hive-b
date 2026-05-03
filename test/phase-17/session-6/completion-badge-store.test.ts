@@ -205,12 +205,12 @@ describe('Session 6: Completion Badge Store', () => {
       }
     })
 
-    test('contains expected bee-themed words', () => {
+    test('contains expected completion flair words', () => {
       expect(COMPLETION_WORDS).toContain('Brewed')
-      expect(COMPLETION_WORDS).toContain('Buzzed')
       expect(COMPLETION_WORDS).toContain('Octobbed')
-      expect(COMPLETION_WORDS).toContain('Honeyed')
-      expect(COMPLETION_WORDS).toContain('Swarmed')
+      expect(COMPLETION_WORDS).toContain('Shipped')
+      expect(COMPLETION_WORDS).toContain('Wrapped')
+      expect(COMPLETION_WORDS).toContain('Inked')
     })
   })
 })

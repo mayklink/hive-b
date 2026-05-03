@@ -18,29 +18,23 @@ const SCREEN_MARGIN = 24
 
 export const DEFAULT_PET_SETTINGS: PetSettings = {
   enabled: false,
-  petId: 'bee',
+  petId: 'octob',
   size: 'M',
   opacity: 1,
   hasHatched: false
 }
 
-const BEE_MANIFEST: PetManifest = {
-  id: 'bee',
-  name: 'Bee',
+const OCTOB_MANIFEST: PetManifest = {
+  id: 'octob',
+  name: 'Octob',
   version: '1.0.0',
   author: 'Octob',
   assets: {
-    idle: 'assets/bee.png',
-    working: 'assets/bee.png',
-    question: 'assets/bee.png',
-    permission: 'assets/bee.png',
-    plan_ready: 'assets/bee.png'
-  },
-  lottieAssets: {
-    working: 'assets/honey-bee.lottie'
-  },
-  lottieScale: {
-    working: 2.15
+    idle: 'assets/octob.png',
+    working: 'assets/octob.png',
+    question: 'assets/octob.png',
+    permission: 'assets/octob.png',
+    plan_ready: 'assets/octob.png'
   },
   defaultSize: 'M'
 }
@@ -67,7 +61,7 @@ const CORGI_MANIFEST: PetManifest = {
 }
 
 const PET_MANIFESTS: Record<string, PetManifest> = {
-  bee: BEE_MANIFEST,
+  octob: OCTOB_MANIFEST,
   corgi: CORGI_MANIFEST
 }
 
@@ -193,12 +187,16 @@ export function getPetConfig(): {
   position: PetPosition
   manifest: PetManifest
 } {
+  if (latestSettings.petId === 'bee') {
+    persistPetSettings({ petId: 'octob' })
+  }
   return {
     settings: latestSettings,
     position: petWindow?.getPosition()
       ? { x: petWindow.getPosition()[0], y: petWindow.getPosition()[1] }
       : loadPetPosition(),
-    manifest: PET_MANIFESTS[latestSettings.petId] ?? BEE_MANIFEST
+    manifest: PET_MANIFESTS[latestSettings.petId === 'bee' ? 'octob' : latestSettings.petId] ??
+      OCTOB_MANIFEST
   }
 }
 
@@ -285,7 +283,9 @@ export function forwardStatusToPet(payload: PetStatusPayload): void {
 }
 
 export function updatePetSettings(partial: Partial<PetSettings>): void {
-  latestSettings = { ...latestSettings, ...partial }
+  let next = { ...latestSettings, ...partial }
+  if (next.petId === 'bee') next = { ...next, petId: 'octob' }
+  latestSettings = next
 
   if (petWindow && !petWindow.isDestroyed()) {
     const size = petWindowSize()
@@ -304,15 +304,14 @@ export function persistPetSettings(partial: Partial<PetSettings>): void {
   try {
     const existing = getDatabase().getSetting(APP_SETTINGS_DB_KEY)
     const parsed = existing ? JSON.parse(existing) : {}
+    const priorPet = { ...DEFAULT_PET_SETTINGS, ...(parsed.pet ?? {}) }
+    const mergedPet = { ...priorPet, ...partial }
+    if (mergedPet.petId === 'bee') mergedPet.petId = 'octob'
     getDatabase().setSetting(
       APP_SETTINGS_DB_KEY,
       JSON.stringify({
         ...parsed,
-        pet: {
-          ...DEFAULT_PET_SETTINGS,
-          ...(parsed.pet ?? {}),
-          ...partial
-        }
+        pet: mergedPet
       })
     )
   } catch {

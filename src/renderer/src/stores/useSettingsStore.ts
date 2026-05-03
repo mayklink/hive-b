@@ -233,7 +233,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   tipsEnabled: true,
   pet: {
     enabled: false,
-    petId: 'bee',
+    petId: 'octob',
     size: 'M',
     opacity: 1,
     hasHatched: false
@@ -362,6 +362,15 @@ async function loadSettingsFromDatabase(): Promise<AppSettings | null> {
           }
         }
 
+        if (result.pet.petId === 'bee') {
+          result.pet = { ...result.pet, petId: 'octob' }
+        }
+
+        const petWasLegacyBee =
+          typeof parsed.pet === 'object' &&
+          parsed.pet !== null &&
+          (parsed.pet as PetSettings).petId === 'bee'
+
         delete (result as Record<string, unknown>).reviewPromptType
 
         const validBuiltinReview = getBuiltinReviewPromptType(result.reviewPromptPresetId) !== null
@@ -404,6 +413,10 @@ async function loadSettingsFromDatabase(): Promise<AppSettings | null> {
           )
         ) {
           result.lastTaskSessionPromptTemplateId = null
+        }
+
+        if (petWasLegacyBee) {
+          await saveToDatabase(result)
         }
 
         return result

@@ -45,7 +45,7 @@ button {
 }
 
 .pet-sprite img,
-.hatch-bee,
+.hatch-mascot,
 .pet-lottie-canvas {
   width: 100%;
   height: 100%;
@@ -170,7 +170,7 @@ button {
   background: rgb(105 64 20 / 0.38);
 }
 
-.hatch-bee {
+.hatch-mascot {
   position: relative;
   filter: drop-shadow(0 8px 12px rgb(0 0 0 / 0.24));
 }

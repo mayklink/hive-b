@@ -4,7 +4,7 @@ import { describe, test, expect, beforeAll } from 'vitest'
  * Session 7: Header Branding — Tests
  *
  * These tests verify:
- * 1. Octob mark (SVG) replaces raster logo in the header
+ * 1. Octob mark (PNG) is used in the header
  * 2. Project name displays when a project is selected
  * 3. Branch name displays in parentheses after the project name
  * 4. Octob fallback when no project selected
@@ -93,11 +93,13 @@ describe('Session 7: Header Branding', () => {
   })
 
   describe('Octob mark component exists', () => {
-    test('OctobMark.tsx exists', async () => {
+    test('OctobMark.tsx exists and uses octob.png', async () => {
       const fs = await import('fs')
       const path = await import('path')
-      const p = path.resolve(__dirname, '../../../src/renderer/src/components/brand/OctobMark.tsx')
+      const p = path.resolve(__dirname, '../../../src/renderer/src/components/brand/OctoBMark.tsx')
       expect(fs.existsSync(p)).toBe(true)
+      const source = fs.readFileSync(p, 'utf-8')
+      expect(source).toContain('octob.png')
     })
   })
 

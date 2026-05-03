@@ -95,7 +95,7 @@ describe('Session 7: Completion Badge UI', () => {
 
     test('completion badge clears when new message starts (busy event)', () => {
       getState().setSessionStatus('session-1', 'completed', {
-        word: 'Buzzed',
+        word: 'Octobbed',
         durationMs: 10000
       })
       expect(getState().sessionStatuses['session-1']?.status).toBe('completed')
@@ -122,7 +122,7 @@ describe('Session 7: Completion Badge UI', () => {
   describe('Starting new streaming clears completion badge', () => {
     test('busy event transitions from completed to working', () => {
       getState().setSessionStatus('session-1', 'completed', {
-        word: 'Hived',
+        word: 'Shipped',
         durationMs: 10000
       })
       expect(getState().sessionStatuses['session-1']?.status).toBe('completed')
@@ -139,12 +139,12 @@ describe('Session 7: Completion Badge UI', () => {
   describe('getWorktreeCompletedEntry', () => {
     test('returns the completed entry with metadata', () => {
       getState().setSessionStatus('session-1', 'completed', {
-        word: 'Foraged',
+        word: 'Packed',
         durationMs: 45000
       })
       const entry = getState().getWorktreeCompletedEntry('wt-1')
       expect(entry).not.toBeNull()
-      expect(entry?.word).toBe('Foraged')
+      expect(entry?.word).toBe('Packed')
       expect(entry?.durationMs).toBe(45000)
     })
 
@@ -221,15 +221,14 @@ describe('Session 7: Completion Badge UI', () => {
       expect(globalListenerSource).not.toContain('30_000')
     })
 
-    test('WorktreeItem shows Ready for completed (no bee icon or completion text)', async () => {
+    test('WorktreeItem shows Ready for completed (no mascot icon or completion text)', async () => {
       const fs = await import('fs')
       const path = await import('path')
       const worktreeItemSource = fs.readFileSync(
         path.resolve(__dirname, '../../../src/renderer/src/components/worktrees/WorktreeItem.tsx'),
         'utf-8'
       )
-      // Should NOT have bee icon, completion formatting, or completed entry
-      expect(worktreeItemSource).not.toContain('beeIcon')
+      expect(worktreeItemSource).not.toContain('octobMascotIcon')
       expect(worktreeItemSource).not.toContain('formatCompletionDuration')
       expect(worktreeItemSource).not.toContain('getWorktreeCompletedEntry')
       expect(worktreeItemSource).not.toContain('#C15F3C')

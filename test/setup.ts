@@ -152,9 +152,9 @@ if (typeof window !== 'undefined') {
         move: vi.fn(),
         focusMain: vi.fn().mockResolvedValue(undefined),
         getConfig: vi.fn().mockResolvedValue({
-          settings: { enabled: false, petId: 'bee', size: 'M', opacity: 1, hasHatched: true },
+          settings: { enabled: false, petId: 'octob', size: 'M', opacity: 1, hasHatched: true },
           position: { x: 0, y: 0 },
-          manifest: { id: 'bee', name: 'Bee', version: '1.0.0', assets: {} }
+          manifest: { id: 'octob', name: 'Octob', version: '1.0.0', assets: {} }
         }),
         getCurrentStatus: vi.fn().mockResolvedValue({ state: 'idle', sourceWorktreeId: null }),
         updateSettings: vi.fn(),

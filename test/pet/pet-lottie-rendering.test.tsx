@@ -36,7 +36,7 @@ vi.mock('@lottiefiles/dotlottie-web/dotlottie-player.wasm?url', () => ({
 
 const settings: PetSettings = {
   enabled: true,
-  petId: 'bee',
+  petId: 'octob',
   size: 'M',
   opacity: 1,
   hasHatched: true
@@ -58,11 +58,12 @@ describe('pet Lottie rendering', () => {
     vi.unstubAllGlobals()
   })
 
-  it('resolves a working-state Lottie asset for the bee pet', () => {
+  it('maps legacy bee id to the Octob pet (static mascot, no Lottie)', () => {
     const pet = getPet('bee')
 
-    expect(pet.resolvedLottieAssets?.working).toContain('honey-bee')
-    expect(pet.lottieScale?.working).toBe(2.15)
+    expect(pet.id).toBe('octob')
+    expect(pet.resolvedLottieAssets?.working).toBeUndefined()
+    expect(pet.resolvedAssets.idle).toContain('octob')
   })
 
   it('resolves static and working-state Lottie assets for the corgi pet', () => {
@@ -77,25 +78,25 @@ describe('pet Lottie rendering', () => {
 
   it('renders Lottie only for working and keeps other states on the PNG sprite', async () => {
     const pet = {
-      id: 'bee',
-      name: 'Bee',
+      id: 'fixture',
+      name: 'Fixture',
       version: '1.0.0',
       assets: {
-        idle: '/bee.png',
-        working: '/bee.png',
-        question: '/bee.png',
-        permission: '/bee.png',
-        plan_ready: '/bee.png'
+        idle: '/mascot.png',
+        working: '/mascot.png',
+        question: '/mascot.png',
+        permission: '/mascot.png',
+        plan_ready: '/mascot.png'
       },
       resolvedAssets: {
-        idle: '/bee.png',
-        working: '/bee.png',
-        question: '/bee.png',
-        permission: '/bee.png',
-        plan_ready: '/bee.png'
+        idle: '/mascot.png',
+        working: '/mascot.png',
+        question: '/mascot.png',
+        permission: '/mascot.png',
+        plan_ready: '/mascot.png'
       },
       resolvedLottieAssets: {
-        working: '/honey-bee.lottie'
+        working: '/mascot-anim.lottie'
       },
       lottieScale: {
         working: 2.15
