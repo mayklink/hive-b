@@ -69,12 +69,12 @@ cd "$TMPDIR_FINALIZE"
 # Download macOS DMGs
 info "Downloading macOS DMGs..."
 gh release download "v${VERSION}" --repo "$REPO" \
-  -p "Hive-${VERSION}-arm64.dmg" -p "Hive-${VERSION}.dmg"
+  -p "Octob-${VERSION}-arm64.dmg" -p "Octob-${VERSION}-x64.dmg"
 ok "DMGs downloaded"
 
 # Compute SHA256
-SHA_ARM=$(shasum -a 256 "Hive-${VERSION}-arm64.dmg" | awk '{print $1}')
-SHA_X64=$(shasum -a 256 "Hive-${VERSION}.dmg" | awk '{print $1}')
+SHA_ARM=$(shasum -a 256 "Octob-${VERSION}-arm64.dmg" | awk '{print $1}')
+SHA_X64=$(shasum -a 256 "Octob-${VERSION}-x64.dmg" | awk '{print $1}')
 ok "SHA256 (arm64): ${SHA_ARM}"
 ok "SHA256 (x64):   ${SHA_X64}"
 
@@ -100,7 +100,7 @@ node -e "
 ok "Cask file updated"
 
 git add Casks/hive.rb
-git commit -m "Update Hive to v${VERSION}"
+git commit -m "Update Octob to v${VERSION}"
 git push origin main
 ok "Homebrew repo pushed"
 

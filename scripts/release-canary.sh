@@ -296,7 +296,7 @@ rollback() {
   fi
 
   ok "Rollback complete"
-  tg "🔄 Hive canary v${NEW_VERSION} — rolled back"
+  tg "🔄 Octob canary v${NEW_VERSION} — rolled back"
 }
 
 on_exit() {
@@ -309,7 +309,7 @@ on_exit() {
     if $PHASE2_STARTED; then
       rollback
     else
-      tg "❌ Hive canary v${NEW_VERSION} — release failed (pre-phase-2, no rollback needed)"
+      tg "❌ Octob canary v${NEW_VERSION} — release failed (pre-phase-2, no rollback needed)"
     fi
   fi
   if $SHUTDOWN_AFTER; then
@@ -324,7 +324,7 @@ on_exit() {
 }
 trap on_exit EXIT
 
-tg "🚀 Hive canary v${NEW_VERSION} — starting release"
+tg "🚀 Octob canary v${NEW_VERSION} — starting release"
 
 # ── Phase 2: Version bump + git ──────────────────────────────────
 PHASE2_STARTED=true
@@ -371,7 +371,7 @@ else
 fi
 
 # ── Phase 3: Build ────────────────────────────────────────────────
-tg "🔨 Hive canary v${NEW_VERSION} — building"
+tg "🔨 Octob canary v${NEW_VERSION} — building"
 # Build from the tagged commit
 info "Checking out tagged commit for build..."
 git checkout "v${NEW_VERSION}"
@@ -409,7 +409,7 @@ yarn build
 ok "Electron build complete"
 
 # ── Phase 4: Package + Sign + Notarize + Publish ─────────────────
-tg "📦 Hive canary v${NEW_VERSION} — build complete, packaging & notarizing"
+tg "📦 Octob canary v${NEW_VERSION} — build complete, packaging & notarizing"
 info "Packaging, signing, notarizing, and publishing..."
 info "This will take several minutes (notarization is slow)."
 
@@ -427,7 +427,7 @@ else
 
   # ── Phase 4.5: Windows build ──────────────────────────────────────
   # Windows build is non-fatal — macOS artifacts are already published.
-  tg "🪟 Hive canary v${NEW_VERSION} — building Windows"
+  tg "🪟 Octob canary v${NEW_VERSION} — building Windows"
   if bash "$SCRIPT_DIR/prepare-win-deps.sh"; then
     info "Packaging Windows canary build..."
     info "This may take a few minutes."
@@ -437,11 +437,11 @@ else
       ok "Windows assets uploaded to GitHub Releases"
     else
       warn "Windows build failed — macOS canary release will continue without Windows artifacts"
-      tg "⚠️ Hive canary v${NEW_VERSION} — Windows build failed"
+      tg "⚠️ Octob canary v${NEW_VERSION} — Windows build failed"
     fi
   else
     warn "Windows dependency preparation failed — skipping Windows build"
-    tg "⚠️ Hive canary v${NEW_VERSION} — Windows deps preparation failed"
+    tg "⚠️ Octob canary v${NEW_VERSION} — Windows deps preparation failed"
   fi
 
   # Always restore macOS native binaries so the working tree stays usable for development
@@ -476,8 +476,8 @@ else
 
   # Compute SHA256 from local build artifacts
   DIST_DIR="$PROJECT_DIR/dist"
-  DMG_ARM="Hive-${NEW_VERSION}-arm64.dmg"
-  DMG_X64="Hive-${NEW_VERSION}.dmg"
+  DMG_ARM="Octob-${NEW_VERSION}-arm64.dmg"
+  DMG_X64="Octob-${NEW_VERSION}-x64.dmg"
 
   [[ -f "$DIST_DIR/$DMG_ARM" ]] || fatal "Build artifact not found: $DIST_DIR/$DMG_ARM"
   [[ -f "$DIST_DIR/$DMG_X64" ]] || fatal "Build artifact not found: $DIST_DIR/$DMG_X64"
@@ -513,7 +513,7 @@ else
   # Commit and push homebrew repo
   cd "$HOMEBREW_REPO"
   git add "$HOMEBREW_CASK"
-  git commit -m "Update Hive Canary to v${NEW_VERSION}"
+  git commit -m "Update Octob Canary to v${NEW_VERSION}"
   git push origin main
   cd "$PROJECT_DIR"
 
@@ -531,15 +531,15 @@ echo "  Homebrew:       brew install --cask morapelker/hive/hive-canary"
 echo ""
 echo "  Assets published:"
 echo "    macOS:"
-echo "      - Hive-${NEW_VERSION}-arm64.dmg  (Apple Silicon)"
-echo "      - Hive-${NEW_VERSION}.dmg        (Intel)"
-echo "      - Hive-${NEW_VERSION}-arm64-mac.zip"
-echo "      - Hive-${NEW_VERSION}-mac.zip"
+echo "      - Octob-${NEW_VERSION}-arm64.dmg  (Apple Silicon)"
+echo "      - Octob-${NEW_VERSION}-x64.dmg     (Intel)"
+echo "      - Octob-${NEW_VERSION}-arm64.zip"
+echo "      - Octob-${NEW_VERSION}-x64.zip"
 echo "      - canary-mac.yml (auto-updater)"
 if $WIN_BUILD_OK; then
   echo "    Windows:"
   echo "      - Octob-Setup-${NEW_VERSION}.exe  (NSIS installer)"
-  echo "      - Hive-${NEW_VERSION}-win.zip    (portable)"
+  echo "      - Octob-${NEW_VERSION}-x64.zip    (portable)"
   echo "      - canary.yml (auto-updater)"
 else
   echo "    Windows: ⚠ build failed (macOS release published without Windows artifacts)"
@@ -551,7 +551,7 @@ fi
 
 RELEASE_SUCCEEDED=true
 if $WIN_BUILD_OK; then
-  tg "✅ Hive canary v${NEW_VERSION} — released successfully (macOS + Windows)"
+  tg "✅ Octob canary v${NEW_VERSION} — released successfully (macOS + Windows)"
 else
-  tg "✅ Hive canary v${NEW_VERSION} — released (macOS only, Windows build failed)"
+  tg "✅ Octob canary v${NEW_VERSION} — released (macOS only, Windows build failed)"
 fi
