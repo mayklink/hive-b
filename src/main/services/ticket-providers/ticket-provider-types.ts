@@ -1,6 +1,6 @@
 // src/main/services/ticket-providers/ticket-provider-types.ts
 
-export type TicketProviderId = 'github' | 'jira'
+export type TicketProviderId = 'github' | 'jira' | 'azure_devops'
 
 export interface SettingsField {
   key: string

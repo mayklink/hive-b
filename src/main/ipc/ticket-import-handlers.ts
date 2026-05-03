@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron'
 import { getTicketProviderManager } from '../services/ticket-providers'
+import { AzureDevOpsProvider } from '../services/ticket-providers/azure-devops-provider'
 import { getDatabase } from '../db'
 import type { TicketProviderId } from '../services/ticket-providers'
 import { createLogger } from '../services/logger'
@@ -120,6 +121,33 @@ export function registerTicketImportHandlers(): void {
     ) => {
       const provider = getTicketProviderManager().getProvider(providerId)
       return provider.updateRemoteStatus(repo, externalId, statusId, settings)
+    }
+  )
+
+  ipcMain.handle(
+    'ticketImport:azureDevOpsListStates',
+    async (_event, settings: Record<string, string>) => {
+      const raw = getTicketProviderManager().getProvider('azure_devops')
+      if (!(raw instanceof AzureDevOpsProvider)) return []
+      return raw.listDistinctStates(settings)
+    }
+  )
+
+  ipcMain.handle(
+    'ticketImport:azureDevOpsListWorkItemTypes',
+    async (_event, settings: Record<string, string>) => {
+      const raw = getTicketProviderManager().getProvider('azure_devops')
+      if (!(raw instanceof AzureDevOpsProvider)) return []
+      return raw.listWorkItemTypeNames(settings)
+    }
+  )
+
+  ipcMain.handle(
+    'ticketImport:azureDevOpsSearchUsers',
+    async (_event, settings: Record<string, string>, query: string) => {
+      const raw = getTicketProviderManager().getProvider('azure_devops')
+      if (!(raw instanceof AzureDevOpsProvider)) return []
+      return raw.searchDirectoryUsers(settings, query ?? '')
     }
   )
 }

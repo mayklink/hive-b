@@ -48,10 +48,12 @@ import { useKanbanStore } from '@/stores/useKanbanStore'
 import { TicketCreateModal } from '@/components/kanban/TicketCreateModal'
 import { ImportTicketsModal } from '@/components/kanban/ImportTicketsModal'
 import { JiraImportModal } from '@/components/kanban/JiraImportModal'
+import { AzureDevOpsImportModal } from '@/components/kanban/AzureDevOpsImportModal'
 import { HiveImportModal } from '@/components/kanban/HiveImportModal'
 import { useVimModeStore } from '@/stores/useVimModeStore'
 import { useHintStore } from '@/stores/useHintStore'
 import { cn, parseColorQuad } from '@/lib/utils'
+import { ProviderIcon } from '@/components/ui/provider-icon'
 import { toast } from '@/lib/toast'
 import { assignSessionHints } from '@/lib/hint-utils'
 import { HintBadge } from '@/components/ui/HintBadge'
@@ -532,6 +534,7 @@ export function SessionTabs(): React.JSX.Element | null {
   const [isTicketCreateOpen, setIsTicketCreateOpen] = useState(false)
   const [showImport, setShowImport] = useState(false)
   const [showJiraImport, setShowJiraImport] = useState(false)
+  const [showAzureDevOpsImport, setShowAzureDevOpsImport] = useState(false)
   const [showHiveImport, setShowHiveImport] = useState(false)
   const [hiveImportTickets, setHiveImportTickets] = useState<Array<{ id: string; title: string; description?: string | null; attachments?: unknown[]; column?: string }>>([])
   const [hiveImportDependencies, setHiveImportDependencies] = useState<Array<{ dependentId: string; blockerId: string }>>([])
@@ -1508,6 +1511,12 @@ export function SessionTabs(): React.JSX.Element | null {
               <ClipboardList className="h-4 w-4 mr-2" />
               Import from Jira
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowAzureDevOpsImport(true)}>
+              <span className="mr-2 inline-flex items-center">
+                <ProviderIcon provider="azure_devops" />
+              </span>
+              Import from Azure DevOps
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={async () => {
                 const result = await window.kanban.board.openImportFile()
@@ -1557,6 +1566,11 @@ export function SessionTabs(): React.JSX.Element | null {
           <JiraImportModal
             open={showJiraImport}
             onOpenChange={setShowJiraImport}
+            projectId={project.id}
+          />
+          <AzureDevOpsImportModal
+            open={showAzureDevOpsImport}
+            onOpenChange={setShowAzureDevOpsImport}
             projectId={project.id}
           />
           <HiveImportModal

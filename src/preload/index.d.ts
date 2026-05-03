@@ -1654,6 +1654,12 @@ declare global {
         statusId: string,
         settings: Record<string, string>
       ) => Promise<{ success: boolean; error?: string }>
+      azureDevOpsListStates: (settings: Record<string, string>) => Promise<string[]>
+      azureDevOpsListWorkItemTypes: (settings: Record<string, string>) => Promise<string[]>
+      azureDevOpsSearchUsers: (
+        settings: Record<string, string>,
+        query: string
+      ) => Promise<Array<{ displayName: string; uniqueName: string }>>
     }
     bash: {
       run: (sessionId: string, command: string, cwd: string) => Promise<{ success: boolean; runId?: string; error?: string }>

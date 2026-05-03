@@ -1,6 +1,7 @@
 import { Github, type LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import jiraIcon from '@/assets/provider-icons/jira.svg'
+import azureDevOpsIcon from '@/assets/provider-icons/azure-devops.svg'
 
 // ── Per-provider style config ────────────────────────────────────────
 interface ProviderConfig {
@@ -23,6 +24,12 @@ const PROVIDER_CONFIG: Record<string, ProviderConfig> = {
     bg: 'bg-blue-500 dark:bg-blue-600',
     color: '',
     label: 'Jira',
+  },
+  azure_devops: {
+    imgSrc: azureDevOpsIcon,
+    bg: 'bg-[#0078d4] dark:bg-[#106ebe]',
+    color: '',
+    label: 'Azure DevOps',
   },
 }
 

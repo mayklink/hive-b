@@ -2194,7 +2194,16 @@ const ticketImport = {
     statusId: string,
     settings: Record<string, string>
   ): Promise<{ success: boolean; error?: string }> =>
-    ipcRenderer.invoke('ticketImport:updateRemoteStatus', providerId, repo, externalId, statusId, settings)
+    ipcRenderer.invoke('ticketImport:updateRemoteStatus', providerId, repo, externalId, statusId, settings),
+  azureDevOpsListStates: (settings: Record<string, string>): Promise<string[]> =>
+    ipcRenderer.invoke('ticketImport:azureDevOpsListStates', settings),
+  azureDevOpsListWorkItemTypes: (settings: Record<string, string>): Promise<string[]> =>
+    ipcRenderer.invoke('ticketImport:azureDevOpsListWorkItemTypes', settings),
+  azureDevOpsSearchUsers: (
+    settings: Record<string, string>,
+    query: string
+  ): Promise<Array<{ displayName: string; uniqueName: string }>> =>
+    ipcRenderer.invoke('ticketImport:azureDevOpsSearchUsers', settings, query)
 }
 
 const bash = {

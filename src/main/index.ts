@@ -63,7 +63,12 @@ import { scriptRunner } from './services/script-runner'
 import { bashService } from './services/bash-service'
 import { registerBashHandlers } from './ipc/bash-handlers'
 import { registerTicketImportHandlers } from './ipc/ticket-import-handlers'
-import { initTicketProviderManager, GitHubProvider, JiraProvider } from './services/ticket-providers'
+import {
+  initTicketProviderManager,
+  GitHubProvider,
+  JiraProvider,
+  AzureDevOpsProvider
+} from './services/ticket-providers'
 import { APP_SETTINGS_DB_KEY } from '../shared/types/settings'
 import { openCodeService } from './services/opencode-service'
 import { setKeepAwake, cleanupPowerSaveBlocker } from './services/power-save-blocker'
@@ -505,7 +510,11 @@ app.whenReady().then(async () => {
   registerKanbanHandlers()
   configurePetWindow({ getMainWindow: () => mainWindow })
   registerPetHandlers()
-  initTicketProviderManager([new GitHubProvider(), new JiraProvider()])
+  initTicketProviderManager([
+    new GitHubProvider(),
+    new JiraProvider(),
+    new AzureDevOpsProvider()
+  ])
   registerTicketImportHandlers()
 
   // Telemetry IPC
