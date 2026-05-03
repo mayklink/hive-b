@@ -30,7 +30,8 @@ import {
   registerUsageHandlers,
   registerAccountHandlers,
   registerKanbanHandlers,
-  registerAttachmentHandlers
+  registerAttachmentHandlers,
+  registerPetHandlers
 } from './ipc'
 import { buildMenu, updateMenuState, shutdownMenu } from './menu'
 import type { MenuState } from './menu'
@@ -66,6 +67,7 @@ import { initTicketProviderManager, GitHubProvider, JiraProvider } from './servi
 import { APP_SETTINGS_DB_KEY } from '../shared/types/settings'
 import { openCodeService } from './services/opencode-service'
 import { setKeepAwake, cleanupPowerSaveBlocker } from './services/power-save-blocker'
+import { configurePetWindow, destroyPetWindow } from './services/pet-window'
 
 const log = createLogger({ component: 'Main' })
 
@@ -482,6 +484,8 @@ app.whenReady().then(async () => {
   registerUsageHandlers()
   registerAccountHandlers()
   registerKanbanHandlers()
+  configurePetWindow({ getMainWindow: () => mainWindow })
+  registerPetHandlers()
   initTicketProviderManager([new GitHubProvider(), new JiraProvider()])
   registerTicketImportHandlers()
 
@@ -694,6 +698,8 @@ app.on('window-all-closed', () => {
 app.on('will-quit', async () => {
   // Prevent further menu mutations — must be first to avoid native WeakPtr errors
   shutdownMenu()
+  // Destroy ambient pet overlay before tearing down app services
+  destroyPetWindow()
   // Cleanup performance diagnostics
   perfDiagnostics.cleanup()
   // Cleanup updater timers
