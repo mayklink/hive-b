@@ -38,7 +38,15 @@ export class GhosttyBackend implements TerminalBackend {
     this.opts = opts
     this.callbacks = callbacks
     this.mounted = true
-    this.visible = true
+    // Seed visibility from the host's current UI state. If the host (e.g. the
+    // bottom-panel terminal) is collapsed at recreation time — common after a
+    // cwd/fontSize/backend-setting change or a React StrictMode double-mount —
+    // defaulting to `true` would let ensureSurface() run the on-screen
+    // syncFrame branch and pin the NSView to a stale on-screen rect that no
+    // later setVisible(false) can move (because effectiveVisible never
+    // changes). Honoring opts.initialVisible avoids that "ghost terminal"
+    // state on collapse.
+    this.visible = opts.initialVisible ?? true
     this.runtimeReady = false
     this.runtimeInitPromise = null
     this.createSurfacePromise = null
@@ -126,8 +134,25 @@ export class GhosttyBackend implements TerminalBackend {
       if (!rect) return
       this.lastVisibleRect = rect
 
+      // If we already know the backend should be hidden (e.g., user collapsed
+      // the panel before this surface finished creating, or initialVisible was
+      // false from mount because the panel was already collapsed), pass
+      // off-screen x/y to ghosttyCreateSurface so the native NSView is BORN
+      // off-screen instead of flashing at the container's last on-screen
+      // position before our follow-up hideSurface IPC arrives. We keep w/h
+      // from the real rect so the PTY grid sizes correctly for when the
+      // surface eventually becomes visible.
+      const createRect = this.visible
+        ? rect
+        : {
+            x: GhosttyBackend.HIDDEN_RECT.x,
+            y: GhosttyBackend.HIDDEN_RECT.y,
+            w: rect.w,
+            h: rect.h
+          }
+
       try {
-        const result = await window.terminalOps.ghosttyCreateSurface(this.terminalId, rect, {
+        const result = await window.terminalOps.ghosttyCreateSurface(this.terminalId, createRect, {
           cwd: this.opts.cwd,
           shell: this.opts.shell,
           scaleFactor: window.devicePixelRatio || 2.0,

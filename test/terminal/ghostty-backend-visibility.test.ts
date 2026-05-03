@@ -269,6 +269,135 @@ describe('GhosttyBackend visibility', () => {
     expect(mockTerminalOps.ghosttyDestroySurface).toHaveBeenCalledWith('wt-1')
   })
 
+  test('passes off-screen rect to ghosttyCreateSurface when initialVisible=false', async () => {
+    // Regression test for "terminal pops from the bottom" on collapse-with-new-tab:
+    // when the user opens a new tab and immediately collapses the panel, the new
+    // tab's setVisible(false) fires before its surface has been created. hideSurface
+    // early-returns. ensureSurface's IPC continues to fire with the *container's
+    // on-screen rect captured before collapse* — native creates the NSView at that
+    // on-screen position, then ensureSurface's else branch fires hideSurface to
+    // move it off-screen. The user sees a 20-50 ms visible flash at the panel's
+    // bottom rect ("popping from the bottom").
+    //
+    // Fix: when this.visible is false at IPC-send time, pass HIDDEN_RECT.x/y
+    // (with the real container w/h to keep the PTY grid sized correctly) so
+    // the native NSView is born off-screen — no flash possible.
+    const backend = new GhosttyBackend()
+    const container = document.createElement('div')
+    container.getBoundingClientRect = vi.fn(() => ({
+      left: 100,
+      top: 80,
+      width: 640,
+      height: 360,
+      right: 740,
+      bottom: 440,
+      x: 100,
+      y: 80,
+      toJSON: () => ({})
+    }))
+
+    backend.mount(
+      container,
+      {
+        terminalId: 'wt-1',
+        cwd: '/tmp/wt-1',
+        initialVisible: false
+      },
+      {
+        onStatusChange: vi.fn()
+      }
+    )
+
+    await flushPromises()
+    await flushPromises()
+
+    expect(mockTerminalOps.ghosttyCreateSurface).toHaveBeenCalledTimes(1)
+
+    // The rect passed to ghosttyCreateSurface itself must already be off-screen.
+    const createRect = mockTerminalOps.ghosttyCreateSurface.mock.calls[0][1] as {
+      x: number
+      y: number
+      w: number
+      h: number
+    }
+    expect(createRect.x).toBeLessThan(0)
+    expect(createRect.y).toBeLessThan(0)
+    // ...and dimensions must match the container so the PTY grid is sized
+    // correctly when we later move the surface on-screen.
+    expect(createRect.w).toBe(640)
+    expect(createRect.h).toBe(360)
+
+    backend.dispose()
+  })
+
+  test('respects initialVisible=false from mount and never shows surface on-screen', async () => {
+    // Regression test for: when TerminalView recreates a GhosttyBackend (e.g.,
+    // after cwd change, fontSize change, or React StrictMode double-mount)
+    // while the bottom panel is collapsed, the new backend must not flash the
+    // native surface on-screen.
+    //
+    // Before the fix, mount() always set this.visible = true regardless of
+    // the UI's actual visibility. The visibility useEffect in TerminalView
+    // only re-fires on effectiveVisible *changes*, so if the panel was
+    // already collapsed when the new backend was created, this.visible
+    // stayed stale-true. ensureSurface() would then run the on-screen
+    // syncFrame() branch when the container had any non-zero size (e.g.
+    // mid-CSS-collapse-transition), positioning the NSView at an on-screen
+    // shrinking-height rect that no later setVisible call could move (because
+    // effectiveVisible never changed).
+    //
+    // The fix: TerminalOpts.initialVisible lets the host pass the current
+    // effectiveVisible, so mount() seeds this.visible correctly. When the
+    // surface eventually resolves, ensureSurface() takes the hideSurface
+    // branch and the NSView goes off-screen.
+    const backend = new GhosttyBackend()
+    const container = document.createElement('div')
+    container.getBoundingClientRect = vi.fn(() => ({
+      left: 100,
+      top: 80,
+      width: 640,
+      height: 360,
+      right: 740,
+      bottom: 440,
+      x: 100,
+      y: 80,
+      toJSON: () => ({})
+    }))
+
+    backend.mount(
+      container,
+      {
+        terminalId: 'wt-1',
+        cwd: '/tmp/wt-1',
+        initialVisible: false
+      },
+      {
+        onStatusChange: vi.fn()
+      }
+    )
+
+    await flushPromises()
+    await flushPromises()
+
+    // Surface gets created because the container is measurable.
+    expect(mockTerminalOps.ghosttyCreateSurface).toHaveBeenCalledTimes(1)
+
+    // The post-creation setFrame call must position the NSView OFF-screen,
+    // because initialVisible=false → ensureSurface takes hideSurface branch.
+    expect(mockTerminalOps.ghosttySetFrame).toHaveBeenCalled()
+    for (const call of mockTerminalOps.ghosttySetFrame.mock.calls) {
+      const frame = call[1] as { x: number; y: number }
+      expect(frame.x).toBeLessThan(0)
+      expect(frame.y).toBeLessThan(0)
+    }
+
+    // Focus(true) must NOT have been requested — that path runs only on the
+    // visible branch and would race a focused web input on initial mount.
+    expect(mockTerminalOps.ghosttySetFocus).not.toHaveBeenCalledWith('wt-1', true)
+
+    backend.dispose()
+  })
+
   test('cancels pending rAF when setVisible(false) races an already-scheduled syncFrame', async () => {
     // Regression test for a subtle ordering of the "thin line" bug:
     // When the panel collapses, the browser fires ResizeObserver BEFORE React
