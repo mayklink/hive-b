@@ -61,6 +61,11 @@ scripts/*
 !scripts/release.sh
 !scripts/prepare-win-deps.sh
 !scripts/codex-app-server-probe.ts
+# Electron native install / rebuild (postinstall + dev/build gates)
+!scripts/run-install-app-deps.cjs
+!scripts/run-electron-native-rebuild.cjs
+!scripts/ensure-electron-native-modules.cjs
+!scripts/electron-native-fingerprint.cjs
 
 # Claude worktrees
 .claude/worktrees/
