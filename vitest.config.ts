@@ -4,6 +4,7 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  assetsInclude: ['**/*.lottie'],
   test: {
     environment: 'jsdom',
     globals: true,
