@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useLayoutEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'motion/react'
 import { ChevronRight, ChevronDown, Plus, Zap, Archive } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -40,14 +41,6 @@ const CARD_LAYOUT_SPRING = {
   mass: 0.8,
 }
 
-// ── Column display names ────────────────────────────────────────────
-const COLUMN_TITLES: Record<ColumnType, string> = {
-  todo: 'To Do',
-  in_progress: 'In Progress',
-  review: 'Review',
-  done: 'Done'
-}
-
 interface KanbanColumnProps {
   column: ColumnType
   tickets: KanbanTicket[]
@@ -58,6 +51,7 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({ column, tickets, archivedTickets, projectId, connectionId, isPinnedMode }: KanbanColumnProps) {
+  const { t } = useTranslation()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isDragOver, setIsDragOver] = useState(false)
@@ -483,13 +477,13 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
       )
       await store.moveTicket(ticketId, ticketProjectId, 'todo', sortOrder)
 
-      toast.success('Session stopped and ticket moved to To Do')
+      toast.success(t('kanban.sessionStoppedMovedTodo'))
     } catch {
-      toast.error('Failed to move ticket')
+      toast.error(t('kanban.failedMoveTicket'))
     }
 
     setPendingBackwardDrag(null)
-  }, [pendingBackwardDrag, findTicketProjectId, findTicket])
+  }, [pendingBackwardDrag, findTicketProjectId, findTicket, t])
 
   // ── Drop indicator element ────────────────────────────────────────
   const dropIndicator = (
@@ -555,8 +549,8 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
 
               <h3 className="whitespace-nowrap text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 {isInProgressColumn && titleMode === 'abbreviated'
-                  ? 'In Prog'
-                  : COLUMN_TITLES[column]}
+                  ? t('kanban.columns.in_progressAbbrev')
+                  : t(`kanban.columns.${column}`)}
               </h3>
 
               <span
@@ -586,7 +580,7 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top" sideOffset={8}>
-                  Send to agent when dragged to this column
+                  {t('kanban.simpleModeTooltip')}
                 </TooltipContent>
               </Tooltip>
             )}
@@ -615,13 +609,13 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                   ref={fullTextMeasureRef}
                   className="text-xs font-semibold uppercase tracking-wider"
                 >
-                  In Progress
+                  {t('kanban.columns.in_progress')}
                 </span>
                 <span
                   ref={shortTextMeasureRef}
                   className="text-xs font-semibold uppercase tracking-wider"
                 >
-                  In Prog
+                  {t('kanban.columns.in_progressAbbrev')}
                 </span>
               </span>
             )}
@@ -637,7 +631,7 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
               className="gap-2"
             >
               <Archive className="h-3.5 w-3.5" />
-              Archive all
+              {t('kanban.archiveAllCtx')}
             </ContextMenuItem>
           </ContextMenuContent>
         )}
@@ -662,11 +656,11 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                   className="flex items-center justify-center gap-1.5 rounded-md border border-dashed border-border/60 p-2 text-sm text-muted-foreground/60 hover:border-primary/40 hover:text-muted-foreground hover:bg-muted/20 transition-colors cursor-pointer"
                 >
                   <Plus className="h-4 w-4" />
-                  <span>New ticket</span>
+                  <span>{t('kanban.newTicket')}</span>
                 </button>
               ) : (
                 <p className="px-2 py-4 text-center text-xs text-muted-foreground/60">
-                  No tickets
+                  {t('kanban.noTickets')}
                 </p>
               )
             )
@@ -693,7 +687,7 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                 <>
                   <div className="flex items-center gap-2 px-2 py-1">
                     <div className="flex-1 border-t border-border/40" />
-                    <span className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-wider">Archived</span>
+                    <span className="text-[10px] font-medium text-muted-foreground/50 uppercase tracking-wider">{t('kanban.archived')}</span>
                     <div className="flex-1 border-t border-border/40" />
                   </div>
                   {archivedTickets.map((ticket) => (
@@ -712,7 +706,7 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                   className="flex items-center justify-center gap-1.5 rounded-md border border-dashed border-border/60 p-2 text-sm text-muted-foreground/60 hover:border-primary/40 hover:text-muted-foreground hover:bg-muted/20 transition-colors cursor-pointer"
                 >
                   <Plus className="h-4 w-4" />
-                  <span>New ticket</span>
+                  <span>{t('kanban.newTicket')}</span>
                 </button>
               )}
             </>
@@ -765,18 +759,18 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
         >
           <AlertDialogContent data-testid="backward-drag-confirm-dialog">
             <AlertDialogHeader>
-              <AlertDialogTitle>Stop active session?</AlertDialogTitle>
+              <AlertDialogTitle>{t('kanban.stopSessionTitle')}</AlertDialogTitle>
               <AlertDialogDescription>
-                This ticket has an active session. Stop the session and move to To Do?
+                {t('kanban.stopSessionDescription')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel data-testid="backward-drag-cancel-btn">Cancel</AlertDialogCancel>
+              <AlertDialogCancel data-testid="backward-drag-cancel-btn">{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 data-testid="backward-drag-confirm-btn"
                 onClick={handleConfirmBackwardDrag}
               >
-                Stop &amp; Move
+                {t('kanban.stopAndMove')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -791,18 +785,20 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
         >
           <AlertDialogContent data-testid="archive-all-confirm-dialog">
             <AlertDialogHeader>
-              <AlertDialogTitle>Archive all done tickets?</AlertDialogTitle>
+              <AlertDialogTitle>{t('kanban.archiveAllTitle')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Archive all {tickets.length} ticket{tickets.length !== 1 ? 's' : ''} in Done?
+                {tickets.length === 1
+                  ? t('kanban.archiveAllDescriptionSingular')
+                  : t('kanban.archiveAllDescriptionPlural', { count: tickets.length })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel data-testid="archive-all-cancel-btn">Cancel</AlertDialogCancel>
+              <AlertDialogCancel data-testid="archive-all-cancel-btn">{t('common.cancel')}</AlertDialogCancel>
               <AlertDialogAction
                 data-testid="archive-all-confirm-btn"
                 onClick={handleArchiveAll}
               >
-                Archive all
+                {t('kanban.archiveAllConfirm')}
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { useTranslation } from 'react-i18next'
 import { useKanbanStore } from '@/stores/useKanbanStore'
 import { useConnectionStore, useProjectStore } from '@/stores'
 import { usePinnedStore } from '@/stores/usePinnedStore'
@@ -33,6 +34,7 @@ interface TicketCreateModalProps {
 
 // ── Component ───────────────────────────────────────────────────────
 export function TicketCreateModal({ open, onOpenChange, projectId, connectionId, isPinnedMode }: TicketCreateModalProps) {
+  const { t } = useTranslation()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [showPreview, setShowPreview] = useState(false)
@@ -156,14 +158,14 @@ export function TicketCreateModal({ open, onOpenChange, projectId, connectionId,
       })
       createdSuccessfully.current = true
       setShowDiscardConfirm(false)
-      toast.success('Ticket created')
+      toast.success(t('kanban.ticketCreated'))
       onOpenChange(false)
     } catch {
-      toast.error('Failed to create ticket')
+      toast.error(t('kanban.failedCreateTicket'))
     } finally {
       setIsCreating(false)
     }
-  }, [title, description, attachments, isCreating, createTicket, projectId, selectedProjectId, isMultiProjectMode, onOpenChange])
+  }, [title, description, attachments, isCreating, createTicket, projectId, selectedProjectId, isMultiProjectMode, onOpenChange, t])
 
   const closeImmediately = useCallback(() => {
     setShowDiscardConfirm(false)
@@ -214,8 +216,8 @@ export function TicketCreateModal({ open, onOpenChange, projectId, connectionId,
         onDrop={handleDrop}
       >
         <DialogHeader>
-          <DialogTitle>Create Ticket</DialogTitle>
-          <DialogDescription>Add a new ticket to the To Do column.</DialogDescription>
+          <DialogTitle>{t('kanban.createTicketTitle')}</DialogTitle>
+          <DialogDescription>{t('kanban.createTicketDescription')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -223,7 +225,7 @@ export function TicketCreateModal({ open, onOpenChange, projectId, connectionId,
           {isMultiProjectMode && availableProjects.length > 0 && (
             <div className="space-y-1.5">
               <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Project
+                {t('kanban.createTicketProjectLabel')}
               </label>
               <select
                 value={selectedProjectId}
@@ -240,13 +242,13 @@ export function TicketCreateModal({ open, onOpenChange, projectId, connectionId,
           {/* Title */}
           <div className="space-y-1.5">
             <label htmlFor="ticket-title" className="text-sm font-medium text-foreground">
-              Title <span className="text-destructive">*</span>
+              {t('kanban.createTicketTitleLabel')} <span className="text-destructive">*</span>
             </label>
             <Input
               id="ticket-title"
               ref={titleInputRef}
               data-testid="ticket-title-input"
-              placeholder="What needs to be done?"
+              placeholder={t('kanban.createTicketTitlePlaceholder')}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               autoFocus
@@ -257,7 +259,7 @@ export function TicketCreateModal({ open, onOpenChange, projectId, connectionId,
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label htmlFor="ticket-description" className="text-sm font-medium text-foreground">
-                Description
+                {t('kanban.createTicketDescriptionLabel')}
               </label>
               <Button
                 type="button"
@@ -270,11 +272,11 @@ export function TicketCreateModal({ open, onOpenChange, projectId, connectionId,
               >
                 {showPreview ? (
                   <>
-                    <EyeOff className="h-3.5 w-3.5" /> Edit
+                    <EyeOff className="h-3.5 w-3.5" /> {t('kanban.createTicketEdit')}
                   </>
                 ) : (
                   <>
-                    <Eye className="h-3.5 w-3.5" /> Preview
+                    <Eye className="h-3.5 w-3.5" /> {t('kanban.createTicketPreview')}
                   </>
                 )}
               </Button>
@@ -288,14 +290,14 @@ export function TicketCreateModal({ open, onOpenChange, projectId, connectionId,
                 {description.trim() ? (
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
                 ) : (
-                  <p className="text-muted-foreground/60 italic">No description</p>
+                  <p className="text-muted-foreground/60 italic">{t('kanban.createTicketNoDescription')}</p>
                 )}
               </div>
             ) : (
               <Textarea
                 id="ticket-description"
                 data-testid="ticket-description-input"
-                placeholder="Describe the ticket (supports markdown)..."
+                placeholder={t('kanban.createTicketDescriptionPlaceholder')}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={5}
@@ -319,7 +321,7 @@ export function TicketCreateModal({ open, onOpenChange, projectId, connectionId,
             data-testid="ticket-cancel-btn"
             onClick={handleCancel}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type="button"
@@ -327,7 +329,7 @@ export function TicketCreateModal({ open, onOpenChange, projectId, connectionId,
             disabled={isTitleEmpty || isCreating}
             onClick={handleCreate}
           >
-            {isCreating ? 'Creating...' : 'Create'}
+            {isCreating ? t('kanban.createTicketCreating') : t('kanban.createTicketSubmit')}
           </Button>
         </DialogFooter>
       </DialogContent>

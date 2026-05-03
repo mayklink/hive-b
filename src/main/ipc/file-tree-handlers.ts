@@ -243,21 +243,98 @@ export interface FlatFileEntry {
   extension: string | null
 }
 
+/** Max depth when listing files without git (folders may be arbitrarily deep vs tree view). */
+const SCAN_FLAT_FS_MAX_DEPTH = 64
+
+function isGitLsFilesUnavailable(error: unknown): boolean {
+  const msg = (
+    error instanceof Error ? error.message : typeof error === 'string' ? error : ''
+  ).toLowerCase()
+  return (
+    msg.includes('not a git repository') ||
+    msg.includes('does not appear to be a git repository') ||
+    msg.includes('not a git working copy')
+  )
+}
+
 /**
- * Get all project files as a flat list using git ls-files.
- * Returns tracked + untracked-non-ignored files, respecting .gitignore.
+ * Collect files under dirPath without git — same heavyweight ignores as scanDirectory().
+ * Does not read .gitignore (no git metadata); IGNORE_DIRS skips common noise dirs.
+ */
+async function scanFlatFilesystem(
+  dirPath: string,
+  rootPath: string,
+  currentDepth: number,
+  accum: FlatFileEntry[]
+): Promise<void> {
+  if (currentDepth >= SCAN_FLAT_FS_MAX_DEPTH) {
+    return
+  }
+
+  const entries = await fs.readdir(dirPath, { withFileTypes: true })
+  const resolved = await Promise.all(
+    entries.map(async (entry) => {
+      const entryPath = join(dirPath, entry.name)
+      const isDir = await isDirectoryEntry(entry, entryPath)
+      return { entry, entryPath, isDir }
+    })
+  )
+
+  for (const { entry, entryPath, isDir } of resolved) {
+    if (isDir) {
+      if (IGNORE_DIRS.has(entry.name)) {
+        continue
+      }
+      await scanFlatFilesystem(entryPath, rootPath, currentDepth + 1, accum)
+    } else {
+      if (IGNORE_FILES.has(entry.name)) {
+        continue
+      }
+      const relativePath = relative(rootPath, entryPath)
+      accum.push({
+        name: entry.name,
+        path: entryPath,
+        relativePath,
+        extension: extname(entry.name).toLowerCase() || null
+      })
+    }
+  }
+}
+
+/**
+ * Get all project files as a flat list using git ls-files when possible.
+ * Returns tracked + untracked-non-ignored files (git), respecting .gitignore.
+ *
+ * Falls back to a filesystem walk when the path is not a git worktree/repo
+ * (orphan folders, detached worktrees, copied trees).
  */
 export async function scanFlat(dirPath: string): Promise<FlatFileEntry[]> {
-  const git = simpleGit(dirPath)
-  const raw = await git.raw(['ls-files', '--cached', '--others', '--exclude-standard'])
-  const lines = raw.trim().split('\n').filter(Boolean)
+  try {
+    const git = simpleGit(dirPath)
+    const raw = await git.raw(['ls-files', '--cached', '--others', '--exclude-standard'])
+    const lines = raw.trim().split('\n').filter(Boolean)
 
-  return lines.map((relativePath) => ({
-    name: basename(relativePath),
-    path: join(dirPath, relativePath),
-    relativePath,
-    extension: extname(relativePath).toLowerCase() || null
-  }))
+    return lines.map((relativePath) => ({
+      name: basename(relativePath),
+      path: join(dirPath, relativePath),
+      relativePath,
+      extension: extname(relativePath).toLowerCase() || null
+    }))
+  } catch (error) {
+    if (!isGitLsFilesUnavailable(error)) {
+      throw error
+    }
+    log.warn('scanFlat: not a git dir, using filesystem fallback', {
+      dirPath,
+      detail: error instanceof Error ? error.message : String(error)
+    })
+    const accum: FlatFileEntry[] = []
+    await scanFlatFilesystem(dirPath, dirPath, 0, accum)
+    accum.sort((a, b) =>
+      a.relativePath.localeCompare(b.relativePath, undefined, { sensitivity: 'base' })
+    )
+    return accum
+  }
 }
 
 function isAddLike(eventType: FileEventType): boolean {

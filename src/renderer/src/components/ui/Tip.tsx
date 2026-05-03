@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Button } from '@/components/ui/button'
 import { TIP_DEFINITIONS } from '@/lib/tip-definitions'
@@ -14,6 +15,7 @@ interface TipProps {
 }
 
 export function Tip({ tipId, children, enabled = true }: TipProps): React.JSX.Element {
+  const { t } = useTranslation()
   const definition = TIP_DEFINITIONS[tipId]
   const activeTipId = useTipStore((s) => s.activeTipId)
   const requestTip = useTipStore((s) => s.requestTip)
@@ -78,7 +80,7 @@ export function Tip({ tipId, children, enabled = true }: TipProps): React.JSX.El
             <div className="w-[3px] shrink-0 bg-primary" />
             <div className="flex-1 p-3 space-y-2.5">
               <p className="text-sm text-popover-foreground leading-relaxed">
-                {definition.description}
+                {t(`tips.${tipId}`, { defaultValue: definition.description })}
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -87,7 +89,7 @@ export function Tip({ tipId, children, enabled = true }: TipProps): React.JSX.El
                   className="h-7 text-xs"
                   onClick={handleDismiss}
                 >
-                  Got it
+                  {t('tips.gotIt')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -95,7 +97,7 @@ export function Tip({ tipId, children, enabled = true }: TipProps): React.JSX.El
                   className="h-7 text-xs text-muted-foreground"
                   onClick={handleDisableAll}
                 >
-                  Don't show tips
+                  {t('tips.dontShowTips')}
                 </Button>
               </div>
             </div>
