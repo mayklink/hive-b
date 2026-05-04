@@ -3,6 +3,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { wireValueToPrettyString } from '@/lib/tool-wire-display'
 import type { ToolViewProps } from './types'
 import { getPrismLanguage } from '@/lib/language-map'
 
@@ -106,6 +107,9 @@ function formatLineRanges(lineRanges: ReadLineRange[]): string {
 export function ReadToolView({ input, output, error }: ToolViewProps) {
   const [showAll, setShowAll] = useState(false)
 
+  const errorStr = error !== undefined && error !== null ? wireValueToPrettyString(error) : ''
+  const outputStr = output !== undefined && output !== null ? wireValueToPrettyString(output) : ''
+
   const filePath = (input.file_path || input.filePath || input.path || '') as string
   const offset = input.offset as number | undefined
   const limit = input.limit as number | undefined
@@ -113,15 +117,15 @@ export function ReadToolView({ input, output, error }: ToolViewProps) {
 
   const language = useMemo(() => (filePath ? getPrismLanguage(filePath) : 'text'), [filePath])
 
-  if (error) {
+  if (errorStr.length > 0) {
     return (
-      <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all">{error}</div>
+      <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all">{errorStr}</div>
     )
   }
 
-  if (!output) return null
+  if (!outputStr) return null
 
-  const parsed = parseReadOutput(output)
+  const parsed = parseReadOutput(outputStr)
   const exactNumberedMode = lineRanges.length > 0 && parsed.lines.some((line) => line.lineNumber !== null)
   const startLine = offset || parsed.startLine
   const lineRange =

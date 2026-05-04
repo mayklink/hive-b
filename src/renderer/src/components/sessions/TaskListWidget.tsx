@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronUp, ListTodo } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSettingsStore } from '@/stores/useSettingsStore'
-import { PriorityBadge, StatusIcon, type TodoItem } from './tools/todoIcons'
+import { PriorityBadge, StatusIcon, todoBodyText, type TodoItem } from './tools/todoIcons'
 
 export interface TaskListWidgetProps {
   todos: TodoItem[]
@@ -75,7 +75,7 @@ export function TaskListWidget({
                       'line-through text-muted-foreground/50'
                   )}
                 >
-                  {todo.content}
+                  {todoBodyText(todo.content)}
                 </span>
                 <PriorityBadge priority={todo.priority} />
               </div>

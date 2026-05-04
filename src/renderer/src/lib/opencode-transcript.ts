@@ -112,6 +112,34 @@ function stringifyValue(value: unknown): string | undefined {
   }
 }
 
+/**
+ * Normalize wire-format payloads where `content` / `text` may be structured objects (e.g. Cursor ACP).
+ * Prevents passing plain objects into React children (Markdown, bubbles, kanban summaries).
+ */
+export function coerceOpenCodeRenderableString(raw: unknown, depth = 0): string {
+  if (depth > 10) return ''
+  if (raw === null || raw === undefined) return ''
+  if (typeof raw === 'string') return raw
+  if (typeof raw === 'number' || typeof raw === 'boolean') return String(raw)
+  const rec = asRecord(raw)
+  if (rec) {
+    const asText = asString(rec.text)
+    if (asText !== undefined && asText.length > 0) {
+      return asText
+    }
+    if ('content' in rec) {
+      const inner = coerceOpenCodeRenderableString(rec.content, depth + 1)
+      if (inner !== '') return inner
+    }
+    try {
+      return JSON.stringify(raw)
+    } catch {
+      return String(raw)
+    }
+  }
+  return String(raw)
+}
+
 function mapRawSubtask(part: Record<string, unknown>, index: number): SubtaskInfo {
   const rawParts = Array.isArray(part.parts) ? part.parts : []
   const parts = rawParts
@@ -150,8 +178,10 @@ export function extractTextContentFromParts(parts: unknown): string {
     if (!record) continue
 
     if (record.type === 'text') {
-      const text = asString(record.text)
-      if (text) contentParts.push(text)
+      const text =
+        coerceOpenCodeRenderableString(record.text) ||
+        coerceOpenCodeRenderableString(record.content)
+      if (text.trim().length > 0) contentParts.push(text)
     } else if (record.type === 'file') {
       // Reconstruct data attachments as XML so images persist after refresh
       const mime = asString(record.mime) ?? 'application/octet-stream'
@@ -177,8 +207,10 @@ export function mapOpencodePartToStreamingPart(part: unknown, index = 0): Stream
   if (!type) return null
 
   if (type === 'text') {
-    const text = asString(record.text)
-    return text ? { type: 'text', text } : null
+    const text =
+      coerceOpenCodeRenderableString(record.text) || coerceOpenCodeRenderableString(record.content)
+    const trimmed = text.trim()
+    return trimmed.length > 0 ? { type: 'text', text } : null
   }
 
   if (type === 'tool_use') {
@@ -268,7 +300,11 @@ export function mapOpencodePartToStreamingPart(part: unknown, index = 0): Stream
   }
 
   if (type === 'reasoning') {
-    return { type: 'reasoning', reasoning: asString(record.text) ?? '' }
+    const reasoning =
+      coerceOpenCodeRenderableString(record.text) ||
+      coerceOpenCodeRenderableString(record.reasoning) ||
+      coerceOpenCodeRenderableString(record.content)
+    return reasoning.trim().length > 0 ? { type: 'reasoning', reasoning } : null
   }
 
   if (type === 'compaction') {
@@ -290,11 +326,12 @@ function mapMessage(rawMessage: unknown, index: number): MappedMessage {
     .map((part, partIndex) => mapOpencodePartToStreamingPart(part, partIndex))
     .filter((part): part is StreamingPart => part !== null)
 
-  const content =
-    extractTextContentFromParts(rawParts) ||
-    asString(info?.content) ||
-    asString(messageRecord?.content) ||
-    ''
+  const extracted = extractTextContentFromParts(rawParts)
+  const topLevel =
+    coerceOpenCodeRenderableString(info?.content) ||
+    coerceOpenCodeRenderableString(messageRecord?.content)
+
+  const content = extracted || topLevel || ''
 
   const sortTime =
     toTimestampMs(info?.time && asRecord(info.time)?.created) ??

@@ -20,6 +20,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Textarea } from '@/components/ui/textarea'
 import { useSessionStream } from '@/hooks/useSessionStream'
 import { parseBoardAssistantDraftSet } from '@/lib/board-assistant-drafts'
+import { coerceOpenCodeRenderableString } from '@/lib/opencode-transcript'
 import { toast } from '@/lib/toast'
 import { useBoardChatStore, type BoardChatMessage, type BoardChatScope, type TicketDraft, stripBoardAssistantScaffolding, stripBoardDraftBlocks, resolveBoardChatAgentSdk, resolveBoardChatDefaultModel } from '@/stores/useBoardChatStore'
 import { useCommandApprovalStore } from '@/stores/useCommandApprovalStore'
@@ -600,7 +601,7 @@ function BoardChatMessageList({
               key={message.id}
               className="rounded-2xl border border-border/70 bg-muted/35 px-3 py-2 text-xs text-muted-foreground"
             >
-              {message.content}
+              {coerceOpenCodeRenderableString(message.content)}
             </div>
           )
         }

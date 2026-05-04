@@ -3092,6 +3092,10 @@ export class ClaudeCodeImplementer implements AgentSdkImplementer {
     return this.sessions.get(this.getSessionKey(worktreePath, claudeSessionId))
   }
 
+  hasBackendSession(worktreePath: string, agentSessionId: string): boolean {
+    return this.getSession(worktreePath, agentSessionId) !== undefined
+  }
+
   protected sendToRenderer(channel: string, data: unknown): void {
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
       this.mainWindow.webContents.send(channel, data)

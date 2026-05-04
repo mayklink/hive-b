@@ -1080,13 +1080,20 @@ export class DatabaseService {
     return row ? this.mapSessionRow(row) : null
   }
 
+  /**
+   * Resolve which SDK powers a session. `sessionKey` may be either the agent backend id
+   * stored in {@link Session.opencode_session_id} (OpenCode MCP id, ACP id, `pending::…`, etc.)
+   * or the Octob row id ({@link Session.id}) — callers do not always pass the same shape.
+   */
   getAgentSdkForSession(
-    agentSessionId: string
+    sessionKey: string
   ): 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal' | null {
     const db = this.getDb()
     const row = db
-      .prepare('SELECT agent_sdk FROM sessions WHERE opencode_session_id = ? LIMIT 1')
-      .get(agentSessionId) as
+      .prepare(
+        'SELECT agent_sdk FROM sessions WHERE opencode_session_id = ? OR id = ? LIMIT 1'
+      )
+      .get(sessionKey, sessionKey) as
       | { agent_sdk: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal' }
       | undefined
     return row?.agent_sdk ?? null

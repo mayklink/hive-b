@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Bot, ChevronDown, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { wireValueToPrettyString } from '@/lib/tool-wire-display'
 import type { ToolViewProps } from './types'
 import { SubtaskCard } from '../SubtaskCard'
 
@@ -21,11 +22,14 @@ export function TaskToolView({ input, output, error, subtasks }: ToolViewProps) 
   const [showAllOutput, setShowAllOutput] = useState(false)
   const [showPrompt, setShowPrompt] = useState(false)
 
+  const errorStr = error !== undefined && error !== null ? wireValueToPrettyString(error) : ''
+  const outputStr = output !== undefined && output !== null ? wireValueToPrettyString(output) : ''
+
   const description = ((input.description || input.prompt || '') as string).trim()
   const prompt = (input.prompt || '') as string
   const subagentType = (input.subagent_type || input.subagentType || '') as string
 
-  const cleanOutput = output ? parseTaskOutput(output) : ''
+  const cleanOutput = outputStr ? parseTaskOutput(outputStr) : ''
   const outputLines = cleanOutput ? cleanOutput.split('\n') : []
   const needsTruncation = outputLines.length > MAX_PREVIEW_LINES
   const displayedOutput = showAllOutput
@@ -73,10 +77,10 @@ export function TaskToolView({ input, output, error, subtasks }: ToolViewProps) 
       )}
 
       {/* Error */}
-      {error && (
+      {errorStr.length > 0 && (
         <div className="mb-2">
           <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all bg-red-500/10 rounded p-2">
-            {error}
+            {errorStr}
           </div>
         </div>
       )}
@@ -106,7 +110,7 @@ export function TaskToolView({ input, output, error, subtasks }: ToolViewProps) 
       )}
 
       {subtasks && subtasks.length > 0 && (
-        <div className={cn((cleanOutput || error) && 'mt-2')}>
+        <div className={cn((cleanOutput || errorStr.length > 0) && 'mt-2')}>
           {subtasks.map((subtask) => (
             <SubtaskCard key={subtask.sessionID || subtask.id} subtask={subtask} />
           ))}

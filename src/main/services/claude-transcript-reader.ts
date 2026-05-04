@@ -6,11 +6,17 @@ import { createLogger } from './logger'
 const log = createLogger({ component: 'ClaudeTranscriptReader' })
 
 /**
- * Encode a worktree path the same way Claude CLI does:
- * replace every `/` and `.` with `-`.
+ * Encode a worktree path for `~/.claude/projects/<encoded>/…` (Claude CLI layout).
+ *
+ * Must avoid leaving Windows drive letters or backslashes in the segment: `path.join`
+ * treats `C:\…` as absolute and discards prior segments, which produced broken paths like
+ * `…/projects/C:\Users\…`.
+ *
+ * We normalize `\` → `/`, then replace `/`, `.`, and `:` with `-` (same idea as Unix paths,
+ * extended for `C:` roots).
  */
 export function encodePath(worktreePath: string): string {
-  return worktreePath.replace(/[/.]/g, '-')
+  return worktreePath.replace(/\\/g, '/').replace(/[/:.]/g, '-')
 }
 
 interface ClaudeContentBlock {

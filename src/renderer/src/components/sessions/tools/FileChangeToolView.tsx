@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { wireValueToPrettyString } from '@/lib/tool-wire-display'
 import type { ToolViewProps } from './types'
 
 const MAX_PREVIEW_LINES = 20
@@ -171,9 +172,11 @@ function FileDiffSection({ change }: { change: FileChange }) {
 }
 
 export function FileChangeToolView({ input, error }: ToolViewProps) {
-  if (error) {
+  const errorStr = error !== undefined && error !== null ? wireValueToPrettyString(error) : ''
+
+  if (errorStr.length > 0) {
     return (
-      <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all">{error}</div>
+      <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all">{errorStr}</div>
     )
   }
 

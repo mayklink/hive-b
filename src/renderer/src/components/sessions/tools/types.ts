@@ -7,8 +7,9 @@ export type ToolViewSubtask = SubtaskInfo
 export interface ToolViewProps {
   name: string
   input: Record<string, unknown>
-  output?: string
-  error?: string
+  /** May be plain text or structured wire payloads from some backends (e.g. `{ content }`). */
+  output?: unknown
+  error?: unknown
   status: ToolStatus
   subtasks?: ToolViewSubtask[]
 }

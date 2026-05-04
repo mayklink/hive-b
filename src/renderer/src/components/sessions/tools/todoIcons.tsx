@@ -15,6 +15,31 @@ export interface TodoItem {
   priority: 'high' | 'medium' | 'low'
 }
 
+/**
+ * Some backends (e.g. Cursor ACP) send todo bodies as `{ content: string }`
+ * instead of a plain string. React cannot render plain objects as children.
+ */
+export function todoBodyText(raw: unknown): string {
+  if (typeof raw === 'string') return raw
+  if (raw !== null && typeof raw === 'object' && 'content' in raw) {
+    const inner = (raw as { content: unknown }).content
+    if (typeof inner === 'string') return inner
+    if (inner != null) {
+      try {
+        return JSON.stringify(inner)
+      } catch {
+        return String(inner)
+      }
+    }
+  }
+  if (raw == null) return ''
+  try {
+    return JSON.stringify(raw)
+  } catch {
+    return String(raw)
+  }
+}
+
 export function StatusIcon({ status }: { status: TodoItem['status'] }) {
   switch (status) {
     case 'completed':

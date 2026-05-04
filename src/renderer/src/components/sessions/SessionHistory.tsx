@@ -24,6 +24,7 @@ import {
   DropdownMenuCheckboxItem
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
+import { coerceOpenCodeRenderableString } from '@/lib/opencode-transcript'
 import { toast } from '@/lib/toast'
 import { useSessionHistoryStore, type SessionWithWorktree } from '@/stores/useSessionHistoryStore'
 import { useProjectStore } from '@/stores/useProjectStore'
@@ -262,7 +263,7 @@ function SessionPreview({ session, onLoad }: SessionPreviewProps): React.JSX.Ele
                 <div className="text-xs font-medium text-muted-foreground mb-1 capitalize">
                   {msg.role}
                 </div>
-                <p className="line-clamp-3">{msg.content}</p>
+                <p className="line-clamp-3">{coerceOpenCodeRenderableString(msg.content)}</p>
               </div>
             ))}
             {messages.length >= 5 && (

@@ -1,13 +1,15 @@
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
+import { wireValueToPrettyString } from '@/lib/tool-wire-display'
 import type { ToolViewProps } from './types'
-import { PriorityBadge, StatusIcon, type TodoItem } from './todoIcons'
+import { PriorityBadge, StatusIcon, todoBodyText, type TodoItem } from './todoIcons'
 
 interface TodoInput {
   todos: TodoItem[]
 }
 
 export function TodoWriteToolView({ input, error }: ToolViewProps) {
+  const errorStr = error !== undefined && error !== null ? wireValueToPrettyString(error) : ''
   const todoInput = input as unknown as TodoInput
   const todos = useMemo(
     () => (Array.isArray(todoInput?.todos) ? todoInput.todos : []),
@@ -25,10 +27,10 @@ export function TodoWriteToolView({ input, error }: ToolViewProps) {
   return (
     <div data-testid="todowrite-tool-view">
       {/* Error */}
-      {error && (
+      {errorStr.length > 0 && (
         <div className="mb-2">
           <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all bg-red-500/10 rounded p-2">
-            {error}
+            {errorStr}
           </div>
         </div>
       )}
@@ -51,7 +53,7 @@ export function TodoWriteToolView({ input, error }: ToolViewProps) {
                   'line-through text-muted-foreground/50'
               )}
             >
-              {todo.content}
+              {todoBodyText(todo.content)}
             </span>
             <PriorityBadge priority={todo.priority} />
           </div>

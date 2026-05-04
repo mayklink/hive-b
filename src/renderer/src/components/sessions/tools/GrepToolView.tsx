@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Search, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { wireValueToPrettyString } from '@/lib/tool-wire-display'
 import type { ToolViewProps } from './types'
 
 const MAX_PREVIEW_LINES = 20
@@ -8,18 +9,21 @@ const MAX_PREVIEW_LINES = 20
 export function GrepToolView({ input, output, error }: ToolViewProps) {
   const [showAll, setShowAll] = useState(false)
 
+  const errorStr = error !== undefined && error !== null ? wireValueToPrettyString(error) : ''
+  const outputStr = output !== undefined && output !== null ? wireValueToPrettyString(output) : ''
+
   const pattern = (input.pattern || input.query || input.regex || '') as string
   const searchPath = (input.path || '.') as string
 
-  if (error) {
+  if (errorStr.length > 0) {
     return (
-      <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all">{error}</div>
+      <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all">{errorStr}</div>
     )
   }
 
-  if (!output) return null
+  if (!outputStr) return null
 
-  const lines = output.split('\n').filter((l) => l.trim())
+  const lines = outputStr.split('\n').filter((l) => l.trim())
   const matchCount = lines.length
   const needsTruncation = lines.length > MAX_PREVIEW_LINES
   const displayedLines = showAll ? lines : lines.slice(0, MAX_PREVIEW_LINES)

@@ -9,6 +9,7 @@ import {
   ASK_MODE_PREFIX,
   stripSuperPlanModePrefix
 } from '@/lib/constants'
+import { coerceOpenCodeRenderableString } from '@/lib/opencode-transcript'
 import type { OpenCodeMessage } from './SessionView'
 
 interface MessageRendererProps {
@@ -68,10 +69,10 @@ export const MessageRenderer = memo(function MessageRenderer({
   let isSuperPlanMode = false
   let isPlanMode = false
   let isAskMode = false
-  let displayContent = message.content
+  let displayContent = coerceOpenCodeRenderableString(message.content)
 
   if (message.role === 'user') {
-    const { prefix, remaining } = skipAttachments(message.content)
+    const { prefix, remaining } = skipAttachments(displayContent)
 
     // Check for mode prefixes in order (longest first to avoid false positives)
     const strippedSuperPlan = stripSuperPlanModePrefix(remaining)
@@ -116,7 +117,7 @@ export const MessageRenderer = memo(function MessageRenderer({
         />
       ) : (
         <AssistantCanvas
-          content={message.content}
+          content={coerceOpenCodeRenderableString(message.content)}
           timestamp={message.timestamp}
           isStreaming={isStreaming}
           parts={message.parts}

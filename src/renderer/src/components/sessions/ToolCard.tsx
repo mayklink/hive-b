@@ -39,6 +39,7 @@ import { WebFetchToolView } from './tools/WebFetchToolView'
 import { FileChangeToolView } from './tools/FileChangeToolView'
 import { ToolCallContextMenu } from './ToolCallContextMenu'
 import { extractCommandText } from '@/lib/tool-input-utils'
+import { wireValueToPrettyString } from '@/lib/tool-wire-display'
 import { useSessionStore } from '@/stores/useSessionStore'
 
 export type ToolStatus = 'pending' | 'running' | 'success' | 'error'
@@ -48,8 +49,8 @@ export interface ToolUseInfo {
   name: string
   input: Record<string, unknown>
   status: ToolStatus
-  output?: string
-  error?: string
+  output?: unknown
+  error?: unknown
   startTime: number
   endTime?: number
   subtasks?: SubtaskInfo[]
@@ -751,11 +752,15 @@ const CompactFileToolCard = memo(function CompactFileToolCard({
   const isError = toolUse.status === 'error'
   const hasOutput = !!(toolUse.output || toolUse.error)
   // FileChange tools carry their content in input.changes, not output
+  const hasStructuredInput = Object.keys(toolUse.input).length > 0
   const hasExpandableContent =
     hasOutput ||
+    hasStructuredInput ||
     (isFileChange &&
       Array.isArray(toolUse.input.changes) &&
       (toolUse.input.changes as unknown[]).length > 0)
+  /** Match generic ToolCard: allow opening detail while streaming before args/output arrive. */
+  const canToggleExpand = hasExpandableContent || isRunning
 
   const Renderer = useMemo(() => getToolRenderer(toolUse.name), [toolUse.name])
 
@@ -791,13 +796,13 @@ const CompactFileToolCard = memo(function CompactFileToolCard({
     >
       {/* Compact single-line header */}
       <button
-        onClick={() => hasExpandableContent && setIsExpanded(!isExpanded)}
+        onClick={() => canToggleExpand && setIsExpanded(!isExpanded)}
         className={cn(
           'flex items-center gap-1.5 w-full py-1 text-left text-xs',
-          hasExpandableContent && 'cursor-pointer hover:bg-accent/50 transition-colors rounded-sm',
-          !hasExpandableContent && !isRunning && 'cursor-default'
+          canToggleExpand && 'cursor-pointer hover:bg-accent/50 transition-colors rounded-sm',
+          !canToggleExpand && 'cursor-default'
         )}
-        disabled={!hasExpandableContent && !isRunning}
+        disabled={!canToggleExpand}
       >
         {icon}
         {useCollapsedContent ? (
@@ -819,7 +824,7 @@ const CompactFileToolCard = memo(function CompactFileToolCard({
       </button>
 
       {/* Expanded content */}
-      {isExpanded && hasExpandableContent && (
+      {isExpanded && canToggleExpand && (
         <div className="ml-5 mt-0.5 mb-1" data-testid="tool-output">
           <Renderer
             name={toolUse.name}
@@ -886,7 +891,11 @@ export const ToolCard = memo(function ToolCard({
     lowerName === 'task' &&
     (((typeof effectiveInput?.prompt === 'string' && effectiveInput.prompt.length > 0) ||
       (toolUse.subtasks?.length ?? 0) > 0) as boolean)
-  const hasDetail = hasOutput || hasPlanInput || hasTaskDetail
+  const hasStructuredInput = Object.keys(toolUse.input).length > 0
+  const hasDetail = hasOutput || hasPlanInput || hasTaskDetail || hasStructuredInput
+  const isAgentToolBusy = toolUse.status === 'pending' || toolUse.status === 'running'
+  /** Lets users open detail while tools are in-flight before input/output materializes (e.g. Cursor ACP). */
+  const canShowToolDetailPanel = hasDetail || isAgentToolBusy
 
   const Renderer = useMemo(() => getToolRenderer(toolUse.name), [toolUse.name])
 
@@ -1032,7 +1041,9 @@ export const ToolCard = memo(function ToolCard({
           {planRejected && toolUse.error && (
             <div className="flex justify-end px-6 py-4" data-testid="plan-rejected-message">
               <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-primary/10 text-foreground">
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{toolUse.error}</p>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                  {wireValueToPrettyString(toolUse.error)}
+                </p>
               </div>
             </div>
           )}
@@ -1062,15 +1073,15 @@ export const ToolCard = memo(function ToolCard({
       >
         {/* Header - always visible */}
         <button
-          onClick={() => hasDetail && setIsExpanded(!isExpanded)}
+          onClick={() => canShowToolDetailPanel && setIsExpanded(!isExpanded)}
           className={cn(
             compact
               ? 'flex items-center gap-1.5 w-full px-2 py-1.5 text-left'
               : 'flex items-center gap-1.5 w-full px-2.5 py-1.5 text-left',
-            hasDetail && 'cursor-pointer hover:bg-muted/50 transition-colors'
+            canShowToolDetailPanel && 'cursor-pointer hover:bg-muted/50 transition-colors'
           )}
-          disabled={!hasDetail}
-          aria-expanded={hasDetail ? isExpanded : undefined}
+          disabled={!canShowToolDetailPanel}
+          aria-expanded={canShowToolDetailPanel ? isExpanded : undefined}
           data-testid="tool-card-header"
         >
           {/* Tool-specific collapsed content */}
@@ -1094,7 +1105,7 @@ export const ToolCard = memo(function ToolCard({
           <StatusIndicator status={toolUse.status} />
 
           {/* Expand/Collapse affordance */}
-          {hasDetail && (
+          {canShowToolDetailPanel && (
             <span className="ml-1 inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground">
               {isExpanded ? 'Hide' : 'View'}
               <ChevronDown
@@ -1111,7 +1122,7 @@ export const ToolCard = memo(function ToolCard({
         <div
           className={cn(
             'transition-all duration-150 overflow-hidden',
-            isExpanded && hasDetail ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+            isExpanded && canShowToolDetailPanel ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
           )}
           data-testid="tool-output"
         >

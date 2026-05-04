@@ -1693,6 +1693,10 @@ export class CodexImplementer implements AgentSdkImplementer {
     return `${worktreePath}::${agentSessionId}`
   }
 
+  hasBackendSession(worktreePath: string, agentSessionId: string): boolean {
+    return this.sessions.has(this.getSessionKey(worktreePath, agentSessionId))
+  }
+
   private sendToRenderer(channel: string, data: unknown): void {
     if (this.mainWindow && !this.mainWindow.isDestroyed()) {
       this.mainWindow.webContents.send(channel, data)

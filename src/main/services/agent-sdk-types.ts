@@ -99,6 +99,12 @@ export interface AgentSdkImplementer {
   // Session management
   renameSession(worktreePath: string, agentSessionId: string, name: string): Promise<void>
 
+  /**
+   * True when this backend already holds `(worktreePath, agentSessionId)` in-memory.
+   * Used when SQLite `opencode_session_id` lags behind `session.materialized`.
+   */
+  hasBackendSession?(worktreePath: string, agentSessionId: string): boolean
+
   // Window binding (for event forwarding to renderer)
   setMainWindow(window: BrowserWindow): void
 }

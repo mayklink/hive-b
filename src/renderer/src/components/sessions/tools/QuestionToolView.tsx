@@ -1,4 +1,5 @@
 import { Check } from 'lucide-react'
+import { wireValueToPrettyString } from '@/lib/tool-wire-display'
 import type { ToolViewProps } from './types'
 
 interface QuestionOption {
@@ -32,15 +33,17 @@ function parseAnswers(output: string): Map<string, string> {
 export function QuestionToolView({ input, output, error }: ToolViewProps) {
   const questionInput = input as unknown as QuestionInput
   const questions = Array.isArray(questionInput?.questions) ? questionInput.questions : []
-  const answerMap = output ? parseAnswers(output) : new Map<string, string>()
+  const outputStr = output !== undefined && output !== null ? wireValueToPrettyString(output) : ''
+  const errorStr = error !== undefined && error !== null ? wireValueToPrettyString(error) : ''
+  const answerMap = outputStr ? parseAnswers(outputStr) : new Map<string, string>()
 
   return (
     <div data-testid="question-tool-view">
       {/* Error */}
-      {error && (
+      {errorStr.length > 0 && (
         <div className="mb-2">
           <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all bg-red-500/10 rounded p-2">
-            {error}
+            {errorStr}
           </div>
         </div>
       )}
@@ -98,9 +101,9 @@ export function QuestionToolView({ input, output, error }: ToolViewProps) {
       </div>
 
       {/* Fallback if no questions parsed */}
-      {questions.length === 0 && output && (
+      {questions.length === 0 && outputStr.length > 0 && (
         <pre className="text-xs font-mono text-muted-foreground bg-muted/50 rounded p-2 whitespace-pre-wrap break-words">
-          {output}
+          {outputStr}
         </pre>
       )}
     </div>

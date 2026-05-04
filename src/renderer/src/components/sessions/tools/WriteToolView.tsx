@@ -3,6 +3,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { wireValueToPrettyString } from '@/lib/tool-wire-display'
 import type { ToolViewProps } from './types'
 import { getPrismLanguage } from '@/lib/language-map'
 
@@ -12,14 +13,16 @@ const MAX_PREVIEW_LINES = 20
 export function WriteToolView({ input, error }: ToolViewProps) {
   const [showAll, setShowAll] = useState(false)
 
+  const errorStr = error !== undefined && error !== null ? wireValueToPrettyString(error) : ''
+
   const filePath = (input.file_path || input.filePath || input.path || '') as string
   const content = (input.content || '') as string
 
   const language = useMemo(() => (filePath ? getPrismLanguage(filePath) : 'text'), [filePath])
 
-  if (error) {
+  if (errorStr.length > 0) {
     return (
-      <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all">{error}</div>
+      <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all">{errorStr}</div>
     )
   }
 

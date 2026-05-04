@@ -3,11 +3,13 @@ import Ansi from 'ansi-to-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { containsAnsi } from '@/lib/ansi-utils'
+import { coerceOpenCodeRenderableString } from '@/lib/opencode-transcript'
 import { CodeBlock } from './CodeBlock'
 import type { Components } from 'react-markdown'
 
 interface MarkdownRendererProps {
-  content: string
+  /** May be structured wire payloads (e.g. `{ content: string }`) from some backends. */
+  content: string | unknown
 }
 
 const components: Components = {
@@ -66,7 +68,9 @@ const components: Components = {
 
 const remarkPluginsConfig = [remarkGfm]
 
-export const MarkdownRenderer = memo(function MarkdownRenderer({ content }: MarkdownRendererProps): React.JSX.Element {
+export const MarkdownRenderer = memo(function MarkdownRenderer({ content: raw }: MarkdownRendererProps): React.JSX.Element {
+  const content = coerceOpenCodeRenderableString(raw)
+
   if (containsAnsi(content)) {
     return (
       <div className="whitespace-pre-wrap text-sm font-mono">

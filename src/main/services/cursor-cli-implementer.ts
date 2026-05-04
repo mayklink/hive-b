@@ -22,7 +22,7 @@ import type {
 } from '@agentclientprotocol/sdk'
 import { ClientSideConnection, ndJsonStream, PROTOCOL_VERSION } from '@agentclientprotocol/sdk'
 
-import type { AgentSdkImplementer } from './agent-sdk-types'
+import type { AgentSdkImplementer, PromptOptions } from './agent-sdk-types'
 import { CURSOR_CLI_CAPABILITIES } from './agent-sdk-types'
 import { createLogger } from './logger'
 import type { DatabaseService } from '../db/database'
@@ -35,6 +35,13 @@ import {
   invalidateCursorCliModelResolutionCache,
   normalizeCursorCliModelIdentity
 } from './cursor-cli-models'
+import {
+  acpTranscriptAppendAssistantReasoningChunk,
+  acpTranscriptAppendAssistantTextChunk,
+  acpTranscriptAppendUserTurn,
+  acpTranscriptRecordToolCall,
+  acpTranscriptUpdateToolCall
+} from './acp-session-transcript'
 
 const log = createLogger({ component: 'CursorCliImplementer' })
 
@@ -44,6 +51,7 @@ interface CursorCliSessionState {
   acpSessionId: string
   child: ChildProcessWithoutNullStreams
   connection: ClientSideConnection
+  messages: unknown[]
 }
 
 interface PendingPermission {
@@ -155,6 +163,10 @@ export class CursorCliImplementer implements AgentSdkImplementer {
 
   private getSessionKey(worktreePath: string, agentSessionId: string): string {
     return `${worktreePath}::${agentSessionId}`
+  }
+
+  hasBackendSession(worktreePath: string, agentSessionId: string): boolean {
+    return this.sessions.has(this.getSessionKey(worktreePath, agentSessionId))
   }
 
   private async openAcpSession(params: {
@@ -326,6 +338,7 @@ export class CursorCliImplementer implements AgentSdkImplementer {
           t.length > 0 &&
           (c.type === 'text' || c.type === 'markdown' || c.type === undefined || c.type === null)
         ) {
+          acpTranscriptAppendAssistantTextChunk(state.messages, t, c.type ?? null)
           this.sendToRenderer('opencode:stream', toTextDeltaStreamEvent(state.octobSessionId, t))
         }
         break
@@ -334,11 +347,13 @@ export class CursorCliImplementer implements AgentSdkImplementer {
         const c = u.content as { type?: string; text?: string }
         const t = typeof c.text === 'string' ? c.text : ''
         if (t.length > 0) {
+          acpTranscriptAppendAssistantReasoningChunk(state.messages, t)
           this.sendToRenderer('opencode:stream', toReasoningDeltaStreamEvent(state.octobSessionId, t))
         }
         break
       }
       case 'tool_call': {
+        acpTranscriptRecordToolCall(state.messages, u.toolCallId, u.title ?? 'tool', u.rawInput)
         this.sendToRenderer('opencode:stream', {
           type: 'message.part.updated',
           sessionId: state.octobSessionId,
@@ -355,12 +370,25 @@ export class CursorCliImplementer implements AgentSdkImplementer {
         break
       }
       case 'tool_call_update': {
-        const status =
+        const transcriptStatus =
           u.status === 'completed'
-            ? 'completed'
+            ? ('completed' as const)
             : u.status === 'failed'
-              ? 'error'
+              ? ('failed' as const)
+              : ('running' as const)
+        const streamToolStatus =
+          transcriptStatus === 'failed'
+            ? 'error'
+            : transcriptStatus === 'completed'
+              ? 'completed'
               : 'running'
+        acpTranscriptUpdateToolCall(
+          state.messages,
+          u.toolCallId,
+          u.title ?? 'tool',
+          transcriptStatus,
+          u.rawOutput
+        )
         this.sendToRenderer('opencode:stream', {
           type: 'message.part.updated',
           sessionId: state.octobSessionId,
@@ -370,7 +398,7 @@ export class CursorCliImplementer implements AgentSdkImplementer {
               callID: u.toolCallId,
               tool: u.title ?? 'tool',
               state: {
-                status,
+                status: streamToolStatus,
                 ...(u.rawOutput !== undefined ? { output: u.rawOutput } : {})
               }
             },
@@ -469,7 +497,8 @@ export class CursorCliImplementer implements AgentSdkImplementer {
       worktreePath,
       acpSessionId,
       child,
-      connection
+      connection,
+      messages: []
     })
 
     this.sendToRenderer('opencode:stream', {
@@ -512,7 +541,8 @@ export class CursorCliImplementer implements AgentSdkImplementer {
         worktreePath,
         acpSessionId,
         child,
-        connection
+        connection,
+        messages: []
       })
 
       this.sendToRenderer('opencode:stream', {
@@ -608,6 +638,8 @@ export class CursorCliImplementer implements AgentSdkImplementer {
       }
     }
 
+    acpTranscriptAppendUserTurn(sess.messages, text)
+
     this.sendToRenderer('opencode:stream', {
       type: 'session.status',
       sessionId: sess.octobSessionId,
@@ -669,8 +701,11 @@ export class CursorCliImplementer implements AgentSdkImplementer {
     return true
   }
 
-  async getMessages(_worktreePath: string, _agentSessionId: string): Promise<unknown[]> {
-    return []
+  async getMessages(worktreePath: string, agentSessionId: string): Promise<unknown[]> {
+    const key = this.getSessionKey(worktreePath, agentSessionId)
+    const sess = this.sessions.get(key)
+    if (!sess) return []
+    return [...sess.messages]
   }
 
   async getAvailableModels(): Promise<unknown> {

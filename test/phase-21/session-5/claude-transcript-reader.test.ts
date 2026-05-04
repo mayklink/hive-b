@@ -87,6 +87,12 @@ describe('claude-transcript-reader', () => {
     it('replaces dots with dashes (dotfiles like .octob-worktrees)', () => {
       expect(encodePath('/Users/mor/.octob-worktrees/proj')).toBe('-Users-mor--octob-worktrees-proj')
     })
+
+    it('normalizes Windows paths so join() never sees an absolute segment (drive + backslashes)', () => {
+      expect(encodePath('C:\\Users\\mor\\.octob-worktrees\\web\\proj')).toBe(
+        'C--Users-mor--octob-worktrees-web-proj'
+      )
+    })
   })
 
   // 2. JSONL parsing — correct number of messages

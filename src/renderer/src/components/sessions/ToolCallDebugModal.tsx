@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { toast } from '@/lib/toast'
+import { wireValueToPrettyString } from '@/lib/tool-wire-display'
 import type { ToolUseInfo, ToolStatus } from './ToolCard'
 
 function statusColor(status: ToolStatus): string {
@@ -74,10 +75,18 @@ export function ToolCallDebugModal({ open, onOpenChange, toolUse }: ToolCallDebu
     }
   }, [toolUse.input])
 
-  const outputText = useMemo(
-    () => (toolUse.error ? `[ERROR]\n${toolUse.error}` : (toolUse.output ?? '(no output)')),
-    [toolUse.error, toolUse.output]
-  )
+  const outputText = useMemo(() => {
+    if (toolUse.error !== undefined && toolUse.error !== null) {
+      const err = wireValueToPrettyString(toolUse.error)
+      if (err.length > 0) {
+        return `[ERROR]\n${err}`
+      }
+    }
+    const o = toolUse.output
+    if (o === undefined || o === null) return '(no output)'
+    const s = wireValueToPrettyString(o)
+    return s.length > 0 ? s : '(no output)'
+  }, [toolUse.error, toolUse.output])
 
   const duration =
     toolUse.endTime && toolUse.startTime

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { wireValueToPrettyString } from '@/lib/tool-wire-display'
 import type { ToolViewProps } from './types'
 
 const MAX_PREVIEW_LINES = 20
@@ -8,12 +9,14 @@ const MAX_PREVIEW_LINES = 20
 export function EditToolView({ input, error }: ToolViewProps) {
   const [showAll, setShowAll] = useState(false)
 
+  const errorStr = error !== undefined && error !== null ? wireValueToPrettyString(error) : ''
+
   const oldString = (input.oldString || input.old_string || '') as string
   const newString = (input.newString || input.new_string || '') as string
 
-  if (error) {
+  if (errorStr.length > 0) {
     return (
-      <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all">{error}</div>
+      <div className="text-red-400 font-mono text-xs whitespace-pre-wrap break-all">{errorStr}</div>
     )
   }
 
