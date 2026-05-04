@@ -20,6 +20,15 @@ const log = createLogger({ component: 'OpenCodeHandlers' })
 // when the ID changes.
 const injectedWorktrees = new Set<string>()
 
+/** Coalesce overlapping permission:list IPC for the same worktree into one aggregation pass */
+const permissionListInflightByDirectory = new Map<
+  string,
+  Promise<
+    | { success: true; permissions: unknown[] }
+    | { success: false; permissions: unknown[]; error: string }
+  >
+>()
+
 const BACKEND_SESSION_PROBE_ORDER: AgentSdkId[] = [
   'cursor-cli',
   'mistral-vibe',
@@ -39,7 +48,7 @@ export function registerOpenCodeHandlers(
   ): 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal' | null {
     if (!dbService) return null
 
-    let sdkId = dbService.getAgentSdkForSession(backendSessionId)
+    const sdkId = dbService.getAgentSdkForSession(backendSessionId)
 
     const worktreeReady = !!(worktreePath && worktreePath.length > 0)
     if (sdkId != null || !worktreeReady || !sdkManager) return sdkId
@@ -928,55 +937,58 @@ export function registerOpenCodeHandlers(
   ipcMain.handle(
     'opencode:permission:list',
     async (_event, { worktreePath }: { worktreePath?: string }) => {
-      log.info('IPC: opencode:permission:list')
-      try {
-        // Aggregate permissions from all implementers. OpenCode may be absent when the
-        // active provider is Codex, Mistral Vibe, or Cursor CLI — do not fail the IPC.
-        let permissions: unknown[] = []
-        try {
-          permissions = await openCodeService.permissionList(worktreePath)
-        } catch (openCodeErr) {
-          log.debug('IPC: opencode:permission:list — OpenCode not available, skipping', {
-            message: openCodeErr instanceof Error ? openCodeErr.message : String(openCodeErr)
-          })
-        }
-
-        // Also include Codex pending approvals
-        if (sdkManager) {
-          try {
-            const codexImpl = sdkManager.getImplementer('codex') as CodexImplementer
-            const codexPermissions = await codexImpl.permissionList(worktreePath)
-            permissions = [...permissions, ...codexPermissions]
-          } catch {
-            // Codex implementer not registered, continue
-          }
-
-          try {
-            const mistralImpl = sdkManager.getImplementer('mistral-vibe') as MistralVibeImplementer
-            const mistralPermissions = await mistralImpl.permissionList(worktreePath)
-            permissions = [...permissions, ...mistralPermissions]
-          } catch {
-            /* mistral vibe not registered */
-          }
-
-          try {
-            const cursorImpl = sdkManager.getImplementer('cursor-cli') as CursorCliImplementer
-            const cursorPermissions = await cursorImpl.permissionList(worktreePath)
-            permissions = [...permissions, ...cursorPermissions]
-          } catch {
-            /* cursor cli not registered */
-          }
-        }
-
-        return { success: true, permissions }
-      } catch (error) {
-        log.error('IPC: opencode:permission:list failed', toError(error))
-        return {
-          success: false,
-          permissions: [],
-          error: error instanceof Error ? error.message : 'Unknown error'
-        }
+      const dirKey = worktreePath ?? ''
+      const cached = permissionListInflightByDirectory.get(dirKey)
+      if (cached) {
+        return cached
       }
+
+      const aggregated = (async (): Promise<
+        | { success: true; permissions: unknown[] }
+        | { success: false; permissions: []; error: string }
+      > => {
+        log.debug('IPC: opencode:permission:list')
+        try {
+          // Aggregate OpenCode REST + Codex approvals. Mistral/Cursor CLI return [] from this path —
+          // they surface permissions only via streams; skipping those calls avoids needless hot-path work.
+          let permissions: unknown[] = []
+          try {
+            permissions = await openCodeService.permissionList(worktreePath)
+          } catch (openCodeErr) {
+            log.debug('IPC: opencode:permission:list — OpenCode not available, skipping', {
+              message: openCodeErr instanceof Error ? openCodeErr.message : String(openCodeErr)
+            })
+          }
+
+          if (sdkManager) {
+            try {
+              const codexImpl = sdkManager.getImplementer('codex') as CodexImplementer
+              const codexPermissions = await codexImpl.permissionList(worktreePath)
+              permissions = [...permissions, ...codexPermissions]
+            } catch {
+              // Codex implementer not registered, continue
+            }
+          }
+
+          return { success: true, permissions }
+        } catch (error) {
+          log.error('IPC: opencode:permission:list failed', toError(error))
+          return {
+            success: false,
+            permissions: [],
+            error: error instanceof Error ? error.message : 'Unknown error'
+          }
+        }
+      })()
+
+      permissionListInflightByDirectory.set(dirKey, aggregated)
+      aggregated.finally(() => {
+        if (permissionListInflightByDirectory.get(dirKey) === aggregated) {
+          permissionListInflightByDirectory.delete(dirKey)
+        }
+      })
+
+      return aggregated
     }
   )
 
@@ -990,7 +1002,7 @@ export function registerOpenCodeHandlers(
         approved,
         remember,
         pattern,
-        worktreePath,
+        worktreePath: _worktreePath,
         patterns
       }: {
         requestId: string

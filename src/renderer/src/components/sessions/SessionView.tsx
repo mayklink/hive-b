@@ -127,6 +127,16 @@ function resolveOctobSessionIdFromOpencodeId(opencodeSessionId: string): string 
   return null
 }
 
+/**
+ * OpenCode REST and Codex expose pending permissions via the aggregated `permission:list`
+ * IPC (polled while streaming). Other SDKs return an empty list from that path — they rely
+ * on stream/SSE events — so skipping IPC avoids redundant main-process work (notably bursts
+ * of DEBUG logs during Cursor CLI sessions).
+ */
+function sdkUsesAggregatorPermissionList(agentSdk: string): boolean {
+  return agentSdk === 'opencode' || agentSdk === 'codex'
+}
+
 interface SlashCommandInfo {
   name: string
   description?: string
@@ -1200,10 +1210,12 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
 
   // Periodic permission hydration while the session is actively streaming.
   // The live SSE event path may occasionally miss `permission.asked` events
-  // (e.g., due to event format mismatches), so we poll the REST API as a
-  // safety net to ensure the permission dialog appears promptly.
+  // (e.g., due to event format mismatches), so we poll the REST/OpenCode aggregator
+  // as a safety net for OpenCode and Codex sessions only — other SDKs surface
+  // permissions purely from streaming events (`permission:list` stays empty).
   useEffect(() => {
     if (!isStreaming || !worktreePath || activePermission) return
+    if (!sdkUsesAggregatorPermissionList(sessionAgentSdk)) return
 
     // First check after a short delay, then periodic
     const timerId = setInterval(() => {
@@ -1227,7 +1239,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
     }, 3000)
 
     return () => clearInterval(timerId)
-  }, [isStreaming, worktreePath, activePermission, sessionId])
+  }, [isStreaming, worktreePath, activePermission, sessionId, sessionAgentSdk])
 
   // Clean up rAF-based streaming and scroll guards on unmount
   useEffect(() => {
@@ -3138,7 +3150,8 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
         // so we use PermissionRequest.sessionID (OpenCode session ID) to route
         // each permission to the correct Octob session rather than blindly
         // assigning to the mounting session.
-        const hydratePermissions = (path: string): void => {
+        const hydratePermissions = (path: string, agentSdkForSession: string): void => {
+          if (!sdkUsesAggregatorPermissionList(agentSdkForSession)) return
           window.opencodeOps
             .permissionList(path)
             .then((result) => {
@@ -3254,7 +3267,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
             }
             fetchModelLimits()
             fetchCommands(wtPath, existingOpcSessionId)
-            hydratePermissions(wtPath)
+            hydratePermissions(wtPath, session.agent_sdk ?? 'opencode')
             // Create response log file if logging is enabled
             if (isLogModeRef.current) {
               try {
@@ -3333,7 +3346,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           setRevertMessageID(null)
           fetchModelLimits()
           fetchCommands(wtPath, connectResult.sessionId)
-          hydratePermissions(wtPath)
+          hydratePermissions(wtPath, session.agent_sdk ?? 'opencode')
           // Always persist the live agent/backend session ID. Main-process IPC routes
           // prompts via getAgentSdkForSession(opencode_session_id); if the UI uses a new
           // ID after connect but SQLite still holds an old stale ID (e.g. reconnect failed),

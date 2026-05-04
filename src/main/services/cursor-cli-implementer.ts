@@ -128,6 +128,8 @@ export class CursorCliImplementer implements AgentSdkImplementer {
 
   private sessions = new Map<string, CursorCliSessionState>()
   private pendingPermissions = new Map<string, PendingPermission>()
+  /** Coalesces concurrent `connect()` for the same Hive UI session (double IPC before first finishes). */
+  private octobConnectInFlight = new Map<string, Promise<{ sessionId: string }>>()
 
   setMainWindow(window: BrowserWindow): void {
     this.mainWindow = window
@@ -353,16 +355,42 @@ export class CursorCliImplementer implements AgentSdkImplementer {
         break
       }
       case 'tool_call': {
-        acpTranscriptRecordToolCall(state.messages, u.toolCallId, u.title ?? 'tool', u.rawInput)
+        const tcp = u
+        acpTranscriptRecordToolCall(state.messages, tcp.toolCallId, tcp.title ?? 'tool', tcp.rawInput)
+
+        /** ACP can send terminal `completed`/`failed` on the initial notification without a separate `tool_call_update` */
+        const acpDone = tcp.status === 'completed' || tcp.status === 'failed'
+        if (acpDone) {
+          acpTranscriptUpdateToolCall(
+            state.messages,
+            tcp.toolCallId,
+            tcp.title ?? 'tool',
+            tcp.status === 'completed' ? 'completed' : 'failed',
+            tcp.rawOutput,
+            undefined
+          )
+        }
+
+        const streamToolStatus =
+          tcp.status === 'completed'
+            ? ('completed' as const)
+            : tcp.status === 'failed'
+              ? ('error' as const)
+              : ('running' as const)
+
+        const streamState: Record<string, unknown> = { status: streamToolStatus }
+        if (tcp.rawInput !== undefined) streamState.input = tcp.rawInput
+        if (tcp.rawOutput !== undefined) streamState.output = tcp.rawOutput
+
         this.sendToRenderer('opencode:stream', {
           type: 'message.part.updated',
           sessionId: state.octobSessionId,
           data: {
             part: {
               type: 'tool',
-              callID: u.toolCallId,
-              tool: u.title ?? 'tool',
-              state: { status: 'running', ...(u.rawInput !== undefined ? { input: u.rawInput } : {}) }
+              callID: tcp.toolCallId,
+              tool: tcp.title ?? 'tool',
+              state: streamState
             },
             delta: ''
           }
@@ -387,8 +415,13 @@ export class CursorCliImplementer implements AgentSdkImplementer {
           u.toolCallId,
           u.title ?? 'tool',
           transcriptStatus,
-          u.rawOutput
+          u.rawOutput,
+          u.rawInput
         )
+        const streamState: Record<string, unknown> = { status: streamToolStatus }
+        if (u.rawInput !== undefined) streamState.input = u.rawInput
+        if (u.rawOutput !== undefined) streamState.output = u.rawOutput
+
         this.sendToRenderer('opencode:stream', {
           type: 'message.part.updated',
           sessionId: state.octobSessionId,
@@ -397,10 +430,7 @@ export class CursorCliImplementer implements AgentSdkImplementer {
               type: 'tool',
               callID: u.toolCallId,
               tool: u.title ?? 'tool',
-              state: {
-                status: streamToolStatus,
-                ...(u.rawOutput !== undefined ? { output: u.rawOutput } : {})
-              }
+              state: streamState
             },
             delta: ''
           }
@@ -484,7 +514,26 @@ export class CursorCliImplementer implements AgentSdkImplementer {
     return { outcome: { outcome: 'selected', optionId: match.optionId } }
   }
 
-  async connect(worktreePath: string, octobSessionId: string): Promise<{ sessionId: string }> {
+  private findSessionForOctobWorktree(
+    worktreePath: string,
+    octobSessionId: string
+  ): CursorCliSessionState | undefined {
+    for (const sess of this.sessions.values()) {
+      if (sess.worktreePath === worktreePath && sess.octobSessionId === octobSessionId) {
+        return sess
+      }
+    }
+    return undefined
+  }
+
+  private octobConnectLockKey(worktreePath: string, octobSessionId: string): string {
+    return `${worktreePath}\0${octobSessionId}`
+  }
+
+  private async performFreshConnect(
+    worktreePath: string,
+    octobSessionId: string
+  ): Promise<{ sessionId: string }> {
     const { connection, child, acpSessionId } = await this.openAcpSession({
       worktreePath,
       octobSessionId,
@@ -509,6 +558,35 @@ export class CursorCliImplementer implements AgentSdkImplementer {
 
     log.info('Cursor CLI connected', { worktreePath, octobSessionId, acpSessionId })
     return { sessionId: acpSessionId }
+  }
+
+  async connect(worktreePath: string, octobSessionId: string): Promise<{ sessionId: string }> {
+    const existing = this.findSessionForOctobWorktree(worktreePath, octobSessionId)
+    if (existing) {
+      log.debug('Cursor CLI connect: reusing existing backend session (duplicate IPC connect)', {
+        worktreePath,
+        octobSessionId,
+        acpSessionId: existing.acpSessionId
+      })
+      return { sessionId: existing.acpSessionId }
+    }
+
+    const lockKey = this.octobConnectLockKey(worktreePath, octobSessionId)
+    const inflight = this.octobConnectInFlight.get(lockKey)
+    if (inflight) {
+      log.debug('Cursor CLI connect: coalescing with in-flight connect (same Octob session)', {
+        worktreePath,
+        octobSessionId
+      })
+      return inflight
+    }
+
+    const flight = this.performFreshConnect(worktreePath, octobSessionId).finally(() => {
+      this.octobConnectInFlight.delete(lockKey)
+    })
+
+    this.octobConnectInFlight.set(lockKey, flight)
+    return flight
   }
 
   async reconnect(

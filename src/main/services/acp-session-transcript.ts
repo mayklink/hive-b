@@ -127,7 +127,8 @@ export function acpTranscriptUpdateToolCall(
   toolCallId: string,
   title: string,
   terminalStatus: 'completed' | 'failed' | 'running',
-  rawOutput?: unknown
+  rawOutput?: unknown,
+  rawInput?: unknown
 ): void {
   if (!toolCallId) return
   const parts = assistantParts(messages)
@@ -137,6 +138,9 @@ export function acpTranscriptUpdateToolCall(
 
   if (!existing) {
     const state: Record<string, unknown> = { status: stateStatus }
+    if (rawInput !== undefined) {
+      state.input = rawInput
+    }
     if (rawOutput !== undefined) {
       state.output = rawOutput
     }
@@ -152,6 +156,9 @@ export function acpTranscriptUpdateToolCall(
   existing.tool = title || (existing.tool as string) || 'tool'
   const prevState = (existing.state as Record<string, unknown>) ?? {}
   const next: Record<string, unknown> = { ...prevState, status: stateStatus }
+  if (rawInput !== undefined) {
+    next.input = rawInput
+  }
   if (terminalStatus === 'failed') {
     next.error = rawOutput ?? prevState.error
   } else if (rawOutput !== undefined) {

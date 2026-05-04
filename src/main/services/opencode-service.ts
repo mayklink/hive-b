@@ -347,6 +347,10 @@ class OpenCodeService {
    * Get or create the OpenCode instance
    */
   private async getOrCreateInstance(): Promise<OpenCodeInstance> {
+    if (!this.openCodeLaunchSpec) {
+      throw new Error('OpenCode CLI not found. Install OpenCode and ensure it is on your PATH.')
+    }
+
     // Check if instance already exists
     if (this.instance) {
       return this.instance
@@ -354,7 +358,7 @@ class OpenCodeService {
 
     // Check if connection is already in progress
     if (this.pendingConnection) {
-      log.info('Waiting for pending connection')
+      log.debug('Waiting for pending OpenCode connection')
       return this.pendingConnection
     }
 
@@ -363,15 +367,11 @@ class OpenCodeService {
 
     this.pendingConnection = (async (): Promise<OpenCodeInstance> => {
       try {
-        if (!this.openCodeLaunchSpec) {
-          throw new Error('OpenCode CLI not found. Install OpenCode and ensure it is on your PATH.')
-        }
-
         // Load SDK dynamically (we only need the client, we spawn the server ourselves)
         const { createOpencodeClient } = await loadOpenCodeSDK()
 
         // Spawn opencode serve without --port so it auto-assigns an available port
-        const server = await spawnOpenCodeServer({ launchSpec: this.openCodeLaunchSpec })
+        const server = await spawnOpenCodeServer({ launchSpec: this.openCodeLaunchSpec! })
         log.info('OpenCode server started', {
           url: server.url,
           command: this.openCodeLaunchSpec.command,
@@ -880,6 +880,10 @@ class OpenCodeService {
    * Uses direct HTTP since v1 SDK lacks the permission namespace
    */
   async permissionList(worktreePath?: string): Promise<unknown[]> {
+    if (!this.openCodeLaunchSpec) {
+      return []
+    }
+
     const instance = await this.getOrCreateInstance()
     const url = new URL('/permission', instance.server.url)
     if (worktreePath) url.searchParams.set('directory', worktreePath)

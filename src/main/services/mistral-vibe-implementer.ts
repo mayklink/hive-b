@@ -281,16 +281,41 @@ export class MistralVibeImplementer implements AgentSdkImplementer {
         break
       }
       case 'tool_call': {
-        acpTranscriptRecordToolCall(state.messages, u.toolCallId, u.title ?? 'tool', u.rawInput)
+        const tcp = u
+        acpTranscriptRecordToolCall(state.messages, tcp.toolCallId, tcp.title ?? 'tool', tcp.rawInput)
+
+        const acpDone = tcp.status === 'completed' || tcp.status === 'failed'
+        if (acpDone) {
+          acpTranscriptUpdateToolCall(
+            state.messages,
+            tcp.toolCallId,
+            tcp.title ?? 'tool',
+            tcp.status === 'completed' ? 'completed' : 'failed',
+            tcp.rawOutput,
+            undefined
+          )
+        }
+
+        const streamToolStatus =
+          tcp.status === 'completed'
+            ? ('completed' as const)
+            : tcp.status === 'failed'
+              ? ('error' as const)
+              : ('running' as const)
+
+        const streamState: Record<string, unknown> = { status: streamToolStatus }
+        if (tcp.rawInput !== undefined) streamState.input = tcp.rawInput
+        if (tcp.rawOutput !== undefined) streamState.output = tcp.rawOutput
+
         this.sendToRenderer('opencode:stream', {
           type: 'message.part.updated',
           sessionId: state.octobSessionId,
           data: {
             part: {
               type: 'tool',
-              callID: u.toolCallId,
-              tool: u.title ?? 'tool',
-              state: { status: 'running', ...(u.rawInput !== undefined ? { input: u.rawInput } : {}) }
+              callID: tcp.toolCallId,
+              tool: tcp.title ?? 'tool',
+              state: streamState
             },
             delta: ''
           }
@@ -315,8 +340,13 @@ export class MistralVibeImplementer implements AgentSdkImplementer {
           u.toolCallId,
           u.title ?? 'tool',
           transcriptStatus,
-          u.rawOutput
+          u.rawOutput,
+          u.rawInput
         )
+        const streamState: Record<string, unknown> = { status: streamToolStatus }
+        if (u.rawInput !== undefined) streamState.input = u.rawInput
+        if (u.rawOutput !== undefined) streamState.output = u.rawOutput
+
         this.sendToRenderer('opencode:stream', {
           type: 'message.part.updated',
           sessionId: state.octobSessionId,
@@ -325,10 +355,7 @@ export class MistralVibeImplementer implements AgentSdkImplementer {
               type: 'tool',
               callID: u.toolCallId,
               tool: u.title ?? 'tool',
-              state: {
-                status: streamToolStatus,
-                ...(u.rawOutput !== undefined ? { output: u.rawOutput } : {})
-              }
+              state: streamState
             },
             delta: ''
           }
