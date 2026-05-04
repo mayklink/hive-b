@@ -1142,6 +1142,38 @@ export class GitService {
   }
 
   /**
+   * Check out a branch when the worktree is clean. No-op if already on that branch.
+   */
+  async checkoutBranch(branch: string): Promise<{ success: boolean; error?: string }> {
+    if (!branch || branch.startsWith('-')) {
+      return { success: false, error: 'Invalid branch name' }
+    }
+    try {
+      const current = await this.getCurrentBranch()
+      if (current === branch) {
+        return { success: true }
+      }
+      const dirty = await this.hasUncommittedChanges()
+      if (dirty) {
+        return {
+          success: false,
+          error: `Cannot check out ${branch} — this workspace has uncommitted changes. Commit or stash first.`
+        }
+      }
+      await this.git.checkout(branch)
+      return { success: true }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      log.error(
+        'checkoutBranch failed',
+        error instanceof Error ? error : new Error(message),
+        { branch, repoPath: this.repoPath }
+      )
+      return { success: false, error: message }
+    }
+  }
+
+  /**
    * Merge a branch into the current branch
    * @param sourceBranch - Branch to merge from
    */

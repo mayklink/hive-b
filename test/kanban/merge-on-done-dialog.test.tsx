@@ -146,6 +146,15 @@ describe('MergeOnDoneDialog', () => {
         getDiffStat: vi.fn(),
         getRemoteUrl: vi.fn().mockResolvedValue({ success: true, url: null, remote: null }),
         pull: vi.fn().mockResolvedValue({ success: true }),
+        listBranchesWithStatus: vi.fn().mockResolvedValue({
+          success: true,
+          branches: [
+            { name: 'main', isRemote: false, isCheckedOut: false },
+            { name: 'origin/developer', isRemote: true, isCheckedOut: false },
+            { name: 'feature', isRemote: false, isCheckedOut: false }
+          ]
+        }),
+        checkoutBranch: vi.fn().mockResolvedValue({ success: true }),
         merge,
         mergeAbort
       }

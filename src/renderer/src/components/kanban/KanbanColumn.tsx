@@ -364,12 +364,19 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                 const resolvedBaseBranch = worktree.base_branch ?? defaultWt?.branch_name
 
                 if (resolvedBaseBranch && worktree.branch_name !== resolvedBaseBranch) {
-                  // Verify an active base worktree exists
-                  const baseWorktree = defaultWorktrees.find(
+                  const baseDedicated = defaultWorktrees.find(
                     (w) => w.branch_name === resolvedBaseBranch && w.status === 'active'
                   )
+                  const defaultWt = defaultWorktrees.find((w) => w.is_default && w.status === 'active')
+                  let canAttemptMerge = false
+                  if (baseDedicated) {
+                    canAttemptMerge = true
+                  } else if (defaultWt) {
+                    const unclean = await window.gitOps.hasUncommittedChanges(defaultWt.path)
+                    if (!unclean) canAttemptMerge = true
+                  }
 
-                  if (baseWorktree) {
+                  if (canAttemptMerge) {
                     // Pre-check: does the feature branch actually have work to merge?
                     const [hasUncommitted, branchStatResult] = await Promise.all([
                       window.gitOps.hasUncommittedChanges(worktree.path),
@@ -392,8 +399,18 @@ export function KanbanColumn({ column, tickets, archivedTickets, projectId, conn
                       store.setPendingDoneMove({ ticketId, projectId: ticketProjectId, sortOrder })
                       return
                     }
+                  } else if (!baseDedicated && defaultWt) {
+                    toast.warning(
+                      `Cannot open merge: check out ${resolvedBaseBranch} on a workspace, or commit/stash changes in your default workspace (${defaultWt.branch_name}) first.`
+                    )
+                    return
+                  } else if (!baseDedicated && !defaultWt) {
+                    toast.warning(
+                      `Cannot open merge: no workspace on ${resolvedBaseBranch} and no default workspace in this project.`
+                    )
+                    return
                   }
-                  // No base worktree OR nothing to commit/merge — fall through to normal move
+                  // No merge path OR nothing to commit/merge — fall through to normal move
                 }
               }
             } catch (err) {

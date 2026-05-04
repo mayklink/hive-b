@@ -1004,6 +1004,13 @@ const gitOps = {
     error?: string
   }> => ipcRenderer.invoke('git:listBranchesWithStatus', { projectPath }),
 
+  // Check out a branch (clean tree only; no-op if already on that branch)
+  checkoutBranch: (
+    worktreePath: string,
+    branch: string
+  ): Promise<{ success: boolean; error?: string }> =>
+    ipcRenderer.invoke('git:checkoutBranch', worktreePath, branch),
+
   // Merge a branch into the current branch
   merge: (
     worktreePath: string,

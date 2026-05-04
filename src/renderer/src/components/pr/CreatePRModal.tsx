@@ -6,7 +6,8 @@ import {
   Loader2,
   AlertCircle,
   ChevronDown,
-  Plus
+  Plus,
+  Search
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -96,9 +97,10 @@ export function CreatePRModal({
   const [body, setBody] = useState('')
   const [baseBranch, setBaseBranch] = useState('')
   const [branchDropdownOpen, setBranchDropdownOpen] = useState(false)
-  const [remoteBranches, setRemoteBranches] = useState<
-    { name: string; isRemote: boolean }[]
-  >([])
+  const [sourceBranchOpen, setSourceBranchOpen] = useState(false)
+  const [baseBranchSearch, setBaseBranchSearch] = useState('')
+  const [sourceBranchSearch, setSourceBranchSearch] = useState('')
+  const [allBranches, setAllBranches] = useState<{ name: string; isRemote: boolean }[]>([])
   const [commitCount, setCommitCount] = useState<number | null>(null)
   const [loadingBranches, setLoadingBranches] = useState(false)
 
@@ -143,12 +145,14 @@ export function CreatePRModal({
     setBaseBranch(prTargetBranch?.replace(/^origin\//, '') ?? 'main')
 
     // Fetch remote branches
+    setBaseBranchSearch('')
+    setSourceBranchSearch('')
     setLoadingBranches(true)
     window.gitOps
       .listBranchesWithStatus(worktreePath)
       .then((result) => {
         if (result.success) {
-          setRemoteBranches(result.branches.filter((b) => b.isRemote))
+          setAllBranches(result.branches)
         }
       })
       .catch(() => {
@@ -185,7 +189,8 @@ export function CreatePRModal({
   const branchOptions = useMemo(() => {
     const seen = new Set<string>()
     const result: string[] = []
-    for (const b of remoteBranches) {
+    for (const b of allBranches) {
+      if (!b.isRemote) continue
       // Strip origin/ prefix for display
       const name = b.name.replace(/^origin\//, '')
       if (!seen.has(name)) {
@@ -203,7 +208,42 @@ export function CreatePRModal({
       if (b === defaultBranchName) return 1
       return a.localeCompare(b)
     })
-  }, [remoteBranches, baseBranch, defaultBranchName])
+  }, [allBranches, baseBranch, defaultBranchName])
+
+  const filteredBaseOptions = useMemo(() => {
+    const q = baseBranchSearch.trim().toLowerCase()
+    if (!q) return branchOptions
+    return branchOptions.filter((name) => name.toLowerCase().includes(q))
+  }, [branchOptions, baseBranchSearch])
+
+  /** Local branch names (PR head must match the checkout in this worktree) */
+  const localBranchOptions = useMemo(() => {
+    const seen = new Set<string>()
+    const result: string[] = []
+    for (const b of allBranches) {
+      if (b.isRemote) continue
+      const name = b.name.replace(/^origin\//, '')
+      if (!seen.has(name)) {
+        seen.add(name)
+        result.push(name)
+      }
+    }
+    const cur = branchInfo?.name
+    if (cur && !result.includes(cur)) {
+      result.push(cur)
+    }
+    return result.sort((a, b) => {
+      if (a === cur) return -1
+      if (b === cur) return 1
+      return a.localeCompare(b)
+    })
+  }, [allBranches, branchInfo?.name])
+
+  const filteredSourceOptions = useMemo(() => {
+    const q = sourceBranchSearch.trim().toLowerCase()
+    if (!q) return localBranchOptions
+    return localBranchOptions.filter((name) => name.toLowerCase().includes(q))
+  }, [localBranchOptions, sourceBranchSearch])
 
   // ── Commit phase handlers ────────────────────────────────────
   const handleStageAll = useCallback(async () => {
@@ -568,24 +608,119 @@ export function CreatePRModal({
   // ── Render: Form ────────────────────────────────────────────────
   const renderForm = (): React.JSX.Element => (
     <>
-      {/* Source branch (read-only) */}
+      {/* Source branch — searchable list; only the checkout in this worktree can be the PR head */}
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-foreground">Source branch</label>
-        <div className="flex items-center gap-2 px-3 py-2 text-sm border rounded-md bg-muted/50 min-w-0">
-          <GitBranch className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-          <span className="truncate">{branchInfo?.name ?? 'Unknown'}</span>
-          {commitCount !== null && (
-            <span className="ml-auto text-xs text-muted-foreground shrink-0">
-              {commitCount} commit{commitCount !== 1 ? 's' : ''} ahead
-            </span>
-          )}
-        </div>
+        <label htmlFor="pr-source-branch" className="text-sm font-medium text-foreground">
+          Source branch
+        </label>
+        <Popover
+          open={sourceBranchOpen}
+          onOpenChange={(next) => {
+            setSourceBranchOpen(next)
+            if (!next) setSourceBranchSearch('')
+          }}
+        >
+          <PopoverTrigger asChild>
+            <button
+              id="pr-source-branch"
+              type="button"
+              className={cn(
+                'flex items-center justify-between w-full px-3 py-2 text-sm border rounded-md',
+                'bg-muted/50 hover:bg-muted/70 transition-colors text-left min-w-0'
+              )}
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <GitBranch className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="truncate">{branchInfo?.name ?? 'Unknown'}</span>
+              </span>
+              <span className="flex items-center gap-2 shrink-0">
+                {commitCount !== null && (
+                  <span className="text-xs text-muted-foreground whitespace-nowrap">
+                    {commitCount} commit{commitCount !== 1 ? 's' : ''} ahead
+                  </span>
+                )}
+                <ChevronDown
+                  className={cn(
+                    'h-3.5 w-3.5 text-muted-foreground transition-transform',
+                    sourceBranchOpen && 'rotate-180'
+                  )}
+                />
+              </span>
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+            <p className="px-3 pt-2 pb-1 text-[11px] text-muted-foreground leading-snug">
+              The PR opens from the branch checked out in this workspace. Search helps locate the
+              name in a long list.
+            </p>
+            <div className="border-b px-2 py-1.5">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={sourceBranchSearch}
+                  onChange={(e) => setSourceBranchSearch(e.target.value)}
+                  placeholder="Search branches…"
+                  className="h-8 pl-8 text-sm"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
+            {loadingBranches ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              </div>
+            ) : filteredSourceOptions.length === 0 ? (
+              <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                No matching branches
+              </div>
+            ) : (
+              <div className="max-h-[200px] overflow-y-auto">
+                {filteredSourceOptions.map((name) => {
+                  const isHead = name === branchInfo?.name
+                  return (
+                    <button
+                      key={name}
+                      type="button"
+                      disabled={!isHead}
+                      title={
+                        isHead
+                          ? undefined
+                          : 'Only the branch checked out in this workspace can be the PR source'
+                      }
+                      className={cn(
+                        'flex items-center gap-2 w-full px-3 py-2 text-sm text-left',
+                        'hover:bg-accent transition-colors',
+                        isHead && 'bg-accent',
+                        !isHead && 'opacity-45 cursor-not-allowed hover:bg-transparent'
+                      )}
+                      onClick={() => {
+                        if (!isHead) return
+                        setSourceBranchOpen(false)
+                        setSourceBranchSearch('')
+                      }}
+                    >
+                      <GitBranch className="h-3 w-3 text-muted-foreground shrink-0" />
+                      <span className="truncate">{name}</span>
+                      {isHead && <Check className="h-3 w-3 ml-auto text-primary shrink-0" />}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Base branch dropdown */}
       <div className="space-y-1.5">
         <label htmlFor="pr-base-branch" className="text-sm font-medium text-foreground">Base branch</label>
-        <Popover open={branchDropdownOpen} onOpenChange={setBranchDropdownOpen}>
+        <Popover
+          open={branchDropdownOpen}
+          onOpenChange={(next) => {
+            setBranchDropdownOpen(next)
+            if (!next) setBaseBranchSearch('')
+          }}
+        >
           <PopoverTrigger asChild>
             <button
               id="pr-base-branch"
@@ -607,7 +742,19 @@ export function CreatePRModal({
               />
             </button>
           </PopoverTrigger>
-          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+            <div className="border-b px-2 py-1.5">
+              <div className="relative">
+                <Search className="absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  value={baseBranchSearch}
+                  onChange={(e) => setBaseBranchSearch(e.target.value)}
+                  placeholder="Search branches…"
+                  className="h-8 pl-8 text-sm"
+                  autoComplete="off"
+                />
+              </div>
+            </div>
             {loadingBranches ? (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -616,9 +763,13 @@ export function CreatePRModal({
               <div className="px-3 py-4 text-sm text-muted-foreground text-center">
                 No branches found
               </div>
+            ) : filteredBaseOptions.length === 0 ? (
+              <div className="px-3 py-4 text-sm text-muted-foreground text-center">
+                No matching branches
+              </div>
             ) : (
               <div className="max-h-[200px] overflow-y-auto">
-                {branchOptions.map((name) => (
+                {filteredBaseOptions.map((name) => (
                   <button
                     key={name}
                     type="button"
@@ -630,6 +781,7 @@ export function CreatePRModal({
                     onClick={() => {
                       setBaseBranch(name)
                       setBranchDropdownOpen(false)
+                      setBaseBranchSearch('')
                     }}
                   >
                     <GitBranch className="h-3 w-3 text-muted-foreground shrink-0" />

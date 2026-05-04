@@ -1,18 +1,10 @@
 {
   "name": "octob",
-  "version": "1.0.126",
+  "version": "1.0.127",
   "description": "Native macOS app for managing git worktrees and AI-powered coding sessions",
   "main": "./out/main/index.js",
-  "author": "morapelker <morapelker@users.noreply.github.com>",
+  "author": "Mayk Bublitz",
   "license": "MIT",
-  "homepage": "https://github.com/morapelker/hive#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/morapelker/hive.git"
-  },
-  "bugs": {
-    "url": "https://github.com/morapelker/hive/issues"
-  },
   "keywords": [
     "git",
     "worktrees",

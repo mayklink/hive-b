@@ -454,6 +454,28 @@ export function registerGitFileHandlers(window: BrowserWindow): void {
     }
   )
 
+  // Check out a branch (clean worktree only; no-op if already there)
+  ipcMain.handle(
+    'git:checkoutBranch',
+    async (
+      _event,
+      worktreePath: string,
+      branch: string
+    ): Promise<{ success: boolean; error?: string }> => {
+      try {
+        const gitService = createGitService(worktreePath)
+        return await gitService.checkoutBranch(branch)
+      } catch (error) {
+        const errMessage = error instanceof Error ? error.message : String(error)
+        log.error('Failed to checkout branch', error instanceof Error ? error : new Error(errMessage), {
+          worktreePath,
+          branch
+        })
+        return { success: false, error: errMessage }
+      }
+    }
+  )
+
   // Merge a branch into the current branch
   ipcMain.handle(
     'git:merge',

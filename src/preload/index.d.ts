@@ -1193,6 +1193,11 @@ declare global {
         }>
         error?: string
       }>
+      // Check out a branch (clean tree only; no-op if already there)
+      checkoutBranch: (
+        worktreePath: string,
+        branch: string
+      ) => Promise<{ success: boolean; error?: string }>
       // Merge a branch into the current branch
       merge: (
         worktreePath: string,
