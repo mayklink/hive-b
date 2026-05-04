@@ -36,6 +36,8 @@ export const useUsageStore = create<UsageState>()((set, get) => ({
   fetchUsageForProvider: async (provider: UsageProvider) => {
     const state = get()
 
+    if (provider === 'none') return
+
     if (provider === 'anthropic') {
       if (state.anthropicIsLoading) return
       if (state.anthropicLastFetchedAt && Date.now() - state.anthropicLastFetchedAt < DEBOUNCE_MS)
@@ -69,6 +71,8 @@ export const useUsageStore = create<UsageState>()((set, get) => ({
   forceRefreshProvider: async (provider: UsageProvider) => {
     const state = get()
 
+    if (provider === 'none') return
+
     if (provider === 'anthropic') {
       if (state.anthropicIsLoading) return
 
@@ -99,6 +103,8 @@ export const useUsageStore = create<UsageState>()((set, get) => ({
   setActiveProvider: (provider: UsageProvider) => {
     set({ activeProvider: provider })
 
+    if (provider === 'none') return
+
     const state = get()
     const lastFetched =
       provider === 'anthropic' ? state.anthropicLastFetchedAt : state.openaiLastFetchedAt
@@ -124,6 +130,9 @@ interface SessionLike {
 }
 
 export function resolveUsageProvider(session: SessionLike): UsageProvider {
+  if (session.agent_sdk === 'terminal') return 'none'
+  if (session.agent_sdk === 'mistral-vibe') return 'none'
+  if (session.agent_sdk === 'cursor-cli') return 'none'
   if (session.agent_sdk === 'claude-code') return 'anthropic'
   if (session.model_provider_id === 'openai') return 'openai'
   if (session.model_id?.startsWith('gpt')) return 'openai'
@@ -131,9 +140,17 @@ export function resolveUsageProvider(session: SessionLike): UsageProvider {
 }
 
 export function resolveDefaultUsageProvider(
-  agentSdk: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+  agentSdk:
+    | 'opencode'
+    | 'claude-code'
+    | 'codex'
+    | 'mistral-vibe'
+    | 'cursor-cli'
+    | 'terminal'
 ): UsageProvider {
   if (agentSdk === 'codex') return 'openai'
+  if (agentSdk === 'mistral-vibe' || agentSdk === 'terminal' || agentSdk === 'cursor-cli')
+    return 'none'
   return 'anthropic'
 }
 
@@ -154,6 +171,8 @@ export function normalizeUsage(
   anthropicUsage: UsageData | null | undefined,
   openaiUsage: OpenAIUsageData | null | undefined
 ): UsageData | null {
+  if (provider === 'none') return null
+
   if (provider === 'anthropic') {
     return isAnthropicUsageData(anthropicUsage) ? anthropicUsage : null
   }

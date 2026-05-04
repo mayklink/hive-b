@@ -60,6 +60,8 @@ export function SettingsGeneral(): React.JSX.Element {
   const opencodeAvailable = isAgentSdkAvailable('opencode', availableAgentSdks)
   const claudeAvailable = isAgentSdkAvailable('claude-code', availableAgentSdks)
   const codexAvailable = isAgentSdkAvailable('codex', availableAgentSdks)
+  const mistralVibeAvailable = isAgentSdkAvailable('mistral-vibe', availableAgentSdks)
+  const cursorCliAvailable = isAgentSdkAvailable('cursor-cli', availableAgentSdks)
 
   return (
     <div className="space-y-6">
@@ -505,6 +507,42 @@ export function SettingsGeneral(): React.JSX.Element {
             Codex
           </button>
           <button
+            onClick={() => updateSetting('defaultAgentSdk', 'mistral-vibe')}
+            disabled={!mistralVibeAvailable}
+            className={cn(
+              'px-3 py-1.5 rounded-md text-sm border transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+              defaultAgentSdk === 'mistral-vibe'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent/50'
+            )}
+            data-testid="agent-sdk-mistral-vibe"
+            title={
+              !mistralVibeAvailable
+                ? 'Install Mistral Vibe (`vibe-acp`) and restart Octob.'
+                : undefined
+            }
+          >
+            Mistral Vibe
+          </button>
+          <button
+            onClick={() => updateSetting('defaultAgentSdk', 'cursor-cli')}
+            disabled={!cursorCliAvailable}
+            className={cn(
+              'px-3 py-1.5 rounded-md text-sm border transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+              defaultAgentSdk === 'cursor-cli'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent/50'
+            )}
+            data-testid="agent-sdk-cursor-cli"
+            title={
+              !cursorCliAvailable
+                ? 'Install Cursor CLI (agent on PATH) and restart Octob.'
+                : undefined
+            }
+          >
+            Cursor CLI
+          </button>
+          <button
             onClick={() => updateSetting('defaultAgentSdk', 'terminal')}
             className={cn(
               'px-3 py-1.5 rounded-md text-sm border transition-colors',
@@ -517,7 +555,12 @@ export function SettingsGeneral(): React.JSX.Element {
             Terminal
           </button>
         </div>
-        {availableAgentSdks && (!opencodeAvailable || !claudeAvailable || !codexAvailable) && (
+        {availableAgentSdks &&
+          (!opencodeAvailable ||
+            !claudeAvailable ||
+            !codexAvailable ||
+            !mistralVibeAvailable ||
+            !cursorCliAvailable) && (
           <p className="text-xs text-muted-foreground/70 italic">
             {t('settings.general.providersDisabledHint')}
           </p>

@@ -15,7 +15,8 @@ export interface UsageResult {
   error?: string
 }
 
-export type UsageProvider = 'anthropic' | 'openai'
+/** `none` = no billable Claude/OpenAI usage to show for this agent (e.g. Mistral Vibe, terminal). */
+export type UsageProvider = 'anthropic' | 'openai' | 'none'
 
 export interface OpenAIUsageData {
   plan_type: string

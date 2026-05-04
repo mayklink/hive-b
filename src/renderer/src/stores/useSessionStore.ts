@@ -37,7 +37,7 @@ function isVisibleSession(session: { name: string | null; session_type?: string 
 }
 
 function getUnavailableProviderError(
-  sdk: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+  sdk: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
 ): string | null {
   const { availableAgentSdks } = useSettingsStore.getState()
   return getUnavailableAgentSdkMessage(sdk, availableAgentSdks)
@@ -62,7 +62,7 @@ interface Session {
   name: string | null
   status: 'active' | 'completed' | 'error'
   opencode_session_id: string | null
-  agent_sdk: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+  agent_sdk: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
   mode: SessionMode
   session_type: 'default' | 'board-assistant'
   model_provider_id: string | null

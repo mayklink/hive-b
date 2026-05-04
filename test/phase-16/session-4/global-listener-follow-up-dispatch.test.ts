@@ -179,7 +179,7 @@ vi.mock('@/stores', () => ({
       fetchUsage: fetchUsageSpy
     })
   },
-  resolveUsageProvider: vi.fn(() => 'opencode')
+  resolveUsageProvider: vi.fn(() => 'anthropic')
 }))
 
 function hasCompletedStatus(sessionId: string): boolean {

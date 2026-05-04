@@ -1,13 +1,21 @@
-export type PRContentProvider = 'opencode' | 'claude-code' | 'codex'
+export type PRContentProvider = 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli'
 export type AgentSdkPreference = PRContentProvider | 'terminal'
 
 export interface AvailableAgentSdks {
   opencode: boolean
   claude: boolean
   codex: boolean
+  mistralVibe: boolean
+  cursorCli: boolean
 }
 
-const PROVIDER_ORDER: PRContentProvider[] = ['claude-code', 'codex', 'opencode']
+const PROVIDER_ORDER: PRContentProvider[] = [
+  'claude-code',
+  'codex',
+  'mistral-vibe',
+  'cursor-cli',
+  'opencode'
+]
 
 export function resolvePRContentProvider(
   preferredSdk: AgentSdkPreference,
@@ -38,6 +46,10 @@ function isProviderAvailable(provider: PRContentProvider, availableSdks: Availab
       return availableSdks.claude
     case 'codex':
       return availableSdks.codex
+    case 'mistral-vibe':
+      return availableSdks.mistralVibe
+    case 'cursor-cli':
+      return availableSdks.cursorCli
     case 'opencode':
       return availableSdks.opencode
   }

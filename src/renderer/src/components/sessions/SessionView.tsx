@@ -1865,6 +1865,11 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
               setOpencodeSessionId(newId)
               transcriptSourceRef.current.opencodeSessionId = newId
               useSessionStore.getState().setOpenCodeSessionId(sessionId, newId)
+              void window.db.session
+                .update(sessionId, { opencode_session_id: newId })
+                .catch(() => {
+                  /* non-fatal */
+                })
 
               // On fork, the new session has its own transcript. Clear old
               // messages so the user only sees the local prompt bubble while
@@ -2882,11 +2887,15 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
 
         if (session.model_provider_id && session.model_id) {
           sessionModelHydratedRef.current = true
+          const hydrateSdk = session.agent_sdk ?? 'opencode'
           await window.opencodeOps
             .setModel({
               providerID: session.model_provider_id,
               modelID: session.model_id,
-              variant: session.model_variant ?? undefined
+              variant: session.model_variant ?? undefined,
+              ...(hydrateSdk !== 'opencode' && hydrateSdk !== 'terminal' ?
+                { agentSdk: hydrateSdk }
+              : {})
             })
             .catch((error) => {
               console.error('Failed to hydrate session model from database:', error)
@@ -3058,9 +3067,18 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
         // Fetch context limits for all provider/model combinations (fire-and-forget).
         // This avoids model-id collisions across providers and lets context usage use
         // the exact model that produced the latest assistant message.
+        //
+        // For non-OpenCode SDKs (`mistral-vibe`, `cursor-cli`, Codex clones, …) we must ask
+        // `listModels` for that SDK or we only hydrate OpenCode limits — and the Context
+        // indicator never gets a window for ACP backends.
+        const dbAgentSdk = session.agent_sdk ?? 'opencode'
         const fetchModelLimits = (): void => {
-          window.opencodeOps
-            .listModels()
+          const listModelsPromise =
+            dbAgentSdk !== 'opencode' && dbAgentSdk !== 'terminal' ?
+              window.opencodeOps.listModels({ agentSdk: dbAgentSdk })
+            : window.opencodeOps.listModels()
+
+          listModelsPromise
             .then((result) => {
               const providers = Array.isArray(result.providers)
                 ? result.providers
@@ -3091,6 +3109,7 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
 
                   if (context > 0) {
                     useContextStore.getState().setModelLimit(modelID, context, providerID)
+                    useContextStore.getState().setModelLimit(modelID, context)
                   }
                 }
               }
@@ -3315,15 +3334,13 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
           fetchModelLimits()
           fetchCommands(wtPath, connectResult.sessionId)
           hydratePermissions(wtPath)
-          // Persist only for first-time session connections.
-          // If reconnect to an existing OpenCode session failed and we had to
-          // open a temporary replacement session, keep the original pointer in
-          // DB to avoid losing historical transcript linkage.
-          if (!existingOpcSessionId) {
-            await window.db.session.update(sessionId, {
-              opencode_session_id: connectResult.sessionId
-            })
-          }
+          // Always persist the live agent/backend session ID. Main-process IPC routes
+          // prompts via getAgentSdkForSession(opencode_session_id); if the UI uses a new
+          // ID after connect but SQLite still holds an old stale ID (e.g. reconnect failed),
+          // lookup fails and the prompt incorrectly falls through to OpenCodeService.
+          await window.db.session.update(sessionId, {
+            opencode_session_id: connectResult.sessionId
+          })
           // Create response log file if logging is enabled
           if (isLogModeRef.current) {
             try {
@@ -3455,11 +3472,9 @@ export function SessionView({ sessionId }: SessionViewProps): React.JSX.Element 
         useSessionStore.getState().setOpenCodeSessionId(sessionId, connectResult.sessionId)
         transcriptSourceRef.current.opencodeSessionId = connectResult.sessionId
         setRevertMessageID(null)
-        if (!existingOpcSessionId) {
-          await window.db.session.update(sessionId, {
-            opencode_session_id: connectResult.sessionId
-          })
-        }
+        await window.db.session.update(sessionId, {
+          opencode_session_id: connectResult.sessionId
+        })
       }
 
       const transcriptResult = await window.opencodeOps.getMessages(

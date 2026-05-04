@@ -12,6 +12,7 @@ export interface TranscriptToolUseInfo {
 export interface TranscriptStreamingPart {
   type: 'text' | 'tool_use' | 'subtask' | 'step_start' | 'step_finish' | 'reasoning' | 'compaction'
   text?: string
+  reasoning?: string
   toolUse?: TranscriptToolUseInfo
 }
 
@@ -73,7 +74,14 @@ export function appendStreamedAssistantFallback(
       .map((part) => part.toolUse!.id)
   )
 
-  if (streamedContent.length === 0 && streamedToolIds.size === 0) {
+  // Reasoning/tool/subtask/step parts live in streamedParts without touching
+  // streamedContent — ACP agents (e.g. Mistral Vibe) may stream thoughts only or
+  // emit non-text message chunks that never increment streamedContent.
+  if (
+    streamedContent.length === 0 &&
+    streamedToolIds.size === 0 &&
+    streamedParts.length === 0
+  ) {
     return messages
   }
 

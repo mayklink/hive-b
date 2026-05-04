@@ -246,7 +246,11 @@ async function sendFollowupToSession(opts: {
   await useSessionStore.getState().setSessionMode(opts.sessionId, opts.followUpMode)
 
   // Claude Code & Codex handle plan mode via the SDK — don't prepend the text prefix
-  const skipPrefix = session.agent_sdk === 'claude-code' || session.agent_sdk === 'codex'
+  const skipPrefix =
+    session.agent_sdk === 'claude-code' ||
+    session.agent_sdk === 'codex' ||
+    session.agent_sdk === 'mistral-vibe' ||
+    session.agent_sdk === 'cursor-cli'
   const modePrefix =
     opts.followUpMode === 'super-plan' ? getSuperPlanModePrefix(session.agent_sdk)
     : opts.followUpMode === 'plan' && !skipPrefix ? PLAN_MODE_PREFIX

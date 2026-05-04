@@ -98,12 +98,18 @@ function getStatusLabel(status: ReturnType<typeof useBoardChatStore.getState>['s
   }
 }
 
-function getAgentSdkLabel(agentSdk: 'opencode' | 'claude-code' | 'codex'): string {
+function getAgentSdkLabel(
+  agentSdk: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli'
+): string {
   switch (agentSdk) {
     case 'claude-code':
       return 'Claude Code'
     case 'codex':
       return 'Codex'
+    case 'mistral-vibe':
+      return 'Mistral Vibe'
+    case 'cursor-cli':
+      return 'Cursor CLI'
     default:
       return 'OpenCode'
   }
@@ -351,10 +357,10 @@ function BoardChatHeader({
   selectedTargetProjectId: string | null
   status: ReturnType<typeof useBoardChatStore.getState>['status']
   selectedModel: SelectedModel | null
-  agentSdk: 'opencode' | 'claude-code' | 'codex'
-  availableAgentSdks: Array<'opencode' | 'claude-code' | 'codex'>
+  agentSdk: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli'
+  availableAgentSdks: Array<'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli'>
   modelResetVisible: boolean
-  onSelectAgentSdk: (agentSdk: 'opencode' | 'claude-code' | 'codex') => void
+  onSelectAgentSdk: (agentSdk: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli') => void
   onSelectModel: (model: SelectedModel) => void
   onResetModel: () => void
   onSelectTargetProject: (projectId: string) => void
@@ -809,11 +815,13 @@ export function BoardAssistantView({ projectId }: BoardAssistantViewProps): Reac
   const resolvedDefaultModel = useSettingsStore((state) => resolveBoardChatDefaultModel(state, effectiveAgentSdk))
   const effectiveSelectedModel = selectedModelOverride ?? resolvedDefaultModel
   const agentSdkOptions = useMemo(() => {
-    const options: Array<'opencode' | 'claude-code' | 'codex'> = []
+    const options: Array<'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli'> = []
     if (!availableAgentSdks) return [effectiveAgentSdk]
     if (availableAgentSdks.opencode) options.push('opencode')
     if (availableAgentSdks.claude) options.push('claude-code')
     if (availableAgentSdks.codex) options.push('codex')
+    if (availableAgentSdks.mistralVibe) options.push('mistral-vibe')
+    if (availableAgentSdks.cursorCli) options.push('cursor-cli')
     return options.length > 0 ? options : [effectiveAgentSdk]
   }, [availableAgentSdks, effectiveAgentSdk])
   const handleMaterializedSessionId = useCallback((nextOpencodeSessionId: string) => {
@@ -1040,7 +1048,7 @@ export function BoardAssistantView({ projectId }: BoardAssistantViewProps): Reac
     async (options?: {
       preserveOpen?: boolean
       nextTargetProjectId?: string | null
-      nextSelectedAgentSdkOverride?: 'opencode' | 'claude-code' | 'codex' | null
+      nextSelectedAgentSdkOverride?: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | null
       nextSelectedModelOverride?: SelectedModel | null
     }) => {
       await cleanupBoardChatRuntime()
@@ -1175,7 +1183,7 @@ export function BoardAssistantView({ projectId }: BoardAssistantViewProps): Reac
     addLocalSystemMessage('Board assistant model reset to the app default.')
   }, [addLocalSystemMessage, handleDiscardConversation, setSelectedModelOverride])
 
-  const handleSelectAgentSdk = useCallback(async (nextAgentSdk: 'opencode' | 'claude-code' | 'codex') => {
+  const handleSelectAgentSdk = useCallback(async (nextAgentSdk: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli') => {
     const nextOverride = nextAgentSdk === defaultBoardAgentSdk ? null : nextAgentSdk
     setSelectedAgentSdkOverride(nextOverride)
     setSelectedModelOverride(null)

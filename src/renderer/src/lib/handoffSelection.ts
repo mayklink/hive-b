@@ -28,22 +28,35 @@ export interface HandoffSelectionOverride {
 const SDK_DISPLAY_NAMES: Record<HandoffAgentSdk, string> = {
   opencode: 'OpenCode',
   'claude-code': 'Claude Code',
-  codex: 'Codex'
+  codex: 'Codex',
+  'mistral-vibe': 'Mistral Vibe',
+  'cursor-cli': 'Cursor CLI'
 }
 
 const FALLBACK_MODELS: Record<HandoffAgentSdk, SelectedModel> = {
   opencode: { providerID: 'anthropic', modelID: 'claude-opus-4-5-20251101' },
   'claude-code': { providerID: 'anthropic', modelID: 'claude-opus-4-5-20251101' },
-  codex: { providerID: 'codex', modelID: 'gpt-5.5' }
+  codex: { providerID: 'codex', modelID: 'gpt-5.5' },
+  'mistral-vibe': { providerID: 'mistral-vibe', modelID: 'devstral-medium-latest' },
+  'cursor-cli': { providerID: 'cursor-cli', modelID: 'auto' }
 }
 
 const modelCatalogCache = new Map<HandoffAgentSdk, ProviderModels[]>()
 const inflightModelCatalogRequests = new Map<HandoffAgentSdk, Promise<ProviderModels[]>>()
 
 function normalizeHandoffSdk(
-  sdk: 'opencode' | 'claude-code' | 'codex' | 'terminal' | null | undefined
+  sdk:
+    | 'opencode'
+    | 'claude-code'
+    | 'codex'
+    | 'mistral-vibe'
+    | 'cursor-cli'
+    | 'terminal'
+    | null
+    | undefined
 ): HandoffAgentSdk {
-  if (sdk === 'claude-code' || sdk === 'codex') return sdk
+  if (sdk === 'claude-code' || sdk === 'codex' || sdk === 'mistral-vibe' || sdk === 'cursor-cli')
+    return sdk
   return 'opencode'
 }
 
@@ -83,7 +96,7 @@ function getWorktreeFallbackModel(worktreeId?: string): SelectedModel | null {
 
 function resolveSessionSelection(opts: {
   worktreeId?: string
-  agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+  agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
   mode?: 'build' | 'plan' | 'super-plan'
 }): EffectiveHandoffSelection {
   const settings = useSettingsStore.getState()
@@ -133,7 +146,13 @@ export function getHandoffSdkDisplayName(agentSdk: HandoffAgentSdk): string {
 export function getAvailableHandoffAgentSdks(
   availableAgentSdks?: AvailableAgentSdks | null
 ): HandoffAgentSdk[] {
-  const orderedSdks: HandoffAgentSdk[] = ['opencode', 'claude-code', 'codex']
+  const orderedSdks: HandoffAgentSdk[] = [
+    'opencode',
+    'claude-code',
+    'codex',
+    'mistral-vibe',
+    'cursor-cli'
+  ]
   return orderedSdks.filter((sdk) => isAgentSdkAvailable(sdk, availableAgentSdks))
 }
 
@@ -227,11 +246,11 @@ export function getEffectiveHandoffSelection(opts: {
 
 export function resolveSessionCreationSelection(opts: {
   worktreeId?: string
-  agentSdkOverride?: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+  agentSdkOverride?: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
   initialMode?: 'build' | 'plan' | 'super-plan'
   modelOverride?: SelectedModel
 }): {
-  agentSdk: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+  agentSdk: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
   model: SelectedModel | null
 } {
   const settings = useSettingsStore.getState()

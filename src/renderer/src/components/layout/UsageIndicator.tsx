@@ -98,7 +98,10 @@ function getVisibleProviders(
   selectedProviders: UsageProvider[],
   activeProvider: UsageProvider
 ): UsageProvider[] {
-  if (mode === 'current-agent') return [activeProvider]
+  if (mode === 'current-agent') {
+    if (activeProvider === 'none') return []
+    return [activeProvider]
+  }
   return PROVIDER_ORDER.filter((p) => selectedProviders.includes(p))
 }
 

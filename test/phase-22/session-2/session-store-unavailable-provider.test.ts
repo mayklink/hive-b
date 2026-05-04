@@ -40,7 +40,9 @@ describe('useSessionStore unavailable provider guard', () => {
         detectAgentSdks: vi.fn().mockResolvedValue({
           opencode: false,
           claude: true,
-          codex: true
+          codex: true,
+          mistralVibe: false,
+          cursorCli: false
         })
       }
     })
@@ -55,7 +57,9 @@ describe('useSessionStore unavailable provider guard', () => {
       availableAgentSdks: {
         opencode: false,
         claude: true,
-        codex: true
+        codex: true,
+        mistralVibe: false,
+        cursorCli: false
       }
     })
 

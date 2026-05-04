@@ -59,6 +59,7 @@
     "install:mac": "bash scripts/install.sh"
   },
   "dependencies": {
+    "@agentclientprotocol/sdk": "^0.21.0",
     "@anthropic-ai/claude-agent-sdk": "^0.2.119",
     "@codemirror/commands": "^6.10.3",
     "@codemirror/lang-cpp": "^6.0.3",
@@ -100,8 +101,8 @@
     "codemirror": "^6.0.2",
     "diff2html": "^3.4.56",
     "electron-updater": "^6.8.3",
-    "i18next": "^24.2.3",
     "highlight.js": "^11.11.1",
+    "i18next": "^24.2.3",
     "lucide-react": "^0.468.0",
     "monaco-editor": "^0.55.1",
     "motion": "^12.38.0",

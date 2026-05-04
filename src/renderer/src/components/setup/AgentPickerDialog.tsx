@@ -9,8 +9,14 @@ import {
 } from '@/components/ui/alert-dialog'
 
 interface AgentPickerDialogProps {
-  onSelect: (sdk: 'opencode' | 'claude-code' | 'codex') => void
-  availableSdks: { opencode: boolean; claude: boolean; codex: boolean }
+  onSelect: (sdk: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli') => void
+  availableSdks: {
+    opencode: boolean
+    claude: boolean
+    codex: boolean
+    mistralVibe: boolean
+    cursorCli: boolean
+  }
 }
 
 export function AgentPickerDialog({
@@ -70,6 +76,34 @@ export function AgentPickerDialog({
             >
               <div className="text-sm font-medium">Codex</div>
               <div className="text-xs text-muted-foreground mt-1">OpenAI&apos;s coding agent</div>
+            </button>
+          )}
+          {availableSdks.mistralVibe && (
+            <button
+              onClick={() => onSelect('mistral-vibe')}
+              className={cn(
+                'flex-1 px-4 py-3 rounded-lg border-2 border-border',
+                'hover:border-primary hover:bg-accent/50 transition-colors',
+                'text-center cursor-pointer'
+              )}
+            >
+              <div className="text-sm font-medium">Mistral Vibe</div>
+              <div className="text-xs text-muted-foreground mt-1">Mistral&apos;s vibe-acp coding agent</div>
+            </button>
+          )}
+          {availableSdks.cursorCli && (
+            <button
+              onClick={() => onSelect('cursor-cli')}
+              className={cn(
+                'flex-1 px-4 py-3 rounded-lg border-2 border-border',
+                'hover:border-primary hover:bg-accent/50 transition-colors',
+                'text-center cursor-pointer'
+              )}
+            >
+              <div className="text-sm font-medium">Cursor CLI</div>
+              <div className="text-xs text-muted-foreground mt-1">
+                Cursor agent (install CLI, agent acp on PATH)
+              </div>
             </button>
           )}
         </div>

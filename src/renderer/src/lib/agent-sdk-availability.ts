@@ -2,9 +2,17 @@ export interface AvailableAgentSdks {
   opencode: boolean
   claude: boolean
   codex: boolean
+  mistralVibe: boolean
+  cursorCli: boolean
 }
 
-export type SelectableAgentSdk = 'opencode' | 'claude-code' | 'codex' | 'terminal'
+export type SelectableAgentSdk =
+  | 'opencode'
+  | 'claude-code'
+  | 'codex'
+  | 'mistral-vibe'
+  | 'cursor-cli'
+  | 'terminal'
 
 function getAgentSdkLabel(sdk: Exclude<SelectableAgentSdk, 'terminal'>): string {
   switch (sdk) {
@@ -14,6 +22,10 @@ function getAgentSdkLabel(sdk: Exclude<SelectableAgentSdk, 'terminal'>): string 
       return 'Claude Code'
     case 'codex':
       return 'Codex'
+    case 'mistral-vibe':
+      return 'Mistral Vibe'
+    case 'cursor-cli':
+      return 'Cursor CLI'
   }
 }
 
@@ -30,6 +42,10 @@ export function isAgentSdkAvailable(
       return availableAgentSdks.claude
     case 'codex':
       return availableAgentSdks.codex
+    case 'mistral-vibe':
+      return availableAgentSdks.mistralVibe
+    case 'cursor-cli':
+      return availableAgentSdks.cursorCli
     case 'terminal':
       return true
   }

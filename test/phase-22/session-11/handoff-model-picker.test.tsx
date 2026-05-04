@@ -68,7 +68,9 @@ Object.defineProperty(window, 'systemOps', {
     detectAgentSdks: vi.fn().mockResolvedValue({
       opencode: true,
       claude: true,
-      codex: true
+      codex: true,
+      mistralVibe: false,
+      cursorCli: false
     })
   }
 })
@@ -131,7 +133,9 @@ describe('handoff model picker', () => {
       availableAgentSdks: {
         opencode: true,
         claude: true,
-        codex: true
+        codex: true,
+        mistralVibe: false,
+        cursorCli: false
       }
     })
     useWorktreeStore.setState({
@@ -220,7 +224,9 @@ describe('handoff model picker', () => {
       availableAgentSdks: {
         opencode: false,
         claude: true,
-        codex: false
+        codex: false,
+        mistralVibe: false,
+        cursorCli: false
       }
     })
 

@@ -145,7 +145,9 @@ export function WorktreePickerModal({
   const [selectedModel, setSelectedModel] = useState<{
     providerID: string; modelID: string; variant?: string
   } | null>(null)
-  const [selectedSdk, setSelectedSdk] = useState<'opencode' | 'claude-code' | 'codex' | null>(null)
+  const [selectedSdk, setSelectedSdk] = useState<
+    'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | null
+  >(null)
 
   // ── Store access ────────────────────────────────────────────────
   const worktrees = useWorktreeStore(
@@ -309,10 +311,13 @@ export function WorktreePickerModal({
   }, [branches, branchFilter])
 
   // ── Handle SDK change ───────────────────────────────────────────
-  const handleSdkChange = useCallback((sdk: 'opencode' | 'claude-code' | 'codex') => {
-    setSelectedSdk(sdk)
-    setSelectedModel(null)  // reset model — new SDK has different models
-  }, [])
+  const handleSdkChange = useCallback(
+    (sdk: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli') => {
+      setSelectedSdk(sdk)
+      setSelectedModel(null)  // reset model — new SDK has different models
+    },
+    []
+  )
 
   // ── Handle mode toggle ──────────────────────────────────────────
   const toggleMode = useCallback(() => {
@@ -483,7 +488,11 @@ export function WorktreePickerModal({
 
         // Send prompt
         if (promptText.trim()) {
-          const skipPrefix = sessionAgentSdk === 'claude-code' || sessionAgentSdk === 'codex'
+          const skipPrefix =
+            sessionAgentSdk === 'claude-code' ||
+            sessionAgentSdk === 'codex' ||
+            sessionAgentSdk === 'mistral-vibe' ||
+            sessionAgentSdk === 'cursor-cli'
           const modePrefix = mode === 'super-plan' ? getSuperPlanModePrefix(sessionAgentSdk)
             : mode === 'plan' && !skipPrefix ? PLAN_MODE_PREFIX
             : ''
@@ -697,7 +706,11 @@ export function WorktreePickerModal({
 
       // Send the prompt — apply plan mode prefix for opencode SDK
       if (promptText.trim()) {
-        const skipPrefix = sessionAgentSdk === 'claude-code' || sessionAgentSdk === 'codex'
+        const skipPrefix =
+          sessionAgentSdk === 'claude-code' ||
+          sessionAgentSdk === 'codex' ||
+          sessionAgentSdk === 'mistral-vibe' ||
+          sessionAgentSdk === 'cursor-cli'
         const modePrefix =
           mode === 'super-plan' ? getSuperPlanModePrefix(sessionAgentSdk)
           : mode === 'plan' && !skipPrefix ? PLAN_MODE_PREFIX
@@ -969,9 +982,14 @@ export function WorktreePickerModal({
                 Provider & Model
               </label>
               {/* SDK toggle — only when 2+ SDKs are available */}
-              {availableAgentSdks && (
-                [availableAgentSdks.opencode, availableAgentSdks.claude, availableAgentSdks.codex].filter(Boolean).length >= 2
-              ) && (
+              {availableAgentSdks &&
+                [
+                  availableAgentSdks.opencode,
+                  availableAgentSdks.claude,
+                  availableAgentSdks.codex,
+                  availableAgentSdks.mistralVibe,
+                  availableAgentSdks.cursorCli
+                ].filter(Boolean).length >= 2 && (
                 <div className="flex gap-1.5" data-testid="sdk-toggle">
                   {availableAgentSdks.opencode && (
                     <button
@@ -1016,6 +1034,36 @@ export function WorktreePickerModal({
                       )}
                     >
                       Codex
+                    </button>
+                  )}
+                  {availableAgentSdks.mistralVibe && (
+                    <button
+                      type="button"
+                      data-testid="sdk-toggle-mistral-vibe"
+                      onClick={() => handleSdkChange('mistral-vibe')}
+                      className={cn(
+                        'px-2.5 py-1 rounded-md text-xs border transition-colors',
+                        agentSdk === 'mistral-vibe'
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent/50'
+                      )}
+                    >
+                      Mistral Vibe
+                    </button>
+                  )}
+                  {availableAgentSdks.cursorCli && (
+                    <button
+                      type="button"
+                      data-testid="sdk-toggle-cursor-cli"
+                      onClick={() => handleSdkChange('cursor-cli')}
+                      className={cn(
+                        'px-2.5 py-1 rounded-md text-xs border transition-colors',
+                        agentSdk === 'cursor-cli'
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'bg-muted/50 text-muted-foreground border-border hover:bg-accent/50'
+                      )}
+                    >
+                      Cursor CLI
                     </button>
                   )}
                 </div>

@@ -99,4 +99,27 @@ describe('transcript refresh fallback', () => {
 
     expect(next).toEqual(messages)
   })
+
+  test('appends reasoning-only streamed parts when content and tools are empty (ACP agents)', () => {
+    const messages: TranscriptMessage[] = []
+
+    const streamedParts: TranscriptStreamingPart[] = [
+      { type: 'reasoning', reasoning: 'Internal thought only' }
+    ]
+
+    const next = appendStreamedAssistantFallback(messages, {
+      streamedContent: '',
+      streamedParts,
+      createId: () => 'local-stream-thought',
+      now: () => '2026-03-12T10:00:01.000Z'
+    })
+
+    expect(next).toHaveLength(1)
+    expect(next[0]).toMatchObject({
+      id: 'local-stream-thought',
+      role: 'assistant',
+      content: '',
+      parts: streamedParts
+    })
+  })
 })

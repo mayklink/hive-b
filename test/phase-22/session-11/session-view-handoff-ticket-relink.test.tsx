@@ -191,7 +191,9 @@ describe('SessionView handoff ticket relinking', () => {
       availableAgentSdks: {
         opencode: false,
         claude: true,
-        codex: false
+        codex: false,
+        mistralVibe: false,
+        cursorCli: false
       },
       defaultModels: {
         build: null,

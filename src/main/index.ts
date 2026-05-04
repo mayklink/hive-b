@@ -42,9 +42,13 @@ import { notificationService } from './services/notification-service'
 import { updaterService } from './services/updater'
 import { ClaudeCodeImplementer } from './services/claude-code-implementer'
 import { CodexImplementer } from './services/codex-implementer'
+import { MistralVibeImplementer } from './services/mistral-vibe-implementer'
+import { CursorCliImplementer } from './services/cursor-cli-implementer'
 import { AgentSdkManager } from './services/agent-sdk-manager'
 import { resolveClaudeBinaryPath } from './services/claude-binary-resolver'
 import { resolveCodexBinaryPath } from './services/codex-binary-resolver'
+import { resolveMistralVibeAcpBinaryPath } from './services/mistral-vibe-binary-resolver'
+import { resolveCursorCliAgentBinaryPath } from './services/cursor-cli-binary-resolver'
 import {
   resolveOpenCodeLaunchSpec,
   type OpenCodeLaunchSpec
@@ -470,6 +474,8 @@ app.whenReady().then(async () => {
   // Resolve system-wide Claude binary (must run after loadShellEnv)
   const claudeBinaryPath = resolveClaudeBinaryPath()
   const codexBinaryPath = resolveCodexBinaryPath()
+  const mistralVibeAcpPath = resolveMistralVibeAcpBinaryPath()
+  const cursorCliAgentPath = resolveCursorCliAgentBinaryPath()
   const openCodeLaunchSpec = resolveOpenCodeLaunchSpec()
 
   log.info('App starting', {
@@ -477,7 +483,9 @@ app.whenReady().then(async () => {
     platform: process.platform,
     opencodeBinary: openCodeLaunchSpec?.command ?? 'not found',
     claudeBinary: claudeBinaryPath ?? 'not found',
-    codexBinary: codexBinaryPath ?? 'not found'
+    codexBinary: codexBinaryPath ?? 'not found',
+    vibeAcpBinary: mistralVibeAcpPath ?? 'not found',
+    cursorCliAgentBinary: cursorCliAgentPath ?? 'not found'
   })
 
   if (isLogMode) {
@@ -591,10 +599,10 @@ app.whenReady().then(async () => {
         supportsQuestionPrompts: true,
         supportsModelSelection: true,
         supportsReconnect: true,
-        supportsPartialStreaming: true
+        supportsPartialStreaming: true,
+        supportsSteer: false
       },
       connect: async () => ({ sessionId: '' }),
-      reconnect: async () => ({ success: false }),
       disconnect: async () => {},
       cleanup: async () => {},
       prompt: async () => {},
@@ -619,7 +627,19 @@ app.whenReady().then(async () => {
     codexImpl.setDatabaseService(getDatabase())
     codexImpl.setCodexBinaryPath(codexBinaryPath)
     setRouterCodexBinaryPath(codexBinaryPath)
-    const sdkManager = new AgentSdkManager([openCodePlaceholder, claudeImpl, codexImpl])
+    const mistralVibeImpl = new MistralVibeImplementer()
+    mistralVibeImpl.setDatabaseService(getDatabase())
+    mistralVibeImpl.setMistralVibeAcpBinaryPath(mistralVibeAcpPath)
+    const cursorCliImpl = new CursorCliImplementer()
+    cursorCliImpl.setDatabaseService(getDatabase())
+    cursorCliImpl.setCursorCliAgentBinaryPath(cursorCliAgentPath)
+    const sdkManager = new AgentSdkManager([
+      openCodePlaceholder,
+      claudeImpl,
+      codexImpl,
+      mistralVibeImpl,
+      cursorCliImpl
+    ])
     sdkManager.setMainWindow(mainWindow)
 
     const databaseService = getDatabase()

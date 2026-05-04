@@ -36,7 +36,7 @@ export interface SelectedModel {
   variant?: string
 }
 
-export type AgentSdk = 'opencode' | 'claude-code' | 'codex' | 'terminal'
+export type AgentSdk = 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
 export type HandoffAgentSdk = Exclude<AgentSdk, 'terminal'>
 
 export interface ModeDefaultModels {
@@ -255,7 +255,13 @@ interface SettingsState extends AppSettings {
   isLoading: boolean
 
   // Cached SDK availability (non-persisted, re-detected each launch)
-  availableAgentSdks: { opencode: boolean; claude: boolean; codex: boolean } | null
+  availableAgentSdks: {
+    opencode: boolean
+    claude: boolean
+    codex: boolean
+    mistralVibe: boolean
+    cursorCli: boolean
+  } | null
 
   // Actions
   openSettings: (section?: string) => void

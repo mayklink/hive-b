@@ -30,10 +30,15 @@ describe('system-info: detectAgentSdks opencode launchability', () => {
   })
 
   it('marks opencode available only when the launch spec resolves', async () => {
-    mockExecFileSync.mockImplementation((_cmd: string, args: string[]) => {
+    mockExecFileSync.mockImplementation((cmd: string, args: string[]) => {
       const binary = args[0]
       if (binary === 'claude') return '/usr/local/bin/claude\n'
       if (binary === 'codex') return '/usr/local/bin/codex\n'
+      if (binary === 'vibe-acp') return '/usr/local/bin/vibe-acp\n'
+      if (binary === 'agent') return '/usr/local/bin/agent\n'
+      if (binary === 'app-server' && String(cmd).includes('codex')) {
+        return 'Usage: codex app-server'
+      }
       throw new Error('not found')
     })
 
@@ -44,7 +49,9 @@ describe('system-info: detectAgentSdks opencode launchability', () => {
     ).toEqual({
       opencode: true,
       claude: true,
-      codex: true
+      codex: true,
+      mistralVibe: true,
+      cursorCli: true
     })
   })
 
@@ -58,7 +65,9 @@ describe('system-info: detectAgentSdks opencode launchability', () => {
     expect(detectAgentSdks(null)).toEqual({
       opencode: false,
       claude: false,
-      codex: false
+      codex: false,
+      mistralVibe: false,
+      cursorCli: false
     })
   })
 })

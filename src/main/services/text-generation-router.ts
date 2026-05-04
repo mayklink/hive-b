@@ -143,12 +143,20 @@ function resolveProvider(provider: AgentSdkId): AgentSdkId | null {
   const providerAvailable: Record<Exclude<AgentSdkId, 'terminal'>, boolean> = {
     'claude-code': sdks.claude,
     codex: sdks.codex,
+    mistralVibe: sdks.mistralVibe,
+    cursorCli: sdks.cursorCli,
     opencode: sdks.opencode
   }
 
   if (providerAvailable[provider]) return provider
 
-  const fallbackOrder: Exclude<AgentSdkId, 'terminal'>[] = ['claude-code', 'codex', 'opencode']
+  const fallbackOrder: Exclude<AgentSdkId, 'terminal'>[] = [
+    'claude-code',
+    'codex',
+    'mistral-vibe',
+    'cursor-cli',
+    'opencode'
+  ]
   for (const fallback of fallbackOrder) {
     if (providerAvailable[fallback]) return fallback
   }
@@ -172,6 +180,11 @@ function generateWithProvider(
       return generateWithClaude(prompt, systemPrompt, modelOverride, cwd)
     case 'codex':
       return generateWithCodex(prompt, systemPrompt, modelOverride, outputSchema, cwd)
+    case 'mistral-vibe':
+      // Text-router batch jobs are Claude/Codex/OpenCode only for now.
+      return Promise.resolve(null)
+    case 'cursor-cli':
+      return Promise.resolve(null)
     case 'opencode':
       return generateWithOpenCode(prompt, systemPrompt, modelOverride, cwd)
     case 'terminal':

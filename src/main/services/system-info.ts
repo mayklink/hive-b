@@ -3,6 +3,8 @@ import { execFileSync } from 'child_process'
 import { existsSync } from 'fs'
 import { getLogDir } from './logger'
 import { resolveCodexBinaryPath, supportsCodexAppServer } from './codex-binary-resolver'
+import { resolveMistralVibeAcpBinaryPath } from './mistral-vibe-binary-resolver'
+import { resolveCursorCliAgentBinaryPath } from './cursor-cli-binary-resolver'
 import { resolveOpenCodeLaunchSpec } from './opencode-binary-resolver'
 import type { OpenCodeLaunchSpec } from './opencode-binary-resolver'
 
@@ -10,6 +12,8 @@ export interface AgentSdkDetection {
   opencode: boolean
   claude: boolean
   codex: boolean
+  mistralVibe: boolean
+  cursorCli: boolean
 }
 
 export interface AppPaths {
@@ -35,11 +39,15 @@ export function detectAgentSdks(openCodeLaunchSpec: OpenCodeLaunchSpec | null): 
   }
 
   const resolvedCodexBinary = resolveCodexBinaryPath()
+  const mistralVibePath = resolveMistralVibeAcpBinaryPath()
+  const cursorCliPath = resolveCursorCliAgentBinaryPath()
 
   return {
     opencode: openCodeLaunchSpec !== null,
     claude: check('claude'),
-    codex: !!resolvedCodexBinary && supportsCodexAppServer(resolvedCodexBinary)
+    codex: !!resolvedCodexBinary && supportsCodexAppServer(resolvedCodexBinary),
+    mistralVibe: !!mistralVibePath && existsSync(mistralVibePath),
+    cursorCli: !!cursorCliPath && existsSync(cursorCliPath)
   }
 }
 

@@ -307,7 +307,13 @@ describe('Session 9: Worktree Picker Modal', () => {
         projects: [makeProject()]
       })
       useSettingsStore.setState({
-        availableAgentSdks: { opencode: true, claude: true, codex: true },
+        availableAgentSdks: {
+          opencode: true,
+          claude: true,
+          codex: true,
+          mistralVibe: false,
+          cursorCli: false
+        },
         defaultAgentSdk: 'opencode',
         codexFastMode: false,
         codexFastModeAccepted: false

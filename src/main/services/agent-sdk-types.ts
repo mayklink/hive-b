@@ -1,6 +1,6 @@
 import type { BrowserWindow } from 'electron'
 
-export type AgentSdkId = 'opencode' | 'claude-code' | 'codex' | 'terminal'
+export type AgentSdkId = 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
 
 export interface AgentSdkCapabilities {
   supportsUndo: boolean
@@ -137,6 +137,32 @@ export const CODEX_CAPABILITIES: AgentSdkCapabilities = {
   supportsReconnect: true,
   supportsPartialStreaming: true,
   supportsSteer: true
+}
+
+/** Mistral Vibe via `vibe-acp` (Agent Client Protocol, stdio). */
+export const MISTRAL_VIBE_CAPABILITIES: AgentSdkCapabilities = {
+  supportsUndo: false,
+  supportsRedo: false,
+  supportsCommands: true,
+  supportsPermissionRequests: true,
+  supportsQuestionPrompts: false,
+  supportsModelSelection: true,
+  supportsReconnect: true,
+  supportsPartialStreaming: true,
+  supportsSteer: false
+}
+
+/** Cursor CLI (`agent acp`, Agent Client Protocol). */
+export const CURSOR_CLI_CAPABILITIES: AgentSdkCapabilities = {
+  supportsUndo: false,
+  supportsRedo: false,
+  supportsCommands: true,
+  supportsPermissionRequests: true,
+  supportsQuestionPrompts: false,
+  supportsModelSelection: true,
+  supportsReconnect: true,
+  supportsPartialStreaming: true,
+  supportsSteer: false
 }
 
 export const TERMINAL_CAPABILITIES: AgentSdkCapabilities = {

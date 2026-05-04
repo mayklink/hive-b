@@ -72,7 +72,13 @@ function createMockProcess(exitCode = 0): EventEmitter & {
 describe('text-generation-router codex structured output', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockDetectAgentSdks.mockReturnValue({ opencode: false, claude: false, codex: true })
+    mockDetectAgentSdks.mockReturnValue({
+      opencode: false,
+      claude: false,
+      codex: true,
+      mistralVibe: false,
+      cursorCli: false
+    })
     mockResolveCodexBinaryPath.mockReturnValue(null)
     mockReadFile.mockResolvedValue('{"title":"Refine PR flow","body":"## Summary\\n- Added tests\\n## Testing\\n- Not run"}')
     mockWriteFile.mockResolvedValue(undefined)

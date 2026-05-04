@@ -102,7 +102,7 @@ const db = {
       connection_id?: string | null
       name?: string | null
       opencode_session_id?: string | null
-      agent_sdk?: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+      agent_sdk?: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
       mode?: 'build' | 'plan'
       session_type?: 'default' | 'board-assistant'
       model_provider_id?: string | null
@@ -121,7 +121,7 @@ const db = {
         name?: string | null
         status?: 'active' | 'completed' | 'error'
         opencode_session_id?: string | null
-        agent_sdk?: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+        agent_sdk?: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
         mode?: 'build' | 'plan'
         model_provider_id?: string | null
         model_id?: string | null
@@ -474,8 +474,13 @@ const systemOps = {
   isLogMode: (): Promise<boolean> => ipcRenderer.invoke('system:isLogMode'),
 
   // Detect which agent SDKs (opencode, claude, codex) are installed on the system
-  detectAgentSdks: (): Promise<{ opencode: boolean; claude: boolean; codex: boolean }> =>
-    ipcRenderer.invoke('system:detectAgentSdks'),
+  detectAgentSdks: (): Promise<{
+    opencode: boolean
+    claude: boolean
+    codex: boolean
+    mistralVibe: boolean
+    cursorCli: boolean
+  }> => ipcRenderer.invoke('system:detectAgentSdks'),
 
   // Quit the app (needed for macOS where window.close() doesn't quit)
   quitApp: (): Promise<void> => ipcRenderer.invoke('system:quitApp'),
@@ -1378,7 +1383,7 @@ const opencodeOps = {
 
   // List available models from all configured providers
   listModels: (opts?: {
-    agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+    agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
   }): Promise<{
     success: boolean
     providers: Record<string, unknown>
@@ -1391,7 +1396,7 @@ const opencodeOps = {
       providerID: string
       modelID: string
       variant?: string
-      agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+      agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
     } | null
   ): Promise<{ success: boolean; error?: string }> =>
     ipcRenderer.invoke('opencode:setModel', model),
@@ -1400,7 +1405,7 @@ const opencodeOps = {
   modelInfo: (
     worktreePath: string,
     modelId: string,
-    agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'terminal'
+    agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' | 'terminal'
   ): Promise<{
     success: boolean
     model?: { id: string; name: string; limit: { context: number } }

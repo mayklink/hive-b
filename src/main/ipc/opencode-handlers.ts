@@ -7,6 +7,8 @@ import type { AgentSdkManager } from '../services/agent-sdk-manager'
 import type { PromptOptions } from '../services/agent-sdk-types'
 import { ClaudeCodeImplementer } from '../services/claude-code-implementer'
 import { CodexImplementer } from '../services/codex-implementer'
+import { MistralVibeImplementer } from '../services/mistral-vibe-implementer'
+import { CursorCliImplementer } from '../services/cursor-cli-implementer'
 import { toError } from '../services/error-utils'
 
 const log = createLogger({ component: 'OpenCodeHandlers' })
@@ -271,7 +273,7 @@ export function registerOpenCodeHandlers(
   // Get available models from all configured providers
   ipcMain.handle(
     'opencode:models',
-    async (_event, opts?: { agentSdk?: 'opencode' | 'claude-code' | 'codex' }) => {
+    async (_event, opts?: { agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' }) => {
       log.info('IPC: opencode:models', { agentSdk: opts?.agentSdk })
       try {
         if (opts?.agentSdk && opts.agentSdk !== 'opencode' && sdkManager) {
@@ -304,7 +306,7 @@ export function registerOpenCodeHandlers(
         providerID: string
         modelID: string
         variant?: string
-        agentSdk?: 'opencode' | 'claude-code' | 'codex'
+        agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli'
       } | null
     ) => {
       log.info('IPC: opencode:setModel', {
@@ -348,7 +350,7 @@ export function registerOpenCodeHandlers(
         worktreePath,
         modelId,
         agentSdk
-      }: { worktreePath: string; modelId: string; agentSdk?: 'opencode' | 'claude-code' | 'codex' }
+      }: { worktreePath: string; modelId: string; agentSdk?: 'opencode' | 'claude-code' | 'codex' | 'mistral-vibe' | 'cursor-cli' }
     ) => {
       log.info('IPC: opencode:modelInfo', { worktreePath, modelId, agentSdk })
       try {
@@ -638,6 +640,26 @@ export function registerOpenCodeHandlers(
           } catch {
             // Codex implementer not registered, continue
           }
+
+          try {
+            const mistralImpl = sdkManager.getImplementer('mistral-vibe') as MistralVibeImplementer
+            if (mistralImpl.hasPendingQuestion(requestId)) {
+              await mistralImpl.questionReply(requestId, answers, worktreePath)
+              return { success: true }
+            }
+          } catch {
+            /* mistral vibe not registered */
+          }
+
+          try {
+            const cursorImpl = sdkManager.getImplementer('cursor-cli') as CursorCliImplementer
+            if (cursorImpl.hasPendingQuestion(requestId)) {
+              await cursorImpl.questionReply(requestId, answers, worktreePath)
+              return { success: true }
+            }
+          } catch {
+            /* cursor cli not registered */
+          }
         }
         // Fall through to OpenCode
         await openCodeService.questionReply(requestId, answers, worktreePath)
@@ -675,6 +697,26 @@ export function registerOpenCodeHandlers(
             }
           } catch {
             // Codex implementer not registered, continue
+          }
+
+          try {
+            const mistralImpl = sdkManager.getImplementer('mistral-vibe') as MistralVibeImplementer
+            if (mistralImpl.hasPendingQuestion(requestId)) {
+              await mistralImpl.questionReject(requestId, worktreePath)
+              return { success: true }
+            }
+          } catch {
+            /* mistral vibe not registered */
+          }
+
+          try {
+            const cursorImpl = sdkManager.getImplementer('cursor-cli') as CursorCliImplementer
+            if (cursorImpl.hasPendingQuestion(requestId)) {
+              await cursorImpl.questionReject(requestId, worktreePath)
+              return { success: true }
+            }
+          } catch {
+            /* cursor cli not registered */
           }
         }
         // Fall through to OpenCode
@@ -795,6 +837,26 @@ export function registerOpenCodeHandlers(
           } catch {
             // Codex implementer not registered, continue
           }
+
+          try {
+            const mistralImpl = sdkManager.getImplementer('mistral-vibe') as MistralVibeImplementer
+            if (mistralImpl.hasPendingApproval(requestId)) {
+              await mistralImpl.permissionReply(requestId, reply, worktreePath)
+              return { success: true }
+            }
+          } catch {
+            /* mistral vibe not registered */
+          }
+
+          try {
+            const cursorImpl = sdkManager.getImplementer('cursor-cli') as CursorCliImplementer
+            if (cursorImpl.hasPendingApproval(requestId)) {
+              await cursorImpl.permissionReply(requestId, reply, worktreePath)
+              return { success: true }
+            }
+          } catch {
+            /* cursor cli not registered */
+          }
         }
         // Fall through to OpenCode
         await openCodeService.permissionReply(requestId, reply, worktreePath, message)
@@ -815,8 +877,16 @@ export function registerOpenCodeHandlers(
     async (_event, { worktreePath }: { worktreePath?: string }) => {
       log.info('IPC: opencode:permission:list')
       try {
-        // Aggregate permissions from all implementers
-        let permissions = await openCodeService.permissionList(worktreePath)
+        // Aggregate permissions from all implementers. OpenCode may be absent when the
+        // active provider is Codex, Mistral Vibe, or Cursor CLI — do not fail the IPC.
+        let permissions: unknown[] = []
+        try {
+          permissions = await openCodeService.permissionList(worktreePath)
+        } catch (openCodeErr) {
+          log.debug('IPC: opencode:permission:list — OpenCode not available, skipping', {
+            message: openCodeErr instanceof Error ? openCodeErr.message : String(openCodeErr)
+          })
+        }
 
         // Also include Codex pending approvals
         if (sdkManager) {
@@ -826,6 +896,22 @@ export function registerOpenCodeHandlers(
             permissions = [...permissions, ...codexPermissions]
           } catch {
             // Codex implementer not registered, continue
+          }
+
+          try {
+            const mistralImpl = sdkManager.getImplementer('mistral-vibe') as MistralVibeImplementer
+            const mistralPermissions = await mistralImpl.permissionList(worktreePath)
+            permissions = [...permissions, ...mistralPermissions]
+          } catch {
+            /* mistral vibe not registered */
+          }
+
+          try {
+            const cursorImpl = sdkManager.getImplementer('cursor-cli') as CursorCliImplementer
+            const cursorPermissions = await cursorImpl.permissionList(worktreePath)
+            permissions = [...permissions, ...cursorPermissions]
+          } catch {
+            /* cursor cli not registered */
           }
         }
 

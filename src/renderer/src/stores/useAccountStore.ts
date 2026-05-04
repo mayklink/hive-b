@@ -12,6 +12,7 @@ export const useAccountStore = create<AccountState>()((set) => ({
   openaiEmail: null,
   fetchEmail: async (provider: UsageProvider) => {
     try {
+      if (provider === 'none') return
       if (provider === 'anthropic') {
         const email = await window.accountOps.getClaudeEmail()
         set({ anthropicEmail: email })
@@ -24,7 +25,7 @@ export const useAccountStore = create<AccountState>()((set) => ({
       // doesn't leave a stale email visible. The handler already returns null for
       // any read failure, so this catch mostly handles unexpected IPC errors.
       if (provider === 'anthropic') set({ anthropicEmail: null })
-      else set({ openaiEmail: null })
+      else if (provider === 'openai') set({ openaiEmail: null })
     }
   }
 }))

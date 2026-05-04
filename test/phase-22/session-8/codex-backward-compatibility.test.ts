@@ -4,6 +4,8 @@ import {
   OPENCODE_CAPABILITIES,
   CLAUDE_CODE_CAPABILITIES,
   CODEX_CAPABILITIES,
+  MISTRAL_VIBE_CAPABILITIES,
+  CURSOR_CLI_CAPABILITIES,
   TERMINAL_CAPABILITIES
 } from '../../../src/main/services/agent-sdk-types'
 
@@ -64,7 +66,13 @@ describe('Backward compatibility: settings without codex field', () => {
   })
 
   it('availableAgentSdks null safely handles codex access via optional chaining', () => {
-    const availableAgentSdks: { opencode: boolean; claude: boolean; codex: boolean } | null = null
+    const availableAgentSdks: {
+      opencode: boolean
+      claude: boolean
+      codex: boolean
+      mistralVibe: boolean
+      cursorCli: boolean
+    } | null = null
 
     // This matches how the renderer accesses capabilities: availableAgentSdks?.codex
     const isCodexAvailable = availableAgentSdks?.codex
@@ -87,6 +95,16 @@ describe('Backward compatibility: defaultAgentSdk persistence', () => {
   it('defaultAgentSdk persisted as "codex" is valid', () => {
     const persisted: AgentSdkId = 'codex'
     expect(persisted).toBe('codex')
+  })
+
+  it('defaultAgentSdk persisted as "mistral-vibe" is valid', () => {
+    const persisted: AgentSdkId = 'mistral-vibe'
+    expect(persisted).toBe('mistral-vibe')
+  })
+
+  it('defaultAgentSdk persisted as "cursor-cli" is valid', () => {
+    const persisted: AgentSdkId = 'cursor-cli'
+    expect(persisted).toBe('cursor-cli')
   })
 
   it('defaultAgentSdk persisted as "terminal" is valid', () => {
@@ -130,6 +148,24 @@ describe('Backward compatibility: sessions with existing SDKs still work', () =>
     expect(session.agent_sdk).toBe('codex')
   })
 
+  it('sessions with agent_sdk = "mistral-vibe" are valid', () => {
+    const session = {
+      id: 's-mistral',
+      agent_sdk: 'mistral-vibe' as AgentSdkId,
+      name: 'Mistral Session'
+    }
+    expect(session.agent_sdk).toBe('mistral-vibe')
+  })
+
+  it('sessions with agent_sdk = "cursor-cli" are valid', () => {
+    const session = {
+      id: 's-cursor',
+      agent_sdk: 'cursor-cli' as AgentSdkId,
+      name: 'Cursor CLI Session'
+    }
+    expect(session.agent_sdk).toBe('cursor-cli')
+  })
+
   it('sessions with null/missing agent_sdk default to opencode', () => {
     const rawSession = { id: 's-old', agent_sdk: null }
     const resolvedSdk: AgentSdkId = (rawSession.agent_sdk as AgentSdkId) ?? 'opencode'
@@ -146,25 +182,35 @@ describe('All AgentSdkId values are production-stable', () => {
     opencode: OPENCODE_CAPABILITIES,
     'claude-code': CLAUDE_CODE_CAPABILITIES,
     codex: CODEX_CAPABILITIES,
+    'mistral-vibe': MISTRAL_VIBE_CAPABILITIES,
+    'cursor-cli': CURSOR_CLI_CAPABILITIES,
     terminal: TERMINAL_CAPABILITIES
   }
 
   it('every AgentSdkId has a corresponding capability constant', () => {
-    const allIds: AgentSdkId[] = ['opencode', 'claude-code', 'codex', 'terminal']
+    const allIds: AgentSdkId[] = [
+      'opencode',
+      'claude-code',
+      'codex',
+      'mistral-vibe',
+      'cursor-cli',
+      'terminal'
+    ]
     for (const id of allIds) {
       expect(SDK_CAPABILITY_MAP[id]).toBeDefined()
     }
   })
 
-  it('exactly four SDK capability constants are defined', () => {
-    expect(Object.keys(SDK_CAPABILITY_MAP)).toHaveLength(4)
+  it('exactly six SDK capability constants are defined', () => {
+    expect(Object.keys(SDK_CAPABILITY_MAP)).toHaveLength(6)
   })
 
   it('each capability object has all required boolean fields', () => {
     const requiredFields = [
       'supportsUndo', 'supportsRedo', 'supportsCommands',
       'supportsPermissionRequests', 'supportsQuestionPrompts',
-      'supportsModelSelection', 'supportsReconnect', 'supportsPartialStreaming'
+      'supportsModelSelection', 'supportsReconnect', 'supportsPartialStreaming',
+      'supportsSteer'
     ]
     for (const [sdkId, caps] of Object.entries(SDK_CAPABILITY_MAP)) {
       for (const field of requiredFields) {
@@ -187,6 +233,7 @@ describe('Capability contracts are stable', () => {
       expect(OPENCODE_CAPABILITIES.supportsModelSelection).toBe(true)
       expect(OPENCODE_CAPABILITIES.supportsReconnect).toBe(true)
       expect(OPENCODE_CAPABILITIES.supportsPartialStreaming).toBe(true)
+      expect(OPENCODE_CAPABILITIES.supportsSteer).toBe(false)
     })
   })
 
@@ -203,6 +250,25 @@ describe('Capability contracts are stable', () => {
       expect(CLAUDE_CODE_CAPABILITIES.supportsModelSelection).toBe(true)
       expect(CLAUDE_CODE_CAPABILITIES.supportsReconnect).toBe(true)
       expect(CLAUDE_CODE_CAPABILITIES.supportsPartialStreaming).toBe(true)
+      expect(CLAUDE_CODE_CAPABILITIES.supportsSteer).toBe(false)
+    })
+  })
+
+  describe('Mistral Vibe capabilities', () => {
+    it('matches the non-OpenCode agent subset we document for Hive', () => {
+      expect(MISTRAL_VIBE_CAPABILITIES.supportsUndo).toBe(false)
+      expect(MISTRAL_VIBE_CAPABILITIES.supportsRedo).toBe(false)
+      expect(MISTRAL_VIBE_CAPABILITIES.supportsCommands).toBe(true)
+      expect(MISTRAL_VIBE_CAPABILITIES.supportsSteer).toBe(false)
+    })
+  })
+
+  describe('Cursor CLI capabilities', () => {
+    it('matches the Mistral-style ACP agent subset we document for Hive', () => {
+      expect(CURSOR_CLI_CAPABILITIES.supportsUndo).toBe(false)
+      expect(CURSOR_CLI_CAPABILITIES.supportsRedo).toBe(false)
+      expect(CURSOR_CLI_CAPABILITIES.supportsCommands).toBe(true)
+      expect(CURSOR_CLI_CAPABILITIES.supportsSteer).toBe(false)
     })
   })
 
@@ -229,6 +295,10 @@ describe('Capability contracts are stable', () => {
     it('supports partial streaming', () => {
       expect(CODEX_CAPABILITIES.supportsPartialStreaming).toBe(true)
     })
+
+    it('supports steer mode', () => {
+      expect(CODEX_CAPABILITIES.supportsSteer).toBe(true)
+    })
   })
 
   describe('Terminal capabilities (all disabled)', () => {
@@ -241,6 +311,7 @@ describe('Capability contracts are stable', () => {
       expect(TERMINAL_CAPABILITIES.supportsModelSelection).toBe(false)
       expect(TERMINAL_CAPABILITIES.supportsReconnect).toBe(false)
       expect(TERMINAL_CAPABILITIES.supportsPartialStreaming).toBe(false)
+      expect(TERMINAL_CAPABILITIES.supportsSteer).toBe(false)
     })
   })
 })
@@ -252,10 +323,17 @@ describe('Settings store defaults contract', () => {
     expect(storeDefault).toBe('opencode')
   })
 
-  it('all four valid SDK values are accepted by the type system', () => {
-    const values: AgentSdkId[] = ['opencode', 'claude-code', 'codex', 'terminal']
-    expect(values).toHaveLength(4)
-    expect(new Set(values).size).toBe(4)
+  it('all six valid SDK values are accepted by the type system', () => {
+    const values: AgentSdkId[] = [
+      'opencode',
+      'claude-code',
+      'codex',
+      'mistral-vibe',
+      'cursor-cli',
+      'terminal'
+    ]
+    expect(values).toHaveLength(6)
+    expect(new Set(values).size).toBe(6)
   })
 
   it('loadFromDatabase merges defaults — missing codex fields get defaults', () => {

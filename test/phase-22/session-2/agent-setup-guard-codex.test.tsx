@@ -32,7 +32,13 @@ vi.mock('@/components/setup/AgentPickerDialog', () => ({
     availableSdks
   }: {
     onSelect: (sdk: string) => void
-    availableSdks: { opencode: boolean; claude: boolean; codex: boolean }
+    availableSdks: {
+      opencode: boolean
+      claude: boolean
+      codex: boolean
+      mistralVibe: boolean
+      cursorCli: boolean
+    }
   }) => (
     <div data-testid="agent-picker-dialog">
       {availableSdks.opencode && (
@@ -48,6 +54,16 @@ vi.mock('@/components/setup/AgentPickerDialog', () => ({
       {availableSdks.codex && (
         <button data-testid="pick-codex" onClick={() => onSelect('codex')}>
           Codex
+        </button>
+      )}
+      {availableSdks.mistralVibe && (
+        <button data-testid="pick-mistral-vibe" onClick={() => onSelect('mistral-vibe')}>
+          Mistral Vibe
+        </button>
+      )}
+      {availableSdks.cursorCli && (
+        <button data-testid="pick-cursor-cli" onClick={() => onSelect('cursor-cli')}>
+          Cursor CLI
         </button>
       )}
     </div>
@@ -87,7 +103,13 @@ describe('AgentSetupGuard with Codex support', () => {
   })
 
   it('auto-selects codex when it is the only installed provider', async () => {
-    mockDetectAgentSdks.mockResolvedValue({ opencode: false, claude: false, codex: true })
+    mockDetectAgentSdks.mockResolvedValue({
+      opencode: false,
+      claude: false,
+      codex: true,
+      mistralVibe: false,
+      cursorCli: false
+    })
 
     const { AgentSetupGuard } = await import(
       '@/components/setup/AgentSetupGuard'
@@ -106,7 +128,13 @@ describe('AgentSetupGuard with Codex support', () => {
   })
 
   it('shows picker with only installed providers (no claude when uninstalled)', async () => {
-    mockDetectAgentSdks.mockResolvedValue({ opencode: true, claude: false, codex: true })
+    mockDetectAgentSdks.mockResolvedValue({
+      opencode: true,
+      claude: false,
+      codex: true,
+      mistralVibe: false,
+      cursorCli: false
+    })
 
     const { AgentSetupGuard } = await import(
       '@/components/setup/AgentSetupGuard'
@@ -125,7 +153,13 @@ describe('AgentSetupGuard with Codex support', () => {
   })
 
   it('shows picker dialog when all three are installed', async () => {
-    mockDetectAgentSdks.mockResolvedValue({ opencode: true, claude: true, codex: true })
+    mockDetectAgentSdks.mockResolvedValue({
+      opencode: true,
+      claude: true,
+      codex: true,
+      mistralVibe: false,
+      cursorCli: false
+    })
 
     const { AgentSetupGuard } = await import(
       '@/components/setup/AgentSetupGuard'
@@ -141,7 +175,13 @@ describe('AgentSetupGuard with Codex support', () => {
   })
 
   it('shows none-found dialog when no agents are installed', async () => {
-    mockDetectAgentSdks.mockResolvedValue({ opencode: false, claude: false, codex: false })
+    mockDetectAgentSdks.mockResolvedValue({
+      opencode: false,
+      claude: false,
+      codex: false,
+      mistralVibe: false,
+      cursorCli: false
+    })
 
     const { AgentSetupGuard } = await import(
       '@/components/setup/AgentSetupGuard'
@@ -154,7 +194,13 @@ describe('AgentSetupGuard with Codex support', () => {
   })
 
   it('auto-selects opencode when only opencode is installed (codex false)', async () => {
-    mockDetectAgentSdks.mockResolvedValue({ opencode: true, claude: false, codex: false })
+    mockDetectAgentSdks.mockResolvedValue({
+      opencode: true,
+      claude: false,
+      codex: false,
+      mistralVibe: false,
+      cursorCli: false
+    })
 
     const { AgentSetupGuard } = await import(
       '@/components/setup/AgentSetupGuard'
@@ -168,7 +214,13 @@ describe('AgentSetupGuard with Codex support', () => {
   })
 
   it('auto-selects claude-code when only claude is installed (codex false)', async () => {
-    mockDetectAgentSdks.mockResolvedValue({ opencode: false, claude: true, codex: false })
+    mockDetectAgentSdks.mockResolvedValue({
+      opencode: false,
+      claude: true,
+      codex: false,
+      mistralVibe: false,
+      cursorCli: false
+    })
 
     const { AgentSetupGuard } = await import(
       '@/components/setup/AgentSetupGuard'
