@@ -1,6 +1,6 @@
-# Hive Phase 19 Implementation Plan
+# Octob Phase 19 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 19, covering dog breed naming, merge conflict sidebar UX, cross-worktree merge defaults, todo chevron icons, per-worktree model persistence, and tab context menus.
+This document outlines the implementation plan for Octob Phase 19, covering dog breed naming, merge conflict sidebar UX, cross-worktree merge defaults, todo chevron icons, per-worktree model persistence, and tab context menus.
 
 ---
 

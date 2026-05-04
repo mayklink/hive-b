@@ -59,10 +59,10 @@ if $SLEEP_AFTER; then
 fi
 
 # ── Constants ─────────────────────────────────────────────────────
-REPO="morapelker/hive"
+REPO="morapelker/octob"
 GHOSTTY_DEPS_TAG="ghostty-deps-v1"
-HOMEBREW_REPO="${HOMEBREW_REPO:-$HOME/Documents/dev/hive-brew}"
-HOMEBREW_CASK="Casks/hive-canary.rb"
+HOMEBREW_REPO="${HOMEBREW_REPO:-$HOME/Documents/dev/octob-brew}"
+HOMEBREW_CASK="Casks/octob-canary.rb"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
@@ -213,7 +213,7 @@ ${RELEASE_NOTES}"
   if ! $AUTO_YES; then
     read -rp "Edit release notes in \$EDITOR before publishing? [y/N] " edit_notes
     if [[ "$edit_notes" =~ ^[Yy]$ ]]; then
-      NOTES_TMPFILE=$(mktemp "${TMPDIR:-/tmp}/hive-canary-release-notes.XXXXXX")
+      NOTES_TMPFILE=$(mktemp "${TMPDIR:-/tmp}/octob-canary-release-notes.XXXXXX")
       echo "$RELEASE_NOTES" > "$NOTES_TMPFILE"
       ${EDITOR:-vim} "$NOTES_TMPFILE"
       RELEASE_NOTES=$(cat "$NOTES_TMPFILE")
@@ -527,7 +527,7 @@ echo -e "${GREEN}  Canary release v${NEW_VERSION} complete!${NC}"
 echo -e "${GREEN}══════════════════════════════════════════════════${NC}"
 echo ""
 echo "  GitHub Release: https://github.com/${REPO}/releases/tag/v${NEW_VERSION}"
-echo "  Homebrew:       brew install --cask morapelker/hive/hive-canary"
+echo "  Homebrew:       brew install --cask morapelker/octob/octob-canary"
 echo ""
 echo "  Assets published:"
 echo "    macOS:"

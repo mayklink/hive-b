@@ -1,4 +1,4 @@
-# Hive -- Phase 20 Product Requirements Document
+# Octob -- Phase 20 Product Requirements Document
 
 ## Overview
 
@@ -318,7 +318,7 @@ Replace the static PR button with a state-driven button:
         variant="destructive"
         className="h-7 text-xs"
         onClick={handleArchiveWorktree}
-        data-testid="archive-button"
+        data-testid="arcoctob-button"
       >
         <Archive className="h-3.5 w-3.5 mr-1" />
         Archive
@@ -492,7 +492,7 @@ app.on('before-quit', (event) => {
     dialog
       .showMessageBox(mainWindow, {
         type: 'warning',
-        title: 'Quit Hive?',
+        title: 'Quit Octob?',
         message: 'Are you sure you want to quit?',
         detail:
           'You have pending worktrees running. Quitting now will terminate all active sessions and processes.',
@@ -740,7 +740,7 @@ Replace the merge button conditionally:
       size="sm"
       className="h-6 text-xs whitespace-nowrap"
       onClick={handleArchiveWorktree}
-      data-testid="archive-merged-button"
+      data-testid="arcoctob-merged-button"
     >
       Archive
     </Button>

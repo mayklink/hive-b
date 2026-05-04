@@ -7,7 +7,7 @@
 
 Phase 10 is the final server-side phase. It ensures comprehensive test coverage for all GraphQL resolvers, subscriptions, and security features built in Phases 1-9. It also verifies that the existing desktop app is completely unaffected by all changes.
 
-At the end of this phase, the Hive headless server is complete, tested, and production-ready. Implementation moves to the React Native mobile app (separate repository) in Phase 11.
+At the end of this phase, the Octob headless server is complete, tested, and production-ready. Implementation moves to the React Native mobile app (separate repository) in Phase 11.
 
 ## Prerequisites
 

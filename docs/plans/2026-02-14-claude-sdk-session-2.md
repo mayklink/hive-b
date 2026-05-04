@@ -235,7 +235,7 @@ describe('ClaudeCodeImplementer', () => {
 
   describe('stub methods throw not-yet-implemented', () => {
     it('connect throws', async () => {
-      await expect(implementer.connect('/path', 'hive-1')).rejects.toThrow(/not yet implemented/)
+      await expect(implementer.connect('/path', 'octob-1')).rejects.toThrow(/not yet implemented/)
     })
 
     it('prompt throws', async () => {
@@ -537,7 +537,7 @@ describe('cleanup', () => {
 
     impl.sessions.set('path::session-1', {
       claudeSessionId: 'session-1',
-      octobSessionId: 'hive-1',
+      octobSessionId: 'octob-1',
       worktreePath: '/path',
       abortController,
       checkpoints: new Map()
@@ -590,7 +590,7 @@ describe('cleanup', () => {
     const impl = implementer as any
     impl.sessions.set('path::session-idle', {
       claudeSessionId: 'session-idle',
-      octobSessionId: 'hive-idle',
+      octobSessionId: 'octob-idle',
       worktreePath: '/path',
       abortController: null,
       checkpoints: new Map()

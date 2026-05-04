@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Build the core GraphQL server infrastructure so `hive --headless` starts a functional GraphQL server with authentication, TLS, and management commands.
+**Goal:** Build the core GraphQL server infrastructure so `octob --headless` starts a functional GraphQL server with authentication, TLS, and management commands.
 
 **Architecture:** Headless mode shares services (Database, Git, OpenCode) with GUI mode but replaces window/IPC with a GraphQL server (yoga + HTTPS + WebSocket). Auth via `hive_`-prefixed API keys with SHA-256 hash stored in SQLite. Self-signed ECDSA TLS certs auto-generated on first run.
 
@@ -269,7 +269,7 @@ describe('PathGuard', () => {
   let guard: PathGuard
 
   beforeEach(() => {
-    guard = new PathGuard(['/home/user/projects', '/tmp/hive'])
+    guard = new PathGuard(['/home/user/projects', '/tmp/octob'])
   })
 
   it('accepts valid path under allowed root', () => {
@@ -301,7 +301,7 @@ describe('PathGuard', () => {
   })
 
   it('accepts path under second root', () => {
-    expect(guard.validatePath('/tmp/hive/data.json')).toBe(true)
+    expect(guard.validatePath('/tmp/octob/data.json')).toBe(true)
   })
 
   it('addRoot allows new paths', () => {
@@ -389,7 +389,7 @@ describe('loadHeadlessConfig', () => {
   let tempDir: string
 
   beforeEach(() => {
-    tempDir = join(tmpdir(), `hive-config-test-${Date.now()}`)
+    tempDir = join(tmpdir(), `octob-config-test-${Date.now()}`)
     mkdirSync(tempDir, { recursive: true })
   })
 
@@ -585,7 +585,7 @@ describe('TLS Certificate Generation', () => {
   let tempDir: string
 
   beforeEach(() => {
-    tempDir = join(tmpdir(), `hive-tls-test-${Date.now()}`)
+    tempDir = join(tmpdir(), `octob-tls-test-${Date.now()}`)
     mkdirSync(tempDir, { recursive: true })
   })
 
@@ -665,7 +665,7 @@ export function generateTlsCerts(outputDir: string): void {
 
   // Generate self-signed certificate (10 years)
   execSync(
-    `openssl req -new -x509 -key "${keyPath}" -out "${certPath}" -days 3650 -subj "/CN=hive-headless"`,
+    `openssl req -new -x509 -key "${keyPath}" -out "${certPath}" -days 3650 -subj "/CN=octob-headless"`,
     { stdio: 'pipe' }
   )
 }
@@ -1247,7 +1247,7 @@ export async function headlessBootstrap(opts: HeadlessBootstrapOpts): Promise<vo
     const newKey = generateApiKey()
     existingHash = hashApiKey(newKey)
     db.setSetting('headless_api_key_hash', existingHash)
-    console.log('\n=== Hive Headless API Key (save this!) ===')
+    console.log('\n=== Octob Headless API Key (save this!) ===')
     console.log(newKey)
     console.log('==========================================\n')
   }
@@ -1273,7 +1273,7 @@ export async function headlessBootstrap(opts: HeadlessBootstrapOpts): Promise<vo
     bruteForce
   })
 
-  console.log(`Hive headless server running on https://${bind}:${port}/graphql`)
+  console.log(`Octob headless server running on https://${bind}:${port}/graphql`)
   console.log(`TLS fingerprint: ${fingerprint}`)
 
   // Handle shutdown
@@ -1325,7 +1325,7 @@ export async function handleManagementCommand(opts: ManagementCommandOpts): Prom
   }
 
   if (opts.showStatus) {
-    const statusPath = join(octobDir, 'hive-headless.status.json')
+    const statusPath = join(octobDir, 'octob-headless.status.json')
     try {
       const { readFileSync } = await import('node:fs')
       const status = JSON.parse(readFileSync(statusPath, 'utf-8'))
@@ -1336,7 +1336,7 @@ export async function handleManagementCommand(opts: ManagementCommandOpts): Prom
   }
 
   if (opts.kill) {
-    const pidPath = join(octobDir, 'hive-headless.pid')
+    const pidPath = join(octobDir, 'octob-headless.pid')
     try {
       const { readFileSync } = await import('node:fs')
       const pid = parseInt(readFileSync(pidPath, 'utf-8').trim())

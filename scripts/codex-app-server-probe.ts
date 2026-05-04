@@ -371,7 +371,7 @@ async function main(): Promise<void> {
           turn.requestMethods.some((method) => method.includes('requestApproval'))
         ),
         acceptPlanMechanism:
-          'No dedicated plan approval request was observed. The practical acceptance path is a normal follow-up user turn (Hive\'s non-Claude "Implement" flow).',
+          'No dedicated plan approval request was observed. The practical acceptance path is a normal follow-up user turn (Octob\'s non-Claude "Implement" flow).',
         finalPlanLooksStructured: isPlanMessage(finalPlanText)
       }
     }

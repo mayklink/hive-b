@@ -1,4 +1,4 @@
-# Hive - Phase 2 Product Requirements Document
+# Octob - Phase 2 Product Requirements Document
 
 ## Overview
 
@@ -274,7 +274,7 @@ A searchable command palette accessible via `Cmd/Ctrl+P`.
 │ 🔍 Type a command or search...              │
 ├─────────────────────────────────────────────┤
 │ Recent                                      │
-│   📂 Open Project: hive-electron            │
+│   📂 Open Project: octob-electron            │
 │   🌳 Switch to: tokyo                       │
 ├─────────────────────────────────────────────┤
 │ Commands                                    │

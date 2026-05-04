@@ -45,10 +45,10 @@ if $SLEEP_AFTER; then
 fi
 
 # ── Constants ─────────────────────────────────────────────────────
-REPO="morapelker/hive"
+REPO="morapelker/octob"
 GHOSTTY_DEPS_TAG="ghostty-deps-v1"
-HOMEBREW_REPO="${HOMEBREW_REPO:-$HOME/Documents/dev/hive-brew}"
-HOMEBREW_CASK="Casks/hive.rb"
+HOMEBREW_REPO="${HOMEBREW_REPO:-$HOME/Documents/dev/octob-brew}"
+HOMEBREW_CASK="Casks/octob.rb"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
@@ -200,7 +200,7 @@ if [[ -n "$RELEASE_NOTES" ]]; then
   if ! $AUTO_YES; then
     read -rp "Edit release notes in \$EDITOR before publishing? [y/N] " edit_notes
     if [[ "$edit_notes" =~ ^[Yy]$ ]]; then
-      NOTES_TMPFILE=$(mktemp "${TMPDIR:-/tmp}/hive-release-notes.XXXXXX")
+      NOTES_TMPFILE=$(mktemp "${TMPDIR:-/tmp}/octob-release-notes.XXXXXX")
       echo "$RELEASE_NOTES" > "$NOTES_TMPFILE"
       ${EDITOR:-vim} "$NOTES_TMPFILE"
       RELEASE_NOTES=$(cat "$NOTES_TMPFILE")
@@ -506,7 +506,7 @@ echo -e "${GREEN}  Release v${NEW_VERSION} complete!${NC}"
 echo -e "${GREEN}══════════════════════════════════════════════════${NC}"
 echo ""
 echo "  GitHub Release: https://github.com/${REPO}/releases/tag/v${NEW_VERSION}"
-echo "  Homebrew:       brew install --cask hive-app"
+echo "  Homebrew:       brew install --cask octob-app"
 echo ""
 echo "  Assets published:"
 echo "    macOS:"

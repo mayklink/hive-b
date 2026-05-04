@@ -1,4 +1,4 @@
-# Hive - Phase 6 Product Requirements Document
+# Octob - Phase 6 Product Requirements Document
 
 ## Overview
 
@@ -71,7 +71,7 @@ Expanded:
 └───────────────────────────────────────────────┘
 ```
 
-**Implementation**: The OpenCode SDK emits child session events with `parentID`. The main process already routes these to the parent Hive session. The renderer needs to:
+**Implementation**: The OpenCode SDK emits child session events with `parentID`. The main process already routes these to the parent Octob session. The renderer needs to:
 1. Recognize `subtask` parts in the streaming pipeline
 2. Map child session messages to the subtask part by matching `sessionID`
 3. Accumulate child messages/parts inline under the subtask card
@@ -237,7 +237,7 @@ When a session finishes (`session.idle` event) and the app window is **not focus
 
 ```
 ┌──────────────────────────────────────────┐
-│  🐝 Hive                                │
+│  🐝 Octob                                │
 │  my-project                              │
 │  "Implement auth feature" completed      │
 └──────────────────────────────────────────┘

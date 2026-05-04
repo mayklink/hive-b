@@ -1,8 +1,8 @@
-# Hive - Product Requirements Document
+# Octob - Product Requirements Document
 
 ## Overview
 
-**Hive** is an Electron-based desktop application for managing multiple git projects and their worktrees, with integrated OpenCode AI coding sessions. It provides a streamlined interface for developers who work across multiple repositories and branches simultaneously.
+**Octob** is an Electron-based desktop application for managing multiple git projects and their worktrees, with integrated OpenCode AI coding sessions. It provides a streamlined interface for developers who work across multiple repositories and branches simultaneously.
 
 ---
 
@@ -63,7 +63,7 @@
   - **Expand/collapse chevron** for worktrees
   - **"+" button** to create new worktree (visible on hover or always)
 - Context menu (right-click):
-  - Remove project from Hive
+  - Remove project from Octob
   - Open in Finder/Explorer
   - Copy path to clipboard
   - Edit project name
@@ -398,7 +398,7 @@ CREATE INDEX idx_messages_session ON session_messages(session_id);
 #### 7.2 Directory Structure
 
 ```
-hive-electron/
+octob-electron/
 ├── electron.vite.config.ts
 ├── package.json
 ├── tsconfig.json

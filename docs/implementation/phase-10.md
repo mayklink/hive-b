@@ -1,6 +1,6 @@
-# Hive Phase 10 Implementation Plan
+# Octob Phase 10 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 10, focusing on interactive AI communication (question prompts), scroll UX correctness (FAB fix), tool display parity (Write tool), workspace navigation (Show in Finder), and slash command execution (SDK command endpoint with mode switching).
+This document outlines the implementation plan for Octob Phase 10, focusing on interactive AI communication (question prompts), scroll UX correctness (FAB fix), tool display parity (Write tool), workspace navigation (Show in Finder), and slash command execution (SDK command endpoint with mode switching).
 
 ---
 
@@ -302,26 +302,26 @@ describe('Session 1: Question Store & IPC', () => {
         sessionID: 's1',
         questions: [{ question: 'Pick one', header: 'Choice', options: [] }]
       }
-      useQuestionStore.getState().addQuestion('hive-1', request)
-      expect(useQuestionStore.getState().getQuestions('hive-1')).toHaveLength(1)
+      useQuestionStore.getState().addQuestion('octob-1', request)
+      expect(useQuestionStore.getState().getQuestions('octob-1')).toHaveLength(1)
     })
 
     test('addQuestion prevents duplicates', () => {
       const request = { id: 'q1', sessionID: 's1', questions: [] }
-      useQuestionStore.getState().addQuestion('hive-1', request)
-      useQuestionStore.getState().addQuestion('hive-1', request)
-      expect(useQuestionStore.getState().getQuestions('hive-1')).toHaveLength(1)
+      useQuestionStore.getState().addQuestion('octob-1', request)
+      useQuestionStore.getState().addQuestion('octob-1', request)
+      expect(useQuestionStore.getState().getQuestions('octob-1')).toHaveLength(1)
     })
 
     test('removeQuestion removes by ID', () => {
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q1', sessionID: 's1', questions: [] })
+        .addQuestion('octob-1', { id: 'q1', sessionID: 's1', questions: [] })
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q2', sessionID: 's1', questions: [] })
-      useQuestionStore.getState().removeQuestion('hive-1', 'q1')
-      const remaining = useQuestionStore.getState().getQuestions('hive-1')
+        .addQuestion('octob-1', { id: 'q2', sessionID: 's1', questions: [] })
+      useQuestionStore.getState().removeQuestion('octob-1', 'q1')
+      const remaining = useQuestionStore.getState().getQuestions('octob-1')
       expect(remaining).toHaveLength(1)
       expect(remaining[0].id).toBe('q2')
     })
@@ -329,23 +329,23 @@ describe('Session 1: Question Store & IPC', () => {
     test('getActiveQuestion returns first pending question', () => {
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q1', sessionID: 's1', questions: [] })
+        .addQuestion('octob-1', { id: 'q1', sessionID: 's1', questions: [] })
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q2', sessionID: 's1', questions: [] })
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')?.id).toBe('q1')
+        .addQuestion('octob-1', { id: 'q2', sessionID: 's1', questions: [] })
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')?.id).toBe('q1')
     })
 
     test('getActiveQuestion returns null when no questions', () => {
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')).toBeNull()
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')).toBeNull()
     })
 
     test('clearSession removes all questions for a session', () => {
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q1', sessionID: 's1', questions: [] })
-      useQuestionStore.getState().clearSession('hive-1')
-      expect(useQuestionStore.getState().getQuestions('hive-1')).toHaveLength(0)
+        .addQuestion('octob-1', { id: 'q1', sessionID: 's1', questions: [] })
+      useQuestionStore.getState().clearSession('octob-1')
+      expect(useQuestionStore.getState().getQuestions('octob-1')).toHaveLength(0)
     })
   })
 
@@ -703,7 +703,7 @@ describe('Session 3: Question Session Integration', () => {
   test('question.asked event adds to store', () => {
     const event = {
       type: 'question.asked',
-      sessionId: 'hive-1',
+      sessionId: 'octob-1',
       data: {
         id: 'q1',
         sessionID: 'opc-1',
@@ -711,7 +711,7 @@ describe('Session 3: Question Session Integration', () => {
       }
     }
     // Simulate stream handler receiving this event
-    // Verify useQuestionStore has the question for 'hive-1'
+    // Verify useQuestionStore has the question for 'octob-1'
   })
 
   test('question.replied event removes from store', () => {

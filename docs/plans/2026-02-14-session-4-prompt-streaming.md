@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Stream real Claude SDK responses through Hive's normalized event contract so the renderer receives the same `opencode:stream` events it already handles — no renderer changes needed.
+**Goal:** Stream real Claude SDK responses through Octob's normalized event contract so the renderer receives the same `opencode:stream` events it already handles — no renderer changes needed.
 
 **Architecture:** The `ClaudeCodeImplementer.prompt()` method calls `query()` from the Claude SDK, iterates the async generator, maps each `SDKMessage` into normalized `StreamEvent` payloads, and emits them via `sendToRenderer('opencode:stream', ...)`. IPC handlers gain SDK-dispatch logic so `opencode:prompt` and `opencode:abort` transparently route to the correct implementer based on `session.agent_sdk` in the DB. Abort uses `AbortController.abort()` + `query.interrupt()`.
 
@@ -420,7 +420,7 @@ describe('ClaudeCodeImplementer.prompt() – streaming', () => {
   })
 
   it('emits session.status busy then idle for a simple prompt', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
 
     const messages = [
       { type: 'assistant', session_id: 'real-sdk-id', content: [{ type: 'text', text: 'Hello!' }] }
@@ -437,20 +437,20 @@ describe('ClaudeCodeImplementer.prompt() – streaming', () => {
     // First event: session.status busy
     expect(events[0]).toMatchObject({
       type: 'session.status',
-      sessionId: 'hive-1',
+      sessionId: 'octob-1',
       statusPayload: { type: 'busy' }
     })
 
     // Last event: session.status idle
     expect(events[events.length - 1]).toMatchObject({
       type: 'session.status',
-      sessionId: 'hive-1',
+      sessionId: 'octob-1',
       statusPayload: { type: 'idle' }
     })
   })
 
   it('materializes pending:: session ID on first SDK message', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     expect(sessionId).toMatch(/^pending::/)
 
     const messages = [
@@ -475,7 +475,7 @@ describe('ClaudeCodeImplementer.prompt() – streaming', () => {
   })
 
   it('emits message.part.updated for assistant text', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
 
     const messages = [
       { type: 'assistant', session_id: 'sdk-1', content: [{ type: 'text', text: 'Response text' }] }
@@ -493,12 +493,12 @@ describe('ClaudeCodeImplementer.prompt() – streaming', () => {
     expect(partEvents.length).toBeGreaterThan(0)
     expect(partEvents[0]).toMatchObject({
       type: 'message.part.updated',
-      sessionId: 'hive-1'
+      sessionId: 'octob-1'
     })
   })
 
   it('captures user message UUIDs as checkpoints', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
 
     const messages = [
       { type: 'user', session_id: 'sdk-1', uuid: 'ckpt-abc', content: [] },
@@ -515,7 +515,7 @@ describe('ClaudeCodeImplementer.prompt() – streaming', () => {
   })
 
   it('skips init messages', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
 
     const messages = [
       { type: 'init', session_id: 'sdk-1', content: {} },
@@ -536,7 +536,7 @@ describe('ClaudeCodeImplementer.prompt() – streaming', () => {
   })
 
   it('emits session.error and then idle on SDK error', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
 
     mockQuery.mockImplementation(() => {
       throw new Error('SDK connection failed')
@@ -561,7 +561,7 @@ describe('ClaudeCodeImplementer.prompt() – streaming', () => {
 
   it('passes resume ID to SDK when session is materialized', async () => {
     // Simulate a reconnected session (materialized = true, real ID)
-    await impl.reconnect('/proj', 'real-sdk-id', 'hive-2')
+    await impl.reconnect('/proj', 'real-sdk-id', 'octob-2')
 
     const messages = [
       { type: 'assistant', session_id: 'real-sdk-id', content: [{ type: 'text', text: 'Resumed' }] }
@@ -873,7 +873,7 @@ describe('ClaudeCodeImplementer.abort()', () => {
   })
 
   it('aborts the abort controller', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     const sessions = (impl as any).sessions as Map<string, any>
     const state = sessions.get((impl as any).getSessionKey('/proj', sessionId))
     expect(state.abortController.signal.aborted).toBe(false)
@@ -883,7 +883,7 @@ describe('ClaudeCodeImplementer.abort()', () => {
   })
 
   it('calls query.interrupt() if a query is active', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
 
     // Manually set a mock query on the session
     const mockInterrupt = vi.fn().mockResolvedValue(undefined)
@@ -901,7 +901,7 @@ describe('ClaudeCodeImplementer.abort()', () => {
   })
 
   it('emits session.status idle after abort', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     await impl.abort('/proj', sessionId)
 
     const send = mockWindow.webContents.send as ReturnType<typeof vi.fn>
@@ -912,20 +912,20 @@ describe('ClaudeCodeImplementer.abort()', () => {
     expect(events).toContainEqual(
       expect.objectContaining({
         type: 'session.status',
-        sessionId: 'hive-1',
+        sessionId: 'octob-1',
         statusPayload: { type: 'idle' }
       })
     )
   })
 
   it('returns true on successful abort', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     const result = await impl.abort('/proj', sessionId)
     expect(result).toBe(true)
   })
 
   it('does not throw when query.interrupt() throws', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     const sessions = (impl as any).sessions as Map<string, any>
     const key = (impl as any).getSessionKey('/proj', sessionId)
     sessions.get(key).query = {
@@ -1007,7 +1007,7 @@ Add to the streaming test file:
 
 ```ts
 it('getMessages returns empty array (Session 5 stub)', async () => {
-  const { sessionId } = await impl.connect('/proj', 'hive-1')
+  const { sessionId } = await impl.connect('/proj', 'octob-1')
   const messages = await impl.getMessages('/proj', sessionId)
   expect(messages).toEqual([])
 })

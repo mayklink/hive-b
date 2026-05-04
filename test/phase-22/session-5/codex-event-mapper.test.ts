@@ -20,7 +20,7 @@ function makeEvent(overrides: Partial<CodexManagerEvent>): CodexManagerEvent {
   }
 }
 
-const OCTOB_SESSION = 'hive-session-abc'
+const OCTOB_SESSION = 'octob-session-abc'
 
 describe('mapCodexEventToStreamEvents', () => {
   // ── Content deltas ──────────────────────────────────────────

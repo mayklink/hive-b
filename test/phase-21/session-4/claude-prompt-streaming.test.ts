@@ -77,7 +77,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
     })
 
     it('emits session.status busy then idle for a simple prompt', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const iter = createMockQueryIterator([
         {
@@ -95,20 +95,20 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
       // First event should be busy status
       expect(events[0]).toMatchObject({
         type: 'session.status',
-        sessionId: 'hive-1',
+        sessionId: 'octob-1',
         statusPayload: { type: 'busy' }
       })
 
       // Last event should be idle status
       expect(events[events.length - 1]).toMatchObject({
         type: 'session.status',
-        sessionId: 'hive-1',
+        sessionId: 'octob-1',
         statusPayload: { type: 'idle' }
       })
     })
 
     it('materializes pending:: session ID on first SDK message', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
       expect(sessionId).toMatch(/^pending::/)
 
       const oldKey = (impl as any).getSessionKey('/proj', sessionId)
@@ -138,7 +138,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
     })
 
     it('emits message.part.updated for assistant text', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const iter = createMockQueryIterator([
         {
@@ -170,7 +170,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
     })
 
     it('captures user message UUIDs as checkpoints', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const iter = createMockQueryIterator([
         {
@@ -196,7 +196,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
     })
 
     it('skips init messages', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const iter = createMockQueryIterator([
         {
@@ -222,7 +222,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
     })
 
     it('emits session.error and then idle on SDK error', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       mockQuery.mockImplementation(() => {
         throw new Error('SDK query failed')
@@ -240,7 +240,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
 
       const errorEvent = events.find((e: any) => e.type === 'session.error')
       expect(errorEvent).toBeDefined()
-      expect(errorEvent.sessionId).toBe('hive-1')
+      expect(errorEvent.sessionId).toBe('octob-1')
 
       // Last event should be idle
       expect(events[events.length - 1]).toMatchObject({
@@ -250,7 +250,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
     })
 
     it('emits session.error with stderr when SDK exits silently with no messages', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       // Simulate SDK returning an iterator that ends immediately (no messages)
       // but stderr callback fires before iteration completes
@@ -287,7 +287,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
     })
 
     it('passes resume ID to SDK when session is materialized', async () => {
-      await impl.reconnect('/proj', 'real-sdk-id-1', 'hive-1')
+      await impl.reconnect('/proj', 'real-sdk-id-1', 'octob-1')
 
       const iter = createMockQueryIterator([
         {
@@ -316,7 +316,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
       }
       impl.setDatabaseService(mockDb as any)
 
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
       const messages = [
         { type: 'assistant', session_id: 'real-sdk-id', content: [{ type: 'text', text: 'Hi' }] }
       ]
@@ -324,14 +324,14 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
 
       await impl.prompt('/proj', sessionId, 'Hello')
 
-      expect(mockDb.updateSession).toHaveBeenCalledWith('hive-1', {
+      expect(mockDb.updateSession).toHaveBeenCalledWith('octob-1', {
         opencode_session_id: 'real-sdk-id'
       })
     })
 
     it('does not fail if dbService is null', async () => {
       // No setDatabaseService called — dbService is null
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
       const messages = [
         { type: 'assistant', session_id: 'real-sdk-id', content: [{ type: 'text', text: 'Hi' }] }
       ]
@@ -350,7 +350,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
       }
       impl.setDatabaseService(mockDb as any)
 
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
       const messages = [
         { type: 'assistant', session_id: 'real-sdk-id', content: [{ type: 'text', text: 'Hi' }] }
       ]
@@ -359,7 +359,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
       // Should not throw even if DB fails
       await impl.prompt('/proj', sessionId, 'Hello')
 
-      expect(mockDb.updateSession).toHaveBeenCalledWith('hive-1', {
+      expect(mockDb.updateSession).toHaveBeenCalledWith('octob-1', {
         opencode_session_id: 'real-sdk-id'
       })
     })
@@ -372,7 +372,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
       impl.setDatabaseService(mockDb as any)
 
       // Reconnect creates an already-materialized session
-      await impl.reconnect('/proj', 'existing-sdk-id', 'hive-1')
+      await impl.reconnect('/proj', 'existing-sdk-id', 'octob-1')
       const messages = [
         {
           type: 'assistant',
@@ -393,7 +393,7 @@ describe('ClaudeCodeImplementer – prompt streaming (Session 4)', () => {
 
   describe('getMessages()', () => {
     it('returns empty array (Session 5 stub)', async () => {
-      await impl.connect('/proj', 'hive-1')
+      await impl.connect('/proj', 'octob-1')
       const result = await impl.getMessages('/proj', 'any-session')
       expect(result).toEqual([])
     })

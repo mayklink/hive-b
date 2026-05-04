@@ -280,7 +280,7 @@ npx expo start --ios
    }
    ```
 
-3. `[app]` Create markdown styles that match Hive's dark theme:
+3. `[app]` Create markdown styles that match Octob's dark theme:
    ```typescript
    const markdownStyles = {
      body: { color: '#e4e4e7' },

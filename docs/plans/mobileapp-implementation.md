@@ -1,9 +1,9 @@
-# Hive Headless Server + Mobile App — Implementation Plan
+# Octob Headless Server + Mobile App — Implementation Plan
 
 **PRD Reference:** `docs/plans/mobileapp.md`
 
 **Two repositories:**
-- **server** = this repo (`hive-electron`) — GraphQL server, EventBus, shared types, headless mode
+- **server** = this repo (`octob-electron`) — GraphQL server, EventBus, shared types, headless mode
 - **app** = separate React Native repo — mobile client consuming the GraphQL API
 
 Each task is prefixed with `[server]` or `[app]` to indicate which project it belongs to.
@@ -119,8 +119,8 @@ Each task is prefixed with `[server]` or `[app]` to indicate which project it be
 | 94 | QR Code Pairing | Display API key + QR code on first headless start |
 | 95 | Key Rotation | --rotate-key generates new key, invalidates old, displays new QR |
 | 96 | Cert Regeneration | --regen-certs deletes and recreates TLS certs |
-| 97 | PID File | Write ~/.octob/hive-headless.pid on startup, delete on shutdown |
-| 98 | Status File | Write ~/.octob/hive-headless.status.json every 30s |
+| 97 | PID File | Write ~/.octob/octob-headless.pid on startup, delete on shutdown |
+| 98 | Status File | Write ~/.octob/octob-headless.status.json every 30s |
 | 99 | Security Test Suite | Auth, brute force, path guard, kill switch, auto-lock tests |
 | **Phase 10 — Server Testing & Regression** | | |
 | 100 | Integration Test Infrastructure | Mock database, mock services, yoga test helper |
@@ -967,7 +967,7 @@ pnpm vitest run test/server/auth-key.test.ts
 
 **Goal:** Add the `--headless` branch to `app.whenReady()` that starts GraphQL server instead of creating a window.
 
-**Definition of Done:** `hive --headless` starts server, `hive` (no flag) starts desktop as before.
+**Definition of Done:** `octob --headless` starts server, `octob` (no flag) starts desktop as before.
 
 **Tasks:**
 
@@ -1003,7 +1003,7 @@ pnpm build && pnpm test
 1. `[server]` In `src/main/index.ts` headless branch, BEFORE calling `headlessBootstrap()`, handle one-shot commands:
    - `--rotate-key`: generate new key, store hash, display new key + QR code, exit
    - `--regen-certs`: delete old certs, regenerate, update fingerprint, exit
-   - `--show-status`: read `~/.octob/hive-headless.status.json`, print to stdout, exit
+   - `--show-status`: read `~/.octob/octob-headless.status.json`, print to stdout, exit
    - `--kill`: read PID file, send SIGTERM to running process, exit
    - `--unlock`: clear auto-lock state (via settings table or signal), exit
 2. `[server]` Each command calls `app.quit()` after completing (they don't start the server).
@@ -1123,7 +1123,7 @@ These sessions are documented here for completeness but will be implemented in a
 
 1. `[app]` Initialize React Native project (Expo or bare workflow)
 2. `[app]` Set up TypeScript configuration
-3. `[app]` Set up ESLint + Prettier matching Hive conventions (no semicolons, single quotes)
+3. `[app]` Set up ESLint + Prettier matching Octob conventions (no semicolons, single quotes)
 4. `[app]` Create folder structure: `src/screens/`, `src/components/`, `src/stores/`, `src/hooks/`, `src/lib/`, `src/graphql/`
 5. `[app]` Verify project builds and runs on iOS simulator
 

@@ -1,4 +1,4 @@
-# Hive PostHog Analytics Implementation Plan
+# Octob PostHog Analytics Implementation Plan
 
 This document outlines the implementation plan for anonymous PostHog analytics, covering the telemetry service, IPC bridge, event instrumentation, privacy settings UI, and test mocks.
 

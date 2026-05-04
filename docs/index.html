@@ -8,9 +8,9 @@
   <link rel="icon" type="image/png" sizes="512x512" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
   <meta name="description" content="Run multiple AI coding agents in parallel across projects. One window. Isolated branches. Zero tab chaos. Free and open source.">
-  <meta property="og:title" content="Hive — AI Agent Orchestrator">
+  <meta property="og:title" content="Octob — AI Agent Orchestrator">
   <meta property="og:description" content="Run Claude Code, OpenCode, and Codex sessions in parallel across projects. One window. Isolated branches. Zero tab chaos.">
-  <meta property="og:image" content="https://raw.githubusercontent.com/morapelker/hive/main/docs/screenshots/hive-ss-1.png">
+  <meta property="og:image" content="https://raw.githubusercontent.com/morapelker/octob/main/docs/screenshots/octob-ss-1.png">
   <meta property="og:type" content="website">
   <meta name="twitter:card" content="summary_large_image">
   <style>
@@ -266,7 +266,7 @@
     </div>
 
     <div class="demo" onclick="openModal()">
-      <img src="screenshots/hive-full-demo.gif" alt="Hive demo — orchestrate AI agents across projects">
+      <img src="screenshots/octob-full-demo.gif" alt="Octob demo — orchestrate AI agents across projects">
       <div class="play-overlay">
         <div class="play-icon"></div>
       </div>
@@ -291,19 +291,19 @@
       <h2>Install</h2>
       <div class="install-cmd" onclick="copyInstall(this)">
         <span class="copy-hint">click to copy</span>
-        brew install --cask hive-app
+        brew install --cask octob-app
       </div>
       <p style="margin-top: 16px; color: #555; font-size: 0.8rem;">
-        Or download the .dmg from <a href="https://github.com/morapelker/hive/releases/latest" style="color: #888;">GitHub Releases</a>
+        Or download the .dmg from <a href="https://github.com/morapelker/octob/releases/latest" style="color: #888;">GitHub Releases</a>
       </p>
     </div>
 
     <p class="meta">Free. Open source. MIT licensed. macOS.</p>
 
     <div class="links">
-      <a href="https://github.com/morapelker/hive">GitHub</a>
-      <a href="https://github.com/morapelker/hive/issues">Issues</a>
-      <a href="https://github.com/morapelker/hive/discussions">Discussions</a>
+      <a href="https://github.com/morapelker/octob">GitHub</a>
+      <a href="https://github.com/morapelker/octob/issues">Issues</a>
+      <a href="https://github.com/morapelker/octob/discussions">Discussions</a>
     </div>
   </div>
 
@@ -311,7 +311,7 @@
     <div class="modal-content">
       <button class="modal-close" onclick="closeModal(event)">ESC</button>
       <video id="demoVideo" controls preload="none">
-        <source src="screenshots/hive-full-demo.mp4" type="video/mp4">
+        <source src="screenshots/octob-full-demo.mp4" type="video/mp4">
       </video>
     </div>
   </div>
@@ -340,7 +340,7 @@
     });
 
     function copyInstall(el) {
-      navigator.clipboard.writeText('brew install --cask hive-app');
+      navigator.clipboard.writeText('brew install --cask octob-app');
       el.classList.add('copied');
       el.querySelector('.copy-hint').textContent = 'copied!';
       setTimeout(function() {

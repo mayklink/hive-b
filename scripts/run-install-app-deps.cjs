@@ -27,14 +27,14 @@ function inCi() {
 
 if (sqlite !== 0) {
   if (process.platform === 'win32' && !inCi()) {
-    console.warn('[hive] postinstall: SQLite native rebuild failed — check toolchain or reinstall.')
+    console.warn('[octob] postinstall: SQLite native rebuild failed — check toolchain or reinstall.')
   }
   process.exit(sqlite)
 }
 
 if (nodePty !== 0 && process.platform === 'win32' && !inCi()) {
   console.warn('')
-  console.warn('[hive] node-pty not rebuilt — run yarn rebuild:app-deps after installing Visual Studio Build Tools (C++).')
+  console.warn('[octob] node-pty not rebuilt — run yarn rebuild:app-deps after installing Visual Studio Build Tools (C++).')
   console.warn('')
   try {
     writeMarker(root, ptyUnavailableMarker)

@@ -1,6 +1,6 @@
-# Hive Phase 13 Implementation Plan
+# Octob Phase 13 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 13, focusing on markdown code block rendering fix, diff view color improvements, non-git repository onboarding, individual quick action buttons, header branding redesign, project refresh, selection auto-propagation, and streaming thinking block behavior.
+This document outlines the implementation plan for Octob Phase 13, focusing on markdown code block rendering fix, diff view color improvements, non-git repository onboarding, individual quick action buttons, header branding redesign, project refresh, selection auto-propagation, and streaming thinking block behavior.
 
 ---
 

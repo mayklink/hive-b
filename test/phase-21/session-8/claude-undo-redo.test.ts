@@ -115,7 +115,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
     userUuids?: string[]
     userPrompts?: string[]
   }) {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     const userUuids = opts?.userUuids ?? ['uuid-user-1', 'uuid-user-2']
     const userPrompts = opts?.userPrompts ?? ['first prompt', 'second prompt']
 
@@ -190,7 +190,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
 
   describe('enableFileCheckpointing', () => {
     it('passes enableFileCheckpointing: true in query options', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const iter = createMockQueryIterator([
         {
@@ -235,7 +235,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
     it('calls rewindFiles with the correct user message UUID', async () => {
       const { rewindFilesMock } = await setupSessionWithCheckpoints()
 
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       expect(rewindFilesMock).toHaveBeenCalledWith('uuid-user-2')
     })
@@ -245,7 +245,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
         userPrompts: ['first prompt', 'second prompt']
       })
 
-      const result = await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      const result = await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       expect(result).toHaveProperty('revertMessageID')
       expect(typeof result.revertMessageID).toBe('string')
@@ -263,7 +263,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       const infoBefore = await impl.getSessionInfo('/proj', 'sdk-session-1')
       expect(infoBefore.revertMessageID).toBeNull()
 
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       const infoAfter = await impl.getSessionInfo('/proj', 'sdk-session-1')
       expect(infoAfter.revertMessageID).not.toBeNull()
@@ -272,9 +272,9 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
     })
 
     it('throws "Nothing to undo" when no checkpoints exist', async () => {
-      await impl.reconnect('/proj', 'no-checkpoints-session', 'hive-1')
+      await impl.reconnect('/proj', 'no-checkpoints-session', 'octob-1')
 
-      await expect(impl.undo('/proj', 'no-checkpoints-session', 'hive-1')).rejects.toThrow(
+      await expect(impl.undo('/proj', 'no-checkpoints-session', 'octob-1')).rejects.toThrow(
         'Nothing to undo'
       )
     })
@@ -287,7 +287,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
         error: 'File checkpointing not enabled'
       })
 
-      await expect(impl.undo('/proj', 'sdk-session-1', 'hive-1')).rejects.toThrow(
+      await expect(impl.undo('/proj', 'sdk-session-1', 'octob-1')).rejects.toThrow(
         'File checkpointing not enabled'
       )
     })
@@ -297,7 +297,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
 
       rewindFilesMock.mockResolvedValue({ canRewind: false })
 
-      await expect(impl.undo('/proj', 'sdk-session-1', 'hive-1')).rejects.toThrow(
+      await expect(impl.undo('/proj', 'sdk-session-1', 'octob-1')).rejects.toThrow(
         'Cannot rewind to this point'
       )
     })
@@ -309,15 +309,15 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       })
 
       // First undo: should rewind to uuid-3 (most recent)
-      const result1 = await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      const result1 = await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(rewindFilesMock).toHaveBeenLastCalledWith('uuid-3')
 
       // Second undo: should walk past the revert boundary and target uuid-2
-      const result2 = await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      const result2 = await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(rewindFilesMock).toHaveBeenLastCalledWith('uuid-2')
 
       // Third undo: should target uuid-1
-      const result3 = await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      const result3 = await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(rewindFilesMock).toHaveBeenLastCalledWith('uuid-1')
 
       // All results should have revertMessageID
@@ -330,7 +330,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
     })
 
     it('targets the latest checkpoint across multiple prompt calls', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const prompt1 = createMockQueryIterator([
         {
@@ -398,13 +398,13 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       await impl.prompt('/proj', 'sdk-session-1', 'prompt two')
       await impl.prompt('/proj', 'sdk-session-1', 'prompt three')
 
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       expect(resumeRewindFilesMock).toHaveBeenCalledWith('uuid-3')
     })
 
     it('captures first-seen checkpoint even when SDK marks message as replay', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const prompt1 = createMockQueryIterator([
         {
@@ -458,7 +458,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
 
       await impl.prompt('/proj', sessionId, 'prompt one')
       await impl.prompt('/proj', 'sdk-session-1', 'prompt two')
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       expect(resumeRewindFilesMock).toHaveBeenCalledWith('uuid-2')
     })
@@ -470,20 +470,20 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       })
 
       // First undo succeeds
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       // Second undo should fail — no more checkpoints before the boundary
-      await expect(impl.undo('/proj', 'sdk-session-1', 'hive-1')).rejects.toThrow('Nothing to undo')
+      await expect(impl.undo('/proj', 'sdk-session-1', 'octob-1')).rejects.toThrow('Nothing to undo')
     })
 
     it('throws when session not found', async () => {
-      await expect(impl.undo('/proj', 'nonexistent', 'hive-1')).rejects.toThrow(
+      await expect(impl.undo('/proj', 'nonexistent', 'octob-1')).rejects.toThrow(
         /session not found/i
       )
     })
 
     it('throws when it cannot create a resumed query for rewinding', async () => {
-      await impl.reconnect('/proj', 'orphan-session', 'hive-1')
+      await impl.reconnect('/proj', 'orphan-session', 'octob-1')
       const key = (impl as any).getSessionKey('/proj', 'orphan-session')
       const session = sessions.get(key)!
       // Manually add a checkpoint so we pass the "no checkpoints" check
@@ -496,13 +496,13 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       })
       // No mock query configured, so resume should fail.
 
-      await expect(impl.undo('/proj', 'orphan-session', 'hive-1')).rejects.toThrow(
+      await expect(impl.undo('/proj', 'orphan-session', 'octob-1')).rejects.toThrow(
         /failed to resume session for rewinding/i
       )
     })
 
     it('throws when resumed query does not support rewindFiles', async () => {
-      await impl.reconnect('/proj', 'no-rewind-session', 'hive-1')
+      await impl.reconnect('/proj', 'no-rewind-session', 'octob-1')
       const key = (impl as any).getSessionKey('/proj', 'no-rewind-session')
       const session = sessions.get(key)!
       session.checkpoints.set('some-uuid', 0)
@@ -522,7 +522,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       delete (noRewindIter as { rewindFiles?: unknown }).rewindFiles
       mockQuery.mockReturnValue(noRewindIter)
 
-      await expect(impl.undo('/proj', 'no-rewind-session', 'hive-1')).rejects.toThrow(
+      await expect(impl.undo('/proj', 'no-rewind-session', 'octob-1')).rejects.toThrow(
         /does not support rewindFiles/i
       )
     })
@@ -540,15 +540,15 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       expect(session.revertCheckpointUuid).toBeNull()
 
       // First undo targets uuid-3
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(session.revertCheckpointUuid).toBe('uuid-3')
 
       // Second undo targets uuid-2
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(session.revertCheckpointUuid).toBe('uuid-2')
 
       // Third undo targets uuid-1
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(session.revertCheckpointUuid).toBe('uuid-1')
     })
 
@@ -562,12 +562,12 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
         deletions: 0
       })
 
-      const result = await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      const result = await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(result.revertDiff).toBeNull()
     })
 
     it('resumes with an empty prompt and rewinds on a new query when stream is complete', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const promptRewindFilesMock = vi.fn().mockResolvedValue({
         canRewind: true,
@@ -629,7 +629,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
 
       await impl.prompt('/proj', sessionId, 'initial prompt')
 
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       expect(mockQuery).toHaveBeenCalledTimes(2)
 
@@ -643,7 +643,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
     })
 
     it('accepts void rewindFiles return values', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const promptIter = createMockQueryIterator([
         {
@@ -681,13 +681,13 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
 
       await impl.prompt('/proj', sessionId, 'initial prompt')
 
-      const result = await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      const result = await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(resumeRewindFilesMock).toHaveBeenCalledWith('uuid-user-1')
       expect(result.revertDiff).toBeNull()
     })
 
     it('skips tool_result-only user UUIDs when selecting undo checkpoint', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const promptIter = createMockQueryIterator([
         {
@@ -741,13 +741,13 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       mockQuery.mockReturnValueOnce(promptIter).mockReturnValueOnce(resumeIter)
 
       await impl.prompt('/proj', sessionId, 'initial prompt')
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       expect(resumeRewindFilesMock).toHaveBeenCalledWith('uuid-user-prompt')
     })
 
     it('falls back to conversation-only undo when no file checkpoint exists for selected UUID', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const promptIter = createMockQueryIterator([
         {
@@ -802,7 +802,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
 
       await impl.prompt('/proj', sessionId, 'initial prompt')
 
-      const undoResult = await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      const undoResult = await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(undoResult.revertMessageID).toBe('uuid-user-1')
       expect(undoResult.revertDiff).toBeNull()
 
@@ -819,7 +819,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
     it('sets resumeSessionAt to PREVIOUS checkpoint UUID (not the undone one)', async () => {
       // Two prompts: A (uuid-user-1) and B (uuid-user-2).
       // Undoing should target B and set resumeSessionAt to A.
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const prompt1Iter = createMockQueryIterator([
         {
@@ -888,7 +888,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       await impl.prompt('/proj', 'sdk-session-1', 'prompt B')
 
       // Undo: should target uuid-B (latest) and set resumeSessionAt to uuid-A
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       await impl.prompt('/proj', 'sdk-session-1', 'new prompt after undo')
 
@@ -899,7 +899,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
     })
 
     it('de-materializes session when undoing the only prompt (no previous checkpoint)', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       const promptIter = createMockQueryIterator([
         {
@@ -949,7 +949,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
         .mockReturnValueOnce(postUndoIter)
 
       await impl.prompt('/proj', sessionId, 'only prompt')
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       // Session should be de-materialized with no pending fork
       const key = (impl as any).getSessionKey('/proj', 'sdk-session-1')
@@ -970,7 +970,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
 
   describe('redo()', () => {
     it('throws "Redo is not supported for Claude Code sessions"', async () => {
-      await expect(impl.redo('/proj', 'any-session', 'hive-1')).rejects.toThrow(
+      await expect(impl.redo('/proj', 'any-session', 'octob-1')).rejects.toThrow(
         'Redo is not supported for Claude Code sessions'
       )
     })
@@ -980,7 +980,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
 
   describe('getSessionInfo()', () => {
     it('returns null revert state by default', async () => {
-      await impl.reconnect('/proj', 'test-session', 'hive-1')
+      await impl.reconnect('/proj', 'test-session', 'octob-1')
 
       const info = await impl.getSessionInfo('/proj', 'test-session')
       expect(info).toEqual({
@@ -992,7 +992,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
     it('returns tracked revert boundary after undo', async () => {
       await setupSessionWithCheckpoints()
 
-      const undoResult = await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      const undoResult = await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       const info = await impl.getSessionInfo('/proj', 'sdk-session-1')
       expect(info.revertMessageID).toBe(undoResult.revertMessageID)
@@ -1015,7 +1015,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       const { rewindFilesMock } = await setupSessionWithCheckpoints()
 
       // Undo sets revert state
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       const key = (impl as any).getSessionKey('/proj', 'sdk-session-1')
       const session = sessions.get(key)!
       expect(session.revertMessageID).not.toBeNull()
@@ -1078,7 +1078,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       expect(session.lastQuery).not.toBeNull()
 
       // undo should succeed using a resumed query
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(mockQuery).toHaveBeenCalledTimes(2)
       expect(resumeRewindFilesMock).toHaveBeenCalled()
     })
@@ -1098,7 +1098,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       expect(messageCountBefore).toBeGreaterThan(3)
 
       // Undo the last turn (uuid-3)
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       // After undo: messages should NOT be truncated — the in-memory
       // array stays intact.  The renderer uses revertMessageID to hide
@@ -1119,7 +1119,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       const checkpointsBefore = session.checkpoints.size
 
       // First undo: messages array stays intact
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(session.messages.length).toBe(countAfterPrompt)
       expect(session.checkpoints.size).toBe(checkpointsBefore)
       // All messages still present
@@ -1128,7 +1128,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       expect(session.messages.find((m: any) => m.id === 'uuid-1')).toBeDefined()
 
       // Second undo: still non-destructive
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(session.messages.length).toBe(countAfterPrompt)
       expect(session.messages.find((m: any) => m.id === 'uuid-2')).toBeDefined()
       expect(session.messages.find((m: any) => m.id === 'uuid-1')).toBeDefined()
@@ -1146,7 +1146,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       expect(userMsgsBefore.length).toBeGreaterThanOrEqual(2)
 
       // Undo the last turn
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       // After undo: getMessages still returns all messages (non-destructive).
       // The renderer's visibleMessages filter uses revertMessageID to hide
@@ -1165,7 +1165,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       // Before undo: no pending fork
       expect(session.pendingFork).toBe(false)
 
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       // After undo: pendingFork is set, no JSONL writes
       expect(session.pendingFork).toBe(true)
@@ -1178,7 +1178,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
         userPrompts: ['prompt A', 'prompt B']
       })
 
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       // Send a new prompt — should pass forkSession: true
       const nextIter = createMockQueryIterator([
@@ -1203,7 +1203,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
         userPrompts: ['prompt A', 'prompt B']
       })
 
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(session.pendingFork).toBe(true)
 
       // Send a new prompt — pendingFork should be cleared after
@@ -1230,7 +1230,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       // Confirm messages exist before undo
       expect(session.messages.length).toBeGreaterThan(0)
 
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       // Messages should still be intact after undo (non-destructive)
       expect(session.messages.length).toBeGreaterThan(0)
@@ -1262,7 +1262,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       })
 
       // Should not throw and should not write to any JSONL file
-      await expect(impl.undo('/proj', 'sdk-session-1', 'hive-1')).resolves.toBeDefined()
+      await expect(impl.undo('/proj', 'sdk-session-1', 'octob-1')).resolves.toBeDefined()
       expect(mockWriteFile).not.toHaveBeenCalled()
     })
 
@@ -1272,7 +1272,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
         userPrompts: ['prompt A', 'prompt B']
       })
 
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       // Send a new prompt after undo — the SDK returns a NEW session ID (fork creates new branch)
       const forkedIter = createMockQueryIterator([
@@ -1324,7 +1324,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       expect(session.checkpoints.has('uuid-3')).toBe(true)
 
       // First undo
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       // Checkpoints should all still be present (non-destructive)
       expect(session.checkpoints.size).toBe(3)
@@ -1333,7 +1333,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       expect(session.checkpoints.has('uuid-3')).toBe(true)
 
       // Second undo
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       // Still all 3 checkpoints preserved
       expect(session.checkpoints.size).toBe(3)
@@ -1348,7 +1348,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
         userPrompts: ['only prompt']
       })
 
-      await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      await impl.undo('/proj', 'sdk-session-1', 'octob-1')
 
       // Should de-materialize and NOT set pendingFork (nothing to fork from)
       expect(session.materialized).toBe(false)
@@ -1361,7 +1361,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
 
   describe('subagent message filtering (Bug #5)', () => {
     it('should NOT capture checkpoints from subagent user messages (parent_tool_use_id set)', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       // Simulate a stream with:
       //   1. Main user prompt (no parent_tool_use_id) → should be captured
@@ -1439,7 +1439,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
     })
 
     it('undo after subagent uses correct main-thread UUID for resumeSessionAt', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
 
       // Stream with main prompts and a subagent in between
       const rewindFilesMock = vi.fn()
@@ -1513,7 +1513,7 @@ describe('ClaudeCodeImplementer - undo/redo/getSessionInfo (Session 8)', () => {
       mockQuery.mockReturnValueOnce(resumeIter)
 
       // Undo the last turn (main-2)
-      const result = await impl.undo('/proj', 'sdk-session-1', 'hive-1')
+      const result = await impl.undo('/proj', 'sdk-session-1', 'octob-1')
       expect(result.revertMessageID).toBe('main-2')
 
       // pendingFork should be true (previous main-thread checkpoint exists)

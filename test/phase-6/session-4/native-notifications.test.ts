@@ -254,7 +254,7 @@ describe('Session 4: Native Notifications', () => {
   describe('Notification data shape', () => {
     test('Session notification data includes all required fields', () => {
       const data = {
-        projectName: 'hive',
+        projectName: 'octob',
         sessionName: 'fix auth bug',
         projectId: 'p-1',
         worktreeId: 'wt-1',

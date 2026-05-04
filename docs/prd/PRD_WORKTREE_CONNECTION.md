@@ -1,4 +1,4 @@
-# Hive -- Worktree Connections Product Requirements Document
+# Octob -- Worktree Connections Product Requirements Document
 
 ## Overview
 
@@ -322,7 +322,7 @@ When the user clicks "+" to create a new session tab while a connection is selec
 The agent now sees the connection folder structure:
 
 ```
-/Users/mor/.hive/connections/french-bulldog/
+/Users/mor/.octob/connections/french-bulldog/
   AGENTS.md
   frontend/  -> (symlink)
   backend/   -> (symlink)
@@ -570,4 +570,4 @@ Schema version bump: `CURRENT_SCHEMA_VERSION` incremented. New migration appende
 
 4. **Existing worktree "Connect to..." UX:** When the user right-clicks a worktree that's already in a connection, should "Connect to..." show existing connections they can add it to, or only create new ones? Recommendation: show both -- existing connections as top items, then a "Create new connection..." option below a divider.
 
-5. **AGENTS.md customization:** Should users be able to edit the auto-generated AGENTS.md? If they do, should Hive preserve their edits when regenerating? Recommendation: v1 always overwrites. Add a user-editable section in a future iteration.
+5. **AGENTS.md customization:** Should users be able to edit the auto-generated AGENTS.md? If they do, should Octob preserve their edits when regenerating? Recommendation: v1 always overwrites. Add a user-editable section in a future iteration.

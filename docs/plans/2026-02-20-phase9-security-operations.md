@@ -862,11 +862,11 @@ Replace the API key display block (lines 83-92) with:
       certFingerprint
     })
 
-    console.log('\n=== Hive Headless Server — First Run Setup ===\n')
+    console.log('\n=== Octob Headless Server — First Run Setup ===\n')
     console.log(`API Key: ${newKey}`)
     console.log(`Port: ${port}`)
     console.log(`Cert Fingerprint: ${certFingerprint}\n`)
-    console.log('Scan this QR code with the Hive mobile app:\n')
+    console.log('Scan this QR code with the Octob mobile app:\n')
     qrcode.generate(pairingPayload, { small: true })
     console.log('\n⚠️  Save your API key now — it cannot be shown again.')
     console.log('Use --rotate-key to generate a new key if needed.\n')
@@ -896,7 +896,7 @@ In the `handleManagementCommand` function, enhance the `rotateKey` block:
 
     console.log('\n=== API Key Rotated ===\n')
     console.log(`New API Key: ${newKey}`)
-    console.log('\nScan this QR code with the Hive mobile app:\n')
+    console.log('\nScan this QR code with the Octob mobile app:\n')
     qrcode.generate(pairingPayload, { small: true })
     console.log('\n⚠️  The old key is now invalid. Update your mobile app.')
     console.log('If the headless server is running, restart it.\n')
@@ -939,7 +939,7 @@ git commit -m "feat(server): add QR code pairing display on first run and key ro
 - Modify: `src/server/headless-bootstrap.ts` (add PID file write on startup, cleanup on exit)
 - Test: `test/server/pid-file.test.ts`
 
-Write `~/.octob/hive-headless.pid` on startup, detect stale PID files, and clean up on exit.
+Write `~/.octob/octob-headless.pid` on startup, detect stale PID files, and clean up on exit.
 
 **Step 1: Write the failing test**
 
@@ -957,8 +957,8 @@ import {
 } from '../../src/server/pid-file'
 
 describe('PID file management', () => {
-  const testDir = join(tmpdir(), 'hive-test-pid-' + process.pid)
-  const pidPath = join(testDir, 'hive-headless.pid')
+  const testDir = join(tmpdir(), 'octob-test-pid-' + process.pid)
+  const pidPath = join(testDir, 'octob-headless.pid')
 
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true })
@@ -1072,7 +1072,7 @@ After the server starts (after the `console.log` lines around line 115-116), add
 
 ```typescript
   // PID file management
-  const pidPath = join(homedir(), '.octob', 'hive-headless.pid')
+  const pidPath = join(homedir(), '.octob', 'octob-headless.pid')
   const pidStatus = checkStalePidFile(pidPath)
   if (pidStatus === 'running') {
     const existingPid = parseInt(
@@ -1126,7 +1126,7 @@ git commit -m "feat(server): add PID file management with stale detection"
 - Test: `test/server/status-file.test.ts`
 - Modify: `src/server/headless-bootstrap.ts` (add periodic status writer)
 
-Write `~/.octob/hive-headless.status.json` every 30 seconds with live server metrics.
+Write `~/.octob/octob-headless.status.json` every 30 seconds with live server metrics.
 
 **Step 1: Write the failing test**
 
@@ -1141,8 +1141,8 @@ import { writeStatusFile, cleanupStatusFile, formatUptime } from '../../src/serv
 import { resetServerState, incrementRequestCount } from '../../src/server/server-state'
 
 describe('status-file', () => {
-  const testDir = join(tmpdir(), 'hive-test-status-' + process.pid)
-  const statusPath = join(testDir, 'hive-headless.status.json')
+  const testDir = join(tmpdir(), 'octob-test-status-' + process.pid)
+  const statusPath = join(testDir, 'octob-headless.status.json')
 
   beforeEach(() => {
     mkdirSync(testDir, { recursive: true })
@@ -1293,7 +1293,7 @@ After the PID file block, add:
 
 ```typescript
   // Status file writer
-  const statusPath = join(homedir(), '.octob', 'hive-headless.status.json')
+  const statusPath = join(homedir(), '.octob', 'octob-headless.status.json')
   const statusOpts = { port, version: app.getVersion() }
   writeStatusFile(statusPath, statusOpts)
   const statusInterval = setInterval(() => {

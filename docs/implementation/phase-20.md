@@ -1,6 +1,6 @@
-# Hive Phase 20 Implementation Plan
+# Octob Phase 20 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 20, covering added-file viewer routing, PR lifecycle (create → merge → archive), quit confirmation, Cmd+G merge shortcut, and branch up-to-date archive swap.
+This document outlines the implementation plan for Octob Phase 20, covering added-file viewer routing, PR lifecycle (create → merge → archive), quit confirmation, Cmd+G merge shortcut, and branch up-to-date archive swap.
 
 ---
 
@@ -807,7 +807,7 @@ app.on('before-quit', (event) => {
     dialog
       .showMessageBox(mainWindow, {
         type: 'warning',
-        title: 'Quit Hive?',
+        title: 'Quit Octob?',
         message: 'Are you sure you want to quit?',
         detail:
           'You have pending worktrees running. Quitting now will terminate all active sessions and processes.',
@@ -1193,7 +1193,7 @@ Replace the merge button with conditional rendering:
       size="sm"
       className="h-6 text-xs whitespace-nowrap"
       onClick={handleArchiveWorktree}
-      data-testid="archive-merged-button"
+      data-testid="arcoctob-merged-button"
     >
       Archive
     </Button>

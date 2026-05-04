@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve Hive
+about: Create a report to help us improve Octob
 title: '[BUG] '
 labels: 'bug, needs-triage'
 assignees: ''
@@ -28,7 +28,7 @@ assignees: ''
 ## Environment
 <!-- Please complete the following information -->
 - **OS**: macOS [e.g., 14.2 Sonoma]
-- **Hive Version**: [e.g., 1.0.54]
+- **Octob Version**: [e.g., 1.0.54]
 - **Node Version**: [e.g., 20.10.0]
 - **Installation Method**: [Homebrew / Direct Download]
 
@@ -51,7 +51,7 @@ Paste any error messages here
 ```
 
 ## Logs
-<!-- Check ~/Library/Logs/hive/ for log files -->
+<!-- Check ~/Library/Logs/octob/ for log files -->
 <details>
 <summary>Log Output</summary>
 

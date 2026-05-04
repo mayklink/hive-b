@@ -1,6 +1,6 @@
-# Hive Phase 12 Implementation Plan
+# Octob Phase 12 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 12, focusing on prompt history navigation, context calculation accuracy, queued message UX, compact tool card redesign, todo list rendering, markdown file preview, session auto-focus, archive loading states, and file viewer context menus.
+This document outlines the implementation plan for Octob Phase 12, focusing on prompt history navigation, context calculation accuracy, queued message UX, compact tool card redesign, todo list rendering, markdown file preview, session auto-focus, archive loading states, and file viewer context menus.
 
 ---
 
@@ -38,7 +38,7 @@ test/
 │   ├── session-7/
 │   │   └── session-autofocus.test.ts
 │   ├── session-8/
-│   │   └── archive-loading.test.ts
+│   │   └── arcoctob-loading.test.ts
 │   ├── session-9/
 │   │   └── file-viewer-context-menu.test.ts
 │   └── session-10/
@@ -306,7 +306,7 @@ Create `src/renderer/src/stores/usePromptHistoryStore.ts`:
 - Actions:
   - `addPrompt(worktreeId, prompt)`: Trim, deduplicate (remove existing match), append, cap at 100 (FIFO eviction)
   - `getHistory(worktreeId)`: Return the array or empty
-- Persist to localStorage via `createJSONStorage` with key `'hive-prompt-history'`
+- Persist to localStorage via `createJSONStorage` with key `'octob-prompt-history'`
 
 #### 2. Export from store barrel
 
@@ -367,7 +367,7 @@ Add a `useEffect` that resets `historyIndex` to null and clears `savedDraftRef` 
 
 ### Definition of Done
 
-- [ ] `usePromptHistoryStore` persists to localStorage under `'hive-prompt-history'`
+- [ ] `usePromptHistoryStore` persists to localStorage under `'octob-prompt-history'`
 - [ ] Up arrow at cursor position 0 loads the most recent prompt from history
 - [ ] Repeated Up arrows walk backward through history
 - [ ] Down arrow at cursor end walks forward, then restores draft
@@ -1323,7 +1323,7 @@ If the store uses `persist()`, add `archivingWorktreeIds` to the `partialize` ex
 ### Testing Criteria
 
 ```typescript
-// test/phase-12/session-8/archive-loading.test.ts
+// test/phase-12/session-8/arcoctob-loading.test.ts
 describe('Session 8: Archive Loading State', () => {
   test('archivingWorktreeIds starts empty', () => {
     const store = useWorktreeStore.getState()

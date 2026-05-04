@@ -1,6 +1,6 @@
-# Hive Phase 17 Implementation Plan
+# Octob Phase 17 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 17, covering git refresh on window focus, streaming completion badge, per-session model selection, tab loading indicator fix, variant persistence, toast variants, default commit messages, diff file tabs, plan mode badge, and project spaces.
+This document outlines the implementation plan for Octob Phase 17, covering git refresh on window focus, streaming completion badge, per-session model selection, tab loading indicator fix, variant persistence, toast variants, default commit messages, diff file tabs, plan mode badge, and project spaces.
 
 ---
 
@@ -545,7 +545,7 @@ useEffect(() => {
 
 ### Definition of Done
 
-- [ ] Switching back to Hive from another app triggers a git status refresh
+- [ ] Switching back to Octob from another app triggers a git status refresh
 - [ ] The refresh is throttled to once every 2 seconds (no spam on rapid focus toggling)
 - [ ] `useGitStore.refreshStatuses()` is called (already debounced at 150ms internally)
 - [ ] The preload listener properly cleans up on unsubscribe
@@ -555,10 +555,10 @@ useEffect(() => {
 
 ### How to Test
 
-1. Open Hive, expand a project with worktrees showing the git changes sidebar
+1. Open Octob, expand a project with worktrees showing the git changes sidebar
 2. Switch to a terminal, run `git add .` or make a file change
-3. Switch back to Hive — verify the changes sidebar updates within ~2 seconds
-4. Rapidly alt-tab between Hive and another app — verify no excessive refreshes
+3. Switch back to Octob — verify the changes sidebar updates within ~2 seconds
+4. Rapidly alt-tab between Octob and another app — verify no excessive refreshes
 
 ### Testing Criteria
 

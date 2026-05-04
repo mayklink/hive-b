@@ -64,7 +64,7 @@ describe('Claude child session routing', () => {
   })
 
   it('forwards childSessionId on assistant message.updated', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     mockQuery.mockReturnValue(
       createMockQueryIterator([
         {
@@ -89,7 +89,7 @@ describe('Claude child session routing', () => {
   })
 
   it('forwards childSessionId on result message.updated', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     mockQuery.mockReturnValue(
       createMockQueryIterator([
         {
@@ -111,7 +111,7 @@ describe('Claude child session routing', () => {
   })
 
   it('forwards childSessionId on tool_result message.part.updated', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     mockQuery.mockReturnValue(
       createMockQueryIterator([
         {

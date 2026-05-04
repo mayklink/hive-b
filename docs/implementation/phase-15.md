@@ -1,6 +1,6 @@
-# Hive Phase 15 Implementation Plan
+# Octob Phase 15 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 15, focusing on context indicator bug fix, tool call correlation after tab switching, question dialog persistence across tabs, user message ordering, copy branch name, favorite models, worktree last-message time, open in Chrome, Cmd+W file tab close, and merge conflicts button.
+This document outlines the implementation plan for Octob Phase 15, focusing on context indicator bug fix, tool call correlation after tab switching, question dialog persistence across tabs, user message ordering, copy branch name, favorite models, worktree last-message time, open in Chrome, Cmd+W file tab close, and merge conflicts button.
 
 ---
 

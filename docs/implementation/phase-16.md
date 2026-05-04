@@ -1,6 +1,6 @@
-# Hive Phase 16 Implementation Plan
+# Octob Phase 16 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 16, focusing on undo/redo commands, fixing sessions randomly going idle, and capping run tab output history.
+This document outlines the implementation plan for Octob Phase 16, focusing on undo/redo commands, fixing sessions randomly going idle, and capping run tab output history.
 
 ---
 

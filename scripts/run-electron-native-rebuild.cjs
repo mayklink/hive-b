@@ -27,10 +27,10 @@ function cliPath(root) {
 function runPhase(root, onlyModule, label) {
   const cli = cliPath(root)
   if (!cli) {
-    console.error('[hive] Missing @electron/rebuild — run yarn install')
+    console.error('[octob] Missing @electron/rebuild — run yarn install')
     return 1
   }
-  console.warn(`[hive] ${label}`)
+  console.warn(`[octob] ${label}`)
   const r = spawnSync(
     process.execPath,
     [cli, '--force', '--sequential', '--only', onlyModule],
@@ -80,8 +80,8 @@ if (require.main === module) {
 
   if (nodePty !== 0 && process.platform === 'win32' && !inCi) {
     console.warn('')
-    console.warn('[hive] node-pty rebuild skipped (embedded terminal unavailable until MSVC is installed).')
-    console.warn('[hive] App and SQLite DB will still work.')
+    console.warn('[octob] node-pty rebuild skipped (embedded terminal unavailable until MSVC is installed).')
+    console.warn('[octob] App and SQLite DB will still work.')
     console.warn('')
     writeMarker(root, ptyUnavailableMarker)
     process.exit(0)

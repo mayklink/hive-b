@@ -1,6 +1,6 @@
-# Hive User Guide
+# Octob User Guide
 
-Welcome to Hive! This guide will help you get the most out of Hive's powerful features for managing git worktrees and AI-powered coding sessions.
+Welcome to Octob! This guide will help you get the most out of Octob's powerful features for managing git worktrees and AI-powered coding sessions.
 
 ## Table of Contents
 
@@ -20,17 +20,17 @@ Welcome to Hive! This guide will help you get the most out of Hive's powerful fe
 
 ### First Launch
 
-When you first open Hive, you'll see an empty project list. Let's add your first project!
+When you first open Octob, you'll see an empty project list. Let's add your first project!
 
 1. Click the **"Add Project"** button
 2. Navigate to any git repository on your machine
 3. Select the repository folder and click "Open"
 
-Hive will analyze your repository and display it in the sidebar.
+Octob will analyze your repository and display it in the sidebar.
 
 ### Understanding the Interface
 
-Hive's interface is divided into three main areas:
+Octob's interface is divided into three main areas:
 
 - **Left Sidebar**: Projects and worktrees navigation
 - **Main Pane**: Active worktree content, file viewer, or AI session
@@ -57,7 +57,7 @@ git checkout main
 git stash pop
 ```
 
-With Hive worktrees:
+With Octob worktrees:
 - Click on the worktree for `feature-branch`
 - Work on feature
 - Click on the worktree for `main`
@@ -70,7 +70,7 @@ With Hive worktrees:
 You can add projects in multiple ways:
 
 1. **GUI Method**: Click "Add Project" button
-2. **Drag and Drop**: Drag a git repository folder into Hive
+2. **Drag and Drop**: Drag a git repository folder into Octob
 3. **Command Palette**: Press `Cmd+K` and type "Add Project"
 
 ### Project Actions
@@ -93,11 +93,11 @@ Projects can be organized into Spaces (see [Using Spaces](#using-spaces)) and pi
 1. Select a project
 2. Click **"New Worktree"**
 3. Choose an existing branch or create a new one
-4. Hive automatically assigns a unique city-based name (e.g., "tokyo", "paris")
+4. Octob automatically assigns a unique city-based name (e.g., "tokyo", "paris")
 
 ### Worktree Naming
 
-Hive uses a clever naming system:
+Octob uses a clever naming system:
 - Each worktree gets a city name from a pool of 200+ cities
 - If a city is taken, it adds a version suffix (-v1, -v2, etc.)
 - You can rename worktrees after creation
@@ -112,7 +112,7 @@ Hive uses a clever naming system:
 
 ### Archived Worktrees
 
-Archived worktrees are moved to `~/.hive-archive` and can be:
+Archived worktrees are moved to `~/.octob-archive` and can be:
 - Restored later if needed
 - Permanently deleted to free up space
 - Searched in session history
@@ -165,7 +165,7 @@ Always review what the AI wants to do before approving!
 
 ## Connections
 
-Hive's Worktree Connections feature allows you to link two worktrees together, creating powerful workflows for development across multiple branches.
+Octob's Worktree Connections feature allows you to link two worktrees together, creating powerful workflows for development across multiple branches.
 
 ### Understanding Worktree Connections
 
@@ -242,7 +242,7 @@ AI sessions can access both worktrees:
 
 #### Connection Persistence
 Connections are remembered:
-- Survive Hive restarts
+- Survive Octob restarts
 - Restore when worktrees are reopened
 - Can be saved as connection profiles
 
@@ -321,7 +321,7 @@ The file tree shows:
 
 ### Integrated Editor
 
-Hive includes a full Monaco editor (VS Code's editor):
+Octob includes a full Monaco editor (VS Code's editor):
 - Syntax highlighting
 - Code completion
 - Go-to-definition
@@ -418,7 +418,7 @@ Spaces help organize related projects and worktrees.
 2. **Pin Favorites**: Pin frequently used worktrees for quick access
 3. **Keyboard Navigation**: Master `Cmd+K` for speed
 4. **Multiple Sessions**: Run different AI sessions in different worktrees
-5. **Quick Switch**: Use `Cmd+Tab` within Hive to switch worktrees
+5. **Quick Switch**: Use `Cmd+Tab` within Octob to switch worktrees
 
 ### Advanced Features
 
@@ -430,7 +430,7 @@ Create setup scripts that run when creating new worktrees:
 
 #### Terminal Integration
 - Each worktree can have its own terminal session
-- Terminals persist across Hive restarts
+- Terminals persist across Octob restarts
 - Use `Cmd+T` to toggle terminal
 
 ### Troubleshooting
@@ -448,7 +448,7 @@ Create setup scripts that run when creating new worktrees:
 #### Performance Issues
 - Limit open worktrees to 10-15
 - Close unused file tabs
-- Restart Hive if performance degrades
+- Restart Octob if performance degrades
 
 ## Next Steps
 
@@ -460,4 +460,4 @@ Now that you understand the basics:
 4. Customize settings to your preference
 5. Explore keyboard shortcuts for speed
 
-Happy coding with Hive! 🐝
+Happy coding with Octob! 🐝

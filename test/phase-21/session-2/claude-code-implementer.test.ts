@@ -91,7 +91,7 @@ describe('ClaudeCodeImplementer', () => {
 
   describe('stub methods', () => {
     it('connect returns a deferred placeholder sessionId', async () => {
-      const result = await impl.connect('/path', 'hive-1')
+      const result = await impl.connect('/path', 'octob-1')
       expect(result.sessionId).toMatch(/^pending::/)
     })
 
@@ -119,7 +119,7 @@ describe('ClaudeCodeImplementer', () => {
       // Inject a session via the exposed helper
       ;(impl as any).sessions.set('wp::/sid', {
         claudeSessionId: 'sid',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: 'wp',
         abortController: controller,
         checkpoints: new Map(),

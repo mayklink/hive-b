@@ -39,7 +39,7 @@ export function createTestDatabase(): {
     )
   }
 
-  const testDir = join(tmpdir(), 'hive-test-' + randomUUID())
+  const testDir = join(tmpdir(), 'octob-test-' + randomUUID())
   mkdirSync(testDir, { recursive: true })
   const dbPath = join(testDir, 'test.db')
 

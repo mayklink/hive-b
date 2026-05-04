@@ -1,6 +1,6 @@
-# Hive Phase 14 Implementation Plan
+# Octob Phase 14 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 14, focusing on custom project icons, git merge operations, file staging dual display, question submit confirmation, worktree drag reordering, session entry auto-scroll, input field improvements, dock badge notifications, worktree status bar, and file search bug fix.
+This document outlines the implementation plan for Octob Phase 14, focusing on custom project icons, git merge operations, file staging dual display, question submit confirmation, worktree drag reordering, session entry auto-scroll, input field improvements, dock badge notifications, worktree status bar, and file search bug fix.
 
 ---
 

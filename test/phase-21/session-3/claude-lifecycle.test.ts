@@ -43,7 +43,7 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
 
   describe('connect()', () => {
     it('returns a sessionId starting with "pending::"', async () => {
-      const result = await impl.connect('/proj', 'hive-1')
+      const result = await impl.connect('/proj', 'octob-1')
       expect(result.sessionId).toMatch(/^pending::/)
     })
 
@@ -54,20 +54,20 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
     })
 
     it('registers the session in the sessions map', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
       const key = (impl as any).getSessionKey('/proj', sessionId)
       expect(sessions.has(key)).toBe(true)
     })
 
     it('sets materialized to false', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
       const key = (impl as any).getSessionKey('/proj', sessionId)
       const state = sessions.get(key)!
       expect(state.materialized).toBe(false)
     })
 
     it('creates an AbortController', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
       const key = (impl as any).getSessionKey('/proj', sessionId)
       const state = sessions.get(key)!
       expect(state.abortController).toBeInstanceOf(AbortController)
@@ -75,7 +75,7 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
     })
 
     it('initializes empty checkpoints', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
       const key = (impl as any).getSessionKey('/proj', sessionId)
       const state = sessions.get(key)!
       expect(state.checkpoints).toBeInstanceOf(Map)
@@ -83,18 +83,18 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
     })
 
     it('sets query to null', async () => {
-      const { sessionId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId } = await impl.connect('/proj', 'octob-1')
       const key = (impl as any).getSessionKey('/proj', sessionId)
       const state = sessions.get(key)!
       expect(state.query).toBeNull()
     })
 
     it('stores worktreePath and octobSessionId correctly', async () => {
-      const { sessionId } = await impl.connect('/my/path', 'hive-42')
+      const { sessionId } = await impl.connect('/my/path', 'octob-42')
       const key = (impl as any).getSessionKey('/my/path', sessionId)
       const state = sessions.get(key)!
       expect(state.worktreePath).toBe('/my/path')
-      expect(state.octobSessionId).toBe('hive-42')
+      expect(state.octobSessionId).toBe('octob-42')
       expect(state.claudeSessionId).toBe(sessionId)
     })
   })
@@ -103,7 +103,7 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
 
   describe('reconnect()', () => {
     it('returns { success: true, sessionStatus: "idle", revertMessageID: null }', async () => {
-      const result = await impl.reconnect('/proj', 'real-sid-1', 'hive-1')
+      const result = await impl.reconnect('/proj', 'real-sid-1', 'octob-1')
       expect(result).toEqual({
         success: true,
         sessionStatus: 'idle',
@@ -112,29 +112,29 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
     })
 
     it('registers persisted session ID with materialized: true', async () => {
-      await impl.reconnect('/proj', 'real-sid-1', 'hive-1')
+      await impl.reconnect('/proj', 'real-sid-1', 'octob-1')
       const key = (impl as any).getSessionKey('/proj', 'real-sid-1')
       const state = sessions.get(key)!
       expect(state.materialized).toBe(true)
     })
 
     it('creates an AbortController for reconnected session', async () => {
-      await impl.reconnect('/proj', 'real-sid-1', 'hive-1')
+      await impl.reconnect('/proj', 'real-sid-1', 'octob-1')
       const key = (impl as any).getSessionKey('/proj', 'real-sid-1')
       const state = sessions.get(key)!
       expect(state.abortController).toBeInstanceOf(AbortController)
     })
 
     it('sets query to null', async () => {
-      await impl.reconnect('/proj', 'real-sid-1', 'hive-1')
+      await impl.reconnect('/proj', 'real-sid-1', 'octob-1')
       const key = (impl as any).getSessionKey('/proj', 'real-sid-1')
       const state = sessions.get(key)!
       expect(state.query).toBeNull()
     })
 
     it('handles already-registered sessions by updating octobSessionId', async () => {
-      await impl.reconnect('/proj', 'sid-1', 'hive-old')
-      const result = await impl.reconnect('/proj', 'sid-1', 'hive-new')
+      await impl.reconnect('/proj', 'sid-1', 'octob-old')
+      const result = await impl.reconnect('/proj', 'sid-1', 'octob-new')
 
       expect(result).toEqual({
         success: true,
@@ -144,12 +144,12 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
 
       const key = (impl as any).getSessionKey('/proj', 'sid-1')
       const state = sessions.get(key)!
-      expect(state.octobSessionId).toBe('hive-new')
+      expect(state.octobSessionId).toBe('octob-new')
     })
 
     it('does not create a duplicate entry for already-registered sessions', async () => {
-      await impl.reconnect('/proj', 'sid-1', 'hive-old')
-      await impl.reconnect('/proj', 'sid-1', 'hive-new')
+      await impl.reconnect('/proj', 'sid-1', 'octob-old')
+      await impl.reconnect('/proj', 'sid-1', 'octob-new')
 
       let count = 0
       for (const [k] of sessions) {
@@ -317,7 +317,7 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
   describe('lifecycle integration', () => {
     it('connect -> disconnect -> reconnect cycle', async () => {
       // 1. Connect (deferred)
-      const { sessionId: placeholderId } = await impl.connect('/proj', 'hive-1')
+      const { sessionId: placeholderId } = await impl.connect('/proj', 'octob-1')
       expect(placeholderId).toMatch(/^pending::/)
       expect(sessions.size).toBe(1)
 
@@ -326,7 +326,7 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
       expect(sessions.size).toBe(0)
 
       // 3. Reconnect with a "real" persisted ID
-      const result = await impl.reconnect('/proj', 'real-sdk-session-abc', 'hive-1')
+      const result = await impl.reconnect('/proj', 'real-sdk-session-abc', 'octob-1')
       expect(result.success).toBe(true)
       expect(sessions.size).toBe(1)
 
@@ -356,7 +356,7 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
     it('app restart simulation: fresh implementer + reconnect restores sessions', async () => {
       // Simulate first run: connect a session
       const impl1 = new ClaudeCodeImplementer()
-      const { sessionId } = await impl1.connect('/proj', 'hive-1')
+      const { sessionId } = await impl1.connect('/proj', 'octob-1')
       // In real app, sessionId would be replaced by a real SDK ID after first prompt.
       // Simulate saving the real ID to DB
       const persistedSdkId = 'real-sdk-session-xyz'
@@ -366,7 +366,7 @@ describe('ClaudeCodeImplementer – lifecycle (Session 3)', () => {
       const sessions2 = (impl2 as any).sessions as Map<string, ClaudeSessionState>
       expect(sessions2.size).toBe(0)
 
-      const result = await impl2.reconnect('/proj', persistedSdkId, 'hive-1')
+      const result = await impl2.reconnect('/proj', persistedSdkId, 'octob-1')
       expect(result.success).toBe(true)
       expect(sessions2.size).toBe(1)
 

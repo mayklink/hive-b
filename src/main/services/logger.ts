@@ -116,7 +116,7 @@ class LoggerService {
       const files = readdirSync(this.logDir)
         .filter(
           (f) =>
-            (f.startsWith('octob-') || f.startsWith('hive-')) && f.endsWith('.log')
+            f.startsWith('octob-') && f.endsWith('.log')
         )
         .map((f) => ({
           name: f,

@@ -23,7 +23,7 @@ warn()  { echo -e "${YELLOW}⚠${NC} $1"; }
 err()   { echo -e "${RED}✗${NC} $1" >&2; }
 fatal() { err "$1"; exit 1; }
 
-REPO="morapelker/hive"
+REPO="morapelker/octob"
 WIN_NATIVES_TAG="win-natives-v1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"

@@ -1,4 +1,4 @@
-# Hive — Phase 10 Product Requirements Document
+# Octob — Phase 10 Product Requirements Document
 
 ## Overview
 
@@ -47,7 +47,7 @@ The OpenCode SDK has full support for interactive questions. The `@opencode-ai/s
   - `client.question.reply({ requestID, answers })` — POST `/question/{requestID}/reply`
   - `client.question.reject({ requestID })` — POST `/question/{requestID}/reject`
 
-However, Hive currently ignores all `question.*` events entirely:
+However, Octob currently ignores all `question.*` events entirely:
 
 - `src/main/services/opencode-service.ts` line 939 — `handleEvent()` extracts `eventType` but has no special handling for `question.asked`, `question.replied`, or `question.rejected`. These events pass through the generic forwarding at line 1050 (`sendToRenderer('opencode:stream', streamEvent)`), but the renderer does not process them.
 - `src/renderer/src/components/sessions/SessionView.tsx` — The stream event handler (lines 830-1070) has branches for `message.part.updated`, `message.updated`, `session.idle`, `session.status`, and `session.error`, but no branch for any `question.*` event type.
@@ -66,7 +66,7 @@ However, Hive currently ignores all `question.*` events entirely:
 
 #### 1.2 New Design
 
-The question flow in Hive mirrors the OpenCode client architecture but adapted for the Electron IPC model:
+The question flow in Octob mirrors the OpenCode client architecture but adapted for the Electron IPC model:
 
 ```
 Event Flow:

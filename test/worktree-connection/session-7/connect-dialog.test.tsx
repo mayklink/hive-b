@@ -113,7 +113,7 @@ function makeConnection(overrides: Record<string, unknown> = {}) {
     id: 'conn-1',
     name: 'golden-retriever',
     status: 'active' as const,
-    path: '/home/.hive/connections/golden-retriever',
+    path: '/home/.octob/connections/golden-retriever',
     color: JSON.stringify(['#bfdbfe', '#2563eb', '#1e3a5f', '#ffffff']),
     created_at: '2025-01-01T00:00:00.000Z',
     updated_at: '2025-01-01T00:00:00.000Z',

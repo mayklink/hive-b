@@ -89,4 +89,4 @@ deb:
 publish:
   - provider: github
     owner: morapelker
-    repo: hive
+    repo: octob

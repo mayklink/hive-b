@@ -58,7 +58,7 @@ describe('CodexImplementer lifecycle', () => {
         updatedAt: new Date().toISOString()
       })
 
-      const result = await impl.connect('/test/project', 'hive-session-1')
+      const result = await impl.connect('/test/project', 'octob-session-1')
 
       expect(result.sessionId).toBe('thread-new-1')
     })
@@ -76,7 +76,7 @@ describe('CodexImplementer lifecycle', () => {
         updatedAt: new Date().toISOString()
       })
 
-      await impl.connect('/test/project', 'hive-session-1')
+      await impl.connect('/test/project', 'octob-session-1')
 
       expect(mockManager.startSession).toHaveBeenCalledWith({
         cwd: '/test/project',
@@ -98,7 +98,7 @@ describe('CodexImplementer lifecycle', () => {
         updatedAt: new Date().toISOString()
       })
 
-      await impl.connect('/test/project', 'hive-session-1')
+      await impl.connect('/test/project', 'octob-session-1')
 
       expect(mockManager.startSession).toHaveBeenCalledWith({
         cwd: '/test/project',
@@ -122,7 +122,7 @@ describe('CodexImplementer lifecycle', () => {
         updatedAt: new Date().toISOString()
       })
 
-      await impl.connect('/test', 'hive-1')
+      await impl.connect('/test', 'octob-1')
 
       expect(mockManager.startSession).toHaveBeenCalledWith({
         cwd: '/test',
@@ -143,7 +143,7 @@ describe('CodexImplementer lifecycle', () => {
         updatedAt: new Date().toISOString()
       })
 
-      await impl.connect('/test', 'hive-session-2')
+      await impl.connect('/test', 'octob-session-2')
 
       const sessions = impl.getSessions()
       const key = '/test::thread-stored'
@@ -151,7 +151,7 @@ describe('CodexImplementer lifecycle', () => {
 
       const state = sessions.get(key)!
       expect(state.threadId).toBe('thread-stored')
-      expect(state.octobSessionId).toBe('hive-session-2')
+      expect(state.octobSessionId).toBe('octob-session-2')
       expect(state.worktreePath).toBe('/test')
       expect(state.status).toBe('ready')
       expect(state.messages).toEqual([])
@@ -170,7 +170,7 @@ describe('CodexImplementer lifecycle', () => {
         updatedAt: new Date().toISOString()
       })
 
-      await expect(impl.connect('/test', 'hive-1')).rejects.toThrow(
+      await expect(impl.connect('/test', 'octob-1')).rejects.toThrow(
         'no thread ID was returned'
       )
     })
@@ -194,11 +194,11 @@ describe('CodexImplementer lifecycle', () => {
         updatedAt: new Date().toISOString()
       })
 
-      await impl.connect('/test', 'hive-session-3')
+      await impl.connect('/test', 'octob-session-3')
 
       expect(mockWindow.webContents.send).toHaveBeenCalledWith('opencode:stream', {
         type: 'session.materialized',
-        sessionId: 'hive-session-3',
+        sessionId: 'octob-session-3',
         data: { newSessionId: 'thread-mat', wasFork: false }
       })
     })
@@ -212,33 +212,33 @@ describe('CodexImplementer lifecycle', () => {
       const sessions = impl.getSessions()
       sessions.set('/test::thread-existing', {
         threadId: 'thread-existing',
-        octobSessionId: 'old-hive-id',
+        octobSessionId: 'old-octob-id',
         worktreePath: '/test',
         status: 'ready',
         messages: []
       })
 
-      const result = await impl.reconnect('/test', 'thread-existing', 'new-hive-id')
+      const result = await impl.reconnect('/test', 'thread-existing', 'new-octob-id')
 
       expect(result.success).toBe(true)
       expect(result.sessionStatus).toBe('idle')
 
       // Verify octobSessionId was updated
       const state = sessions.get('/test::thread-existing')!
-      expect(state.octobSessionId).toBe('new-hive-id')
+      expect(state.octobSessionId).toBe('new-octob-id')
     })
 
     it('returns busy status for running session', async () => {
       const sessions = impl.getSessions()
       sessions.set('/test::thread-running', {
         threadId: 'thread-running',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/test',
         status: 'running',
         messages: []
       })
 
-      const result = await impl.reconnect('/test', 'thread-running', 'hive-2')
+      const result = await impl.reconnect('/test', 'thread-running', 'octob-2')
 
       expect(result.success).toBe(true)
       expect(result.sessionStatus).toBe('busy')
@@ -257,7 +257,7 @@ describe('CodexImplementer lifecycle', () => {
         updatedAt: new Date().toISOString()
       })
 
-      const result = await impl.reconnect('/test', 'thread-old', 'hive-new')
+      const result = await impl.reconnect('/test', 'thread-old', 'octob-new')
 
       expect(result.success).toBe(true)
       expect(result.sessionStatus).toBe('idle')
@@ -283,7 +283,7 @@ describe('CodexImplementer lifecycle', () => {
         updatedAt: new Date().toISOString()
       })
 
-      await impl.reconnect('/workspace', 'thread-old', 'hive-reconnect')
+      await impl.reconnect('/workspace', 'thread-old', 'octob-reconnect')
 
       const sessions = impl.getSessions()
       expect(sessions.has('/workspace::thread-new-reconnect')).toBe(true)
@@ -292,7 +292,7 @@ describe('CodexImplementer lifecycle', () => {
     it('returns failure if startSession throws', async () => {
       mockManager.startSession.mockRejectedValue(new Error('Connection refused'))
 
-      const result = await impl.reconnect('/test', 'thread-fail', 'hive-fail')
+      const result = await impl.reconnect('/test', 'thread-fail', 'octob-fail')
 
       expect(result.success).toBe(false)
     })
@@ -306,7 +306,7 @@ describe('CodexImplementer lifecycle', () => {
       const sessions = impl.getSessions()
       sessions.set('/test::thread-dc', {
         threadId: 'thread-dc',
-        octobSessionId: 'hive-dc',
+        octobSessionId: 'octob-dc',
         worktreePath: '/test',
         status: 'ready',
         messages: []
@@ -409,8 +409,8 @@ describe('CodexImplementer lifecycle', () => {
           updatedAt: new Date().toISOString()
         })
 
-      await impl.connect('/project-a', 'hive-a')
-      await impl.connect('/project-b', 'hive-b')
+      await impl.connect('/project-a', 'octob-a')
+      await impl.connect('/project-b', 'octob-b')
 
       const sessions = impl.getSessions()
       expect(sessions.size).toBe(2)
@@ -431,7 +431,7 @@ describe('CodexImplementer lifecycle', () => {
         updatedAt: new Date().toISOString()
       })
 
-      await impl.connect('/my/project', 'hive-key-test')
+      await impl.connect('/my/project', 'octob-key-test')
 
       const sessions = impl.getSessions()
       const keys = [...sessions.keys()]
@@ -442,14 +442,14 @@ describe('CodexImplementer lifecycle', () => {
       const sessions = impl.getSessions()
       sessions.set('/test::thread-keep', {
         threadId: 'thread-keep',
-        octobSessionId: 'hive-keep',
+        octobSessionId: 'octob-keep',
         worktreePath: '/test',
         status: 'ready',
         messages: []
       })
       sessions.set('/test::thread-remove', {
         threadId: 'thread-remove',
-        octobSessionId: 'hive-remove',
+        octobSessionId: 'octob-remove',
         worktreePath: '/test',
         status: 'ready',
         messages: []

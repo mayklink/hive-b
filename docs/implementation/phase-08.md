@@ -1,6 +1,6 @@
-# Hive Phase 8 Implementation Plan
+# Octob Phase 8 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 8, focusing on streaming UX quality (smart auto-scroll, adaptive flush), message integrity (echo fix), and keyboard shortcut reliability (Cmd+T).
+This document outlines the implementation plan for Octob Phase 8, focusing on streaming UX quality (smart auto-scroll, adaptive flush), message integrity (echo fix), and keyboard shortcut reliability (Cmd+T).
 
 ---
 

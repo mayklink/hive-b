@@ -47,7 +47,7 @@ function createMockDbService(overrides: Record<string, any> = {}) {
   return {
     updateSession: vi.fn(),
     updateWorktree: vi.fn(),
-    getSession: vi.fn().mockReturnValue({ id: 'hive-session-1', name: 'Fix auth refresh' }),
+    getSession: vi.fn().mockReturnValue({ id: 'octob-session-1', name: 'Fix auth refresh' }),
     getWorktreeBySessionId: vi.fn().mockReturnValue(null),
     getConnection: vi.fn(),
     getWorktree: vi.fn(),
@@ -58,7 +58,7 @@ function createMockDbService(overrides: Record<string, any> = {}) {
 function createMockSession(overrides: Partial<CodexSessionState> = {}): CodexSessionState {
   return {
     threadId: 'thread-1',
-    octobSessionId: 'hive-session-1',
+    octobSessionId: 'octob-session-1',
     worktreePath: '/path/to/worktree',
     status: 'ready',
     messages: [],
@@ -93,7 +93,7 @@ describe('Codex title integration', () => {
 
   it('applies generated title and auto-renames the direct worktree branch', async () => {
     mockGenerateCodexSessionTitle.mockResolvedValue('Fix auth refresh')
-    mockDb.getSession.mockReturnValue({ id: 'hive-session-1', name: 'Fix auth token refresh bug' })
+    mockDb.getSession.mockReturnValue({ id: 'octob-session-1', name: 'Fix auth token refresh bug' })
     mockDb.getWorktreeBySessionId.mockReturnValue({
       id: 'wt-1',
       branch_name: 'labrador',
@@ -107,12 +107,12 @@ describe('Codex title integration', () => {
 
     await (impl as any).handleTitleGeneration(session, 'Fix auth token refresh bug')
 
-    expect(mockDb.updateSession).toHaveBeenCalledWith('hive-session-1', {
+    expect(mockDb.updateSession).toHaveBeenCalledWith('octob-session-1', {
       name: 'Fix auth refresh'
     })
     expect(mockWindow.webContents.send).toHaveBeenCalledWith('opencode:stream', {
       type: 'session.updated',
-      sessionId: 'hive-session-1',
+      sessionId: 'octob-session-1',
       data: {
         title: 'Fix auth refresh',
         info: { title: 'Fix auth refresh' }
@@ -127,12 +127,12 @@ describe('Codex title integration', () => {
     })
     expect(mockLogInfo).toHaveBeenCalledWith(
       'handleTitleGeneration: generateCodexSessionTitle returned',
-      { octobSessionId: 'hive-session-1', title: 'Fix auth refresh' }
+      { octobSessionId: 'octob-session-1', title: 'Fix auth refresh' }
     )
     expect(mockLogCodexLifecycleEvent).toHaveBeenCalledWith(
       'title/applied',
       expect.objectContaining({
-        octobSessionId: 'hive-session-1',
+        octobSessionId: 'octob-session-1',
         threadId: 'thread-1',
         title: 'Fix auth refresh'
       })
@@ -145,7 +145,7 @@ describe('Codex title integration', () => {
 
   it('still auto-renames the branch when the generated title matches the placeholder', async () => {
     mockGenerateCodexSessionTitle.mockResolvedValue('Fix auth refresh')
-    mockDb.getSession.mockReturnValue({ id: 'hive-session-1', name: 'Fix auth refresh' })
+    mockDb.getSession.mockReturnValue({ id: 'octob-session-1', name: 'Fix auth refresh' })
     mockDb.getWorktreeBySessionId.mockReturnValue({
       id: 'wt-1',
       branch_name: 'labrador',
@@ -167,12 +167,12 @@ describe('Codex title integration', () => {
     )
     expect(mockLogDebug).toHaveBeenCalledWith(
       'applyGeneratedTitle: title unchanged, skipping session rename event',
-      { octobSessionId: 'hive-session-1', title: 'Fix auth refresh' }
+      { octobSessionId: 'octob-session-1', title: 'Fix auth refresh' }
     )
   })
 
   it('dedupes a provider title update when the same title was already applied', async () => {
-    mockDb.getSession.mockReturnValue({ id: 'hive-session-1', name: 'Fix auth refresh' })
+    mockDb.getSession.mockReturnValue({ id: 'octob-session-1', name: 'Fix auth refresh' })
     mockDb.getWorktreeBySessionId.mockReturnValue(null)
 
     await (impl as any).handleProviderTitleUpdate({
@@ -192,14 +192,14 @@ describe('Codex title integration', () => {
       'handleProviderTitleUpdate: received provider title update',
       expect.objectContaining({
         threadId: 'thread-1',
-        octobSessionId: 'hive-session-1',
+        octobSessionId: 'octob-session-1',
         title: 'Fix auth refresh'
       })
     )
   })
 
   it('applies a provider title update when local generation did not run', async () => {
-    mockDb.getSession.mockReturnValue({ id: 'hive-session-1', name: 'Session 1' })
+    mockDb.getSession.mockReturnValue({ id: 'octob-session-1', name: 'Session 1' })
     mockDb.getWorktreeBySessionId.mockReturnValue(null)
 
     await (impl as any).handleProviderTitleUpdate({
@@ -210,12 +210,12 @@ describe('Codex title integration', () => {
       payload: { threadName: 'Dark mode settings' }
     })
 
-    expect(mockDb.updateSession).toHaveBeenCalledWith('hive-session-1', {
+    expect(mockDb.updateSession).toHaveBeenCalledWith('octob-session-1', {
       name: 'Dark mode settings'
     })
     expect(mockWindow.webContents.send).toHaveBeenCalledWith('opencode:stream', {
       type: 'session.updated',
-      sessionId: 'hive-session-1',
+      sessionId: 'octob-session-1',
       data: {
         title: 'Dark mode settings',
         info: { title: 'Dark mode settings' }
@@ -225,7 +225,7 @@ describe('Codex title integration', () => {
       'handleProviderTitleUpdate: applying provider title update',
       {
         threadId: 'thread-1',
-        octobSessionId: 'hive-session-1',
+        octobSessionId: 'octob-session-1',
         title: 'Dark mode settings'
       }
     )

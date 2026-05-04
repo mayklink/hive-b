@@ -1,9 +1,9 @@
 /**
- * Cursor CLI (`agent`) model catalog for Hive's ModelSelector and
+ * Cursor CLI (`agent`) model catalog for Octob's ModelSelector and
  * {@link unstable_setSessionModel}.
  *
  * Curated static catalog (same strategy as {@link codex-models} / Claude Code):
- * authoritative list shipped with Hive with indicative limits for the context badge.
+ * authoritative list shipped with Octob with indicative limits for the context badge.
  */
 
 export interface CursorCliModelRow {
@@ -118,7 +118,7 @@ export const CURSOR_CLI_STATIC_MODEL_ROWS: CursorCliModelRow[] = [
 /** @deprecated Prefer {@link CURSOR_CLI_STATIC_MODEL_ROWS}. */
 export const CURSOR_CLI_MODELS = CURSOR_CLI_STATIC_MODEL_ROWS
 
-/** Map legacy Hive placeholder slug to Cursor's live default id. */
+/** Map legacy Octob placeholder slug to Cursor's live default id. */
 export function normalizeCursorCliModelIdentity(modelId: string | null | undefined): string | null {
   const t = modelId?.trim()
   if (!t) return null

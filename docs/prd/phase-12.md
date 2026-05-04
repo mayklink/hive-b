@@ -1,4 +1,4 @@
-# Hive — Phase 12 Product Requirements Document
+# Octob — Phase 12 Product Requirements Document
 
 ## Overview
 
@@ -133,7 +133,7 @@ export const usePromptHistoryStore = create<PromptHistoryState>()(
         return get().historyByWorktree[worktreeId] ?? []
       }
     }),
-    { name: 'hive-prompt-history', storage: createJSONStorage(() => localStorage) }
+    { name: 'octob-prompt-history', storage: createJSONStorage(() => localStorage) }
   )
 )
 ```

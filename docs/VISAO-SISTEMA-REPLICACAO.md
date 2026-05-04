@@ -1,4 +1,4 @@
-# Hive — visão funcional para replicação ou evolução
+# Octob — visão funcional para replicação ou evolução
 
 Documento objetivo sobre **o que o sistema faz**, do ponto de vista de produto e comportamento esperado — útil para reimplementar ou melhorar em outro repositório.
 
@@ -16,7 +16,7 @@ Aplicação **desktop** (Electron) que combina **gestão de Git com worktrees** 
 
 **Dores que o produto endereça:**
 
-| Dor | Como o Hive responde (conceito) |
+| Dor | Como o Octob responde (conceito) |
 |-----|----------------------------------|
 | Muitos terminais/abas | Uma sidebar com projetos, worktrees e sessões |
 | Dois agentes no mesmo checkout | Agentes ligados a worktrees diferentes (pastas isoladas) |
@@ -53,7 +53,7 @@ Aplicação **desktop** (Electron) que combina **gestão de Git com worktrees** 
 
 6. **UX de produtoividade** — Paleta de comandos (ex.: `Cmd+K` / equivalente por SO), temas, atalhos.
 
-7. **Estado persistente local** — Dados como projetos preferidos, trabalho organizado por spaces e estado da aplicação (no Hive atual via SQLite no processo principal).
+7. **Estado persistente local** — Dados como projetos preferidos, trabalho organizado por spaces e estado da aplicação (no Octob atual via SQLite no processo principal).
 
 ---
 
@@ -90,4 +90,4 @@ Sugestões de decisões explícitas no novo projeto:
 
 ---
 
-**Licença do Hive:** MIT (ver `LICENSE`). Este arquivo descreve **comportamento**; políticas legais e marca seguem o repositório original.
+**Licença do Octob:** MIT (ver `LICENSE`). Este arquivo descreve **comportamento**; políticas legais e marca seguem o repositório original.

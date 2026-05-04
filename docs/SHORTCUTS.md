@@ -1,6 +1,6 @@
 # Keyboard Shortcuts
 
-Master these keyboard shortcuts to navigate Hive like a pro!
+Master these keyboard shortcuts to navigate Octob like a pro!
 
 ## Global Shortcuts
 
@@ -10,8 +10,8 @@ These shortcuts work anywhere in the application:
 |----------|--------|-------------|
 | `Cmd+K` | Command Palette | Quick access to all commands |
 | `Cmd+,` | Settings | Open application settings |
-| `Cmd+Q` | Quit Hive | Close the application |
-| `Cmd+H` | Hide Hive | Minimize to dock |
+| `Cmd+Q` | Quit Octob | Close the application |
+| `Cmd+H` | Hide Octob | Minimize to dock |
 | `Cmd+M` | Minimize | Minimize window |
 | `Cmd+W` | Close Tab | Close current tab |
 | `Cmd+Shift+W` | Close Window | Close current window |
@@ -176,9 +176,9 @@ These shortcuts work anywhere in the application:
 
 | Shortcut | Action | Description |
 |----------|--------|-------------|
-| `Cmd+Shift+Option+N` | New Window | Open new Hive window |
+| `Cmd+Shift+Option+N` | New Window | Open new Octob window |
 | `Cmd+Shift+W` | Close Window | Close current window |
-| `Cmd+` ` | Cycle Windows | Cycle through Hive windows |
+| `Cmd+` ` | Cycle Windows | Cycle through Octob windows |
 | `Cmd+Option+M` | Minimize All | Minimize all windows |
 | `F11` | Full Screen | Toggle full screen mode |
 
@@ -212,7 +212,7 @@ You can customize keyboard shortcuts in Settings:
 
 ## Platform-Specific Notes
 
-These shortcuts are for macOS. If Hive becomes available on other platforms:
+These shortcuts are for macOS. If Octob becomes available on other platforms:
 
 | macOS | Windows/Linux |
 |-------|---------------|

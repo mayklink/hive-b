@@ -7,21 +7,21 @@
 
 Phase 11 begins the React Native mobile app in a **separate repository**. It scaffolds the project, sets up the core infrastructure (NativeWind, React Navigation, Apollo Client, graphql-codegen), creates the transport abstraction layer, implements the connection manager store, and builds the pairing screen.
 
-At the end of this phase, the mobile app can connect to a running Hive headless server, authenticate, and is ready for store porting and screen implementation.
+At the end of this phase, the mobile app can connect to a running Octob headless server, authenticate, and is ready for store porting and screen implementation.
 
 ## Prerequisites
 
-- Phases 1-10 completed: Hive headless server fully functional and tested.
-- A running headless server instance for testing: `hive --headless --port 8443`
+- Phases 1-10 completed: Octob headless server fully functional and tested.
+- A running headless server instance for testing: `octob --headless --port 8443`
 - The GraphQL SDL schema files from `src/server/schema/` available for codegen.
 
 ## Repository Setup
 
-This phase creates a **new repository** (e.g., `hive-mobile`). All tasks are prefixed with `[app]`.
+This phase creates a **new repository** (e.g., `octob-mobile`). All tasks are prefixed with `[app]`.
 
 **Target folder structure:**
 ```
-hive-mobile/
+octob-mobile/
   src/
     screens/                  — Screen components
     components/               — Reusable UI components
@@ -120,7 +120,7 @@ Disconnected → Connecting → Connected → Reconnecting → Connected
 
 1. `[app]` Initialize project:
    ```bash
-   npx create-expo-app hive-mobile --template blank-typescript
+   npx create-expo-app octob-mobile --template blank-typescript
    # OR for bare workflow:
    npx react-native init HiveMobile --template react-native-template-typescript
    ```
@@ -130,7 +130,7 @@ Disconnected → Connecting → Connected → Reconnecting → Connected
    - Path aliases: `@/` → `src/`
    - `noEmit: true`
 
-3. `[app]` Set up ESLint + Prettier matching Hive conventions:
+3. `[app]` Set up ESLint + Prettier matching Octob conventions:
    - No semicolons, single quotes, no trailing commas
    - 100 char print width, 2-space indent
    - Add `.eslintrc.js` and `.prettierrc`
@@ -150,7 +150,7 @@ Disconnected → Connecting → Connected → Reconnecting → Connected
 **Verification:**
 ```bash
 npx expo start --ios
-# App should render "Hive Mobile" text on screen
+# App should render "Octob Mobile" text on screen
 ```
 
 ---
@@ -177,7 +177,7 @@ npx expo start --ios
      theme: {
        extend: {
          colors: {
-           // Match Hive desktop theme colors
+           // Match Octob desktop theme colors
            background: 'var(--background)',
            foreground: 'var(--foreground)',
            primary: 'var(--primary)',
@@ -422,7 +422,7 @@ npx expo start --ios
 
 **Verification:**
 ```bash
-# Start headless server: hive --headless --port 8443
+# Start headless server: octob --headless --port 8443
 # Run app, connect, verify query works
 ```
 
@@ -749,12 +749,12 @@ pnpm tsc --noEmit
 
      async clearCredentials() {
        set({ serverUrl: null, apiKey: null, certFingerprint: null, state: 'disconnected' })
-       await Keychain.resetGenericPassword({ service: 'hive-mobile' })
+       await Keychain.resetGenericPassword({ service: 'octob-mobile' })
      },
 
      async _loadFromKeychain() {
        try {
-         const creds = await Keychain.getGenericPassword({ service: 'hive-mobile' })
+         const creds = await Keychain.getGenericPassword({ service: 'octob-mobile' })
          if (creds) {
            const { serverUrl, apiKey, certFingerprint } = JSON.parse(creds.password)
            set({ serverUrl, apiKey, certFingerprint })
@@ -765,9 +765,9 @@ pnpm tsc --noEmit
      async _saveToKeychain() {
        const { serverUrl, apiKey, certFingerprint } = get()
        await Keychain.setGenericPassword(
-         'hive-credentials',
+         'octob-credentials',
          JSON.stringify({ serverUrl, apiKey, certFingerprint }),
-         { service: 'hive-mobile' }
+         { service: 'octob-mobile' }
        )
      },
 
@@ -872,7 +872,7 @@ pnpm tsc --noEmit
      return (
        <View className="flex-1 bg-zinc-900 p-6 justify-center">
          <Text className="text-white text-2xl font-bold text-center mb-8">
-           Connect to Hive
+           Connect to Octob
          </Text>
 
          <Pressable
@@ -963,7 +963,7 @@ pnpm tsc --noEmit
    }
    ```
 
-5. `[app]` Test: scan a QR code from `hive --headless` output, verify connection.
+5. `[app]` Test: scan a QR code from `octob --headless` output, verify connection.
 
 **Verification:**
 ```bash
@@ -977,7 +977,7 @@ npx expo start --ios
 ## Summary of Files Created
 
 ```
-# New repository: hive-mobile/
+# New repository: octob-mobile/
 package.json
 tsconfig.json
 tailwind.config.js

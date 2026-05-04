@@ -1,6 +1,6 @@
-# Hive Phase 11 Implementation Plan
+# Octob Phase 11 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 11, focusing on session title simplification (server-side titles), automatic and manual branch renaming, worktree UX improvements (auto-start, create from branch), file sidebar redesign, and streaming/tool-call correctness bugfixes.
+This document outlines the implementation plan for Octob Phase 11, focusing on session title simplification (server-side titles), automatic and manual branch renaming, worktree UX improvements (auto-start, create from branch), file sidebar redesign, and streaming/tool-call correctness bugfixes.
 
 ---
 
@@ -330,8 +330,8 @@ describe('Session 2: Server Title Events', () => {
   test('session.updated event updates session name in store', () => {
     const updateSessionName = vi.fn()
     // Mock useSessionStore.getState().updateSessionName
-    // Simulate stream event: { type: 'session.updated', sessionId: 'hive-1', data: { title: 'Auth debugging' } }
-    // Verify updateSessionName called with ('hive-1', 'Auth debugging')
+    // Simulate stream event: { type: 'session.updated', sessionId: 'octob-1', data: { title: 'Auth debugging' } }
+    // Verify updateSessionName called with ('octob-1', 'Auth debugging')
   })
 
   test('session.updated without title is ignored', () => {

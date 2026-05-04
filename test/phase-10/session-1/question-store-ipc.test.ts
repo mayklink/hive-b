@@ -14,26 +14,26 @@ describe('Session 1: Question Store & IPC', () => {
         sessionID: 's1',
         questions: [{ question: 'Pick one', header: 'Choice', options: [] }]
       }
-      useQuestionStore.getState().addQuestion('hive-1', request)
-      expect(useQuestionStore.getState().getQuestions('hive-1')).toHaveLength(1)
+      useQuestionStore.getState().addQuestion('octob-1', request)
+      expect(useQuestionStore.getState().getQuestions('octob-1')).toHaveLength(1)
     })
 
     test('addQuestion prevents duplicates', () => {
       const request: QuestionRequest = { id: 'q1', sessionID: 's1', questions: [] }
-      useQuestionStore.getState().addQuestion('hive-1', request)
-      useQuestionStore.getState().addQuestion('hive-1', request)
-      expect(useQuestionStore.getState().getQuestions('hive-1')).toHaveLength(1)
+      useQuestionStore.getState().addQuestion('octob-1', request)
+      useQuestionStore.getState().addQuestion('octob-1', request)
+      expect(useQuestionStore.getState().getQuestions('octob-1')).toHaveLength(1)
     })
 
     test('removeQuestion removes by ID', () => {
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q1', sessionID: 's1', questions: [] })
+        .addQuestion('octob-1', { id: 'q1', sessionID: 's1', questions: [] })
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q2', sessionID: 's1', questions: [] })
-      useQuestionStore.getState().removeQuestion('hive-1', 'q1')
-      const remaining = useQuestionStore.getState().getQuestions('hive-1')
+        .addQuestion('octob-1', { id: 'q2', sessionID: 's1', questions: [] })
+      useQuestionStore.getState().removeQuestion('octob-1', 'q1')
+      const remaining = useQuestionStore.getState().getQuestions('octob-1')
       expect(remaining).toHaveLength(1)
       expect(remaining[0].id).toBe('q2')
     })
@@ -41,48 +41,48 @@ describe('Session 1: Question Store & IPC', () => {
     test('getActiveQuestion returns first pending question', () => {
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q1', sessionID: 's1', questions: [] })
+        .addQuestion('octob-1', { id: 'q1', sessionID: 's1', questions: [] })
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q2', sessionID: 's1', questions: [] })
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')?.id).toBe('q1')
+        .addQuestion('octob-1', { id: 'q2', sessionID: 's1', questions: [] })
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')?.id).toBe('q1')
     })
 
     test('getActiveQuestion returns null when no questions', () => {
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')).toBeNull()
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')).toBeNull()
     })
 
     test('clearSession removes all questions for a session', () => {
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q1', sessionID: 's1', questions: [] })
+        .addQuestion('octob-1', { id: 'q1', sessionID: 's1', questions: [] })
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q2', sessionID: 's1', questions: [] })
-      useQuestionStore.getState().clearSession('hive-1')
-      expect(useQuestionStore.getState().getQuestions('hive-1')).toHaveLength(0)
+        .addQuestion('octob-1', { id: 'q2', sessionID: 's1', questions: [] })
+      useQuestionStore.getState().clearSession('octob-1')
+      expect(useQuestionStore.getState().getQuestions('octob-1')).toHaveLength(0)
     })
 
     test('removeQuestion cleans up session key when last question removed', () => {
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q1', sessionID: 's1', questions: [] })
-      useQuestionStore.getState().removeQuestion('hive-1', 'q1')
-      expect(useQuestionStore.getState().pendingBySession.has('hive-1')).toBe(false)
+        .addQuestion('octob-1', { id: 'q1', sessionID: 's1', questions: [] })
+      useQuestionStore.getState().removeQuestion('octob-1', 'q1')
+      expect(useQuestionStore.getState().pendingBySession.has('octob-1')).toBe(false)
     })
 
     test('questions for different sessions are isolated', () => {
       useQuestionStore
         .getState()
-        .addQuestion('hive-1', { id: 'q1', sessionID: 's1', questions: [] })
+        .addQuestion('octob-1', { id: 'q1', sessionID: 's1', questions: [] })
       useQuestionStore
         .getState()
-        .addQuestion('hive-2', { id: 'q2', sessionID: 's2', questions: [] })
-      expect(useQuestionStore.getState().getQuestions('hive-1')).toHaveLength(1)
-      expect(useQuestionStore.getState().getQuestions('hive-2')).toHaveLength(1)
-      useQuestionStore.getState().clearSession('hive-1')
-      expect(useQuestionStore.getState().getQuestions('hive-1')).toHaveLength(0)
-      expect(useQuestionStore.getState().getQuestions('hive-2')).toHaveLength(1)
+        .addQuestion('octob-2', { id: 'q2', sessionID: 's2', questions: [] })
+      expect(useQuestionStore.getState().getQuestions('octob-1')).toHaveLength(1)
+      expect(useQuestionStore.getState().getQuestions('octob-2')).toHaveLength(1)
+      useQuestionStore.getState().clearSession('octob-1')
+      expect(useQuestionStore.getState().getQuestions('octob-1')).toHaveLength(0)
+      expect(useQuestionStore.getState().getQuestions('octob-2')).toHaveLength(1)
     })
   })
 

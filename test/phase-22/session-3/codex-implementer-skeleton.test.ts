@@ -190,7 +190,7 @@ describe('CodexImplementer skeleton', () => {
     it('assigns canonical same-turn IDs and rolls subsequent assistant deltas below the steered user', async () => {
       const state = {
         threadId: 'thread-1',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/path',
         status: 'running' as const,
         messages: [
@@ -294,13 +294,13 @@ describe('CodexImplementer skeleton', () => {
 
   describe('undo/redo methods', () => {
     it('undo throws for unknown session', async () => {
-      await expect(impl.undo('/path', 'session-1', 'hive-1')).rejects.toThrow(
+      await expect(impl.undo('/path', 'session-1', 'octob-1')).rejects.toThrow(
         'session not found'
       )
     })
 
     it('redo throws unsupported', async () => {
-      await expect(impl.redo('/path', 'session-1', 'hive-1')).rejects.toThrow(
+      await expect(impl.redo('/path', 'session-1', 'octob-1')).rejects.toThrow(
         'Redo is not supported for Codex sessions'
       )
     })

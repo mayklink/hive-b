@@ -7,7 +7,7 @@
 
 Phase 14 builds all remaining screens for full feature parity with the desktop app: file tree browser, file viewer and editor, git changes panel with staging, diff viewer, simplified terminal, settings, and session history search.
 
-At the end of this phase, the mobile app has all features needed for remote control of the Hive development environment.
+At the end of this phase, the mobile app has all features needed for remote control of the Octob development environment.
 
 ## Prerequisites
 

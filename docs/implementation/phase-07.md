@@ -1,6 +1,6 @@
-# Hive Phase 7 Implementation Plan
+# Octob Phase 7 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 7, focusing on project filtering, branch duplication, code review triggers, inline diff viewing, running-process animations, UX polish, and model variant selection.
+This document outlines the implementation plan for Octob Phase 7, focusing on project filtering, branch duplication, code review triggers, inline diff viewing, running-process animations, UX polish, and model variant selection.
 
 ---
 

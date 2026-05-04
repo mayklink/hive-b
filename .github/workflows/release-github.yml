@@ -201,13 +201,13 @@ jobs:
           echo "SHA256 (x64):   $SHA_X64"
 
           # Clone homebrew repo
-          git clone "https://x-access-token:${HOMEBREW_PAT}@github.com/morapelker/homebrew-hive.git" homebrew-hive
-          cd homebrew-hive
+          git clone "https://x-access-token:${HOMEBREW_PAT}@github.com/morapelker/homebrew-octob.git" homebrew-octob
+          cd homebrew-octob
 
           # Update cask file using node
           node -e "
             const fs = require('fs');
-            let cask = fs.readFileSync('Casks/hive.rb', 'utf8');
+            let cask = fs.readFileSync('Casks/octob.rb', 'utf8');
             cask = cask.replace(/version \"[^\"]+\"/, 'version \"${VERSION}\"');
             let shaIndex = 0;
             cask = cask.replace(/sha256 \"[a-f0-9]+\"/g, (match) => {
@@ -216,12 +216,12 @@ jobs:
               if (shaIndex === 2) return 'sha256 \"${SHA_X64}\"';
               return match;
             });
-            fs.writeFileSync('Casks/hive.rb', cask);
+            fs.writeFileSync('Casks/octob.rb', cask);
           "
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add Casks/hive.rb
+          git add Casks/octob.rb
           git commit -m "Update Octob to v${VERSION}"
           git push origin main
       - name: Telegram — release complete

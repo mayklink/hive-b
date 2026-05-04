@@ -50,7 +50,7 @@ export function buildMenu(mainWindow: BrowserWindow, isDev: boolean): Menu {
   const isMac = process.platform === 'darwin'
 
   const template: Electron.MenuItemConstructorOptions[] = [
-    // Hive (appMenu) — macOS only
+    // Octob (appMenu) — macOS only
     ...(isMac ? [{ role: 'appMenu' as const }] : []),
 
     // File

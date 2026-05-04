@@ -1,4 +1,4 @@
-# Hive - Phase 4 Product Requirements Document
+# Octob - Phase 4 Product Requirements Document
 
 ## Overview
 
@@ -590,7 +590,7 @@ Replace the theme dropdown with a 2-button group on the right side of the header
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  (traffic lights)    Hive          [Cursor] [v Open]   [...] │
+│  (traffic lights)    Octob          [Cursor] [v Open]   [...] │
 └──────────────────────────────────────────────────────────────┘
 ```
 

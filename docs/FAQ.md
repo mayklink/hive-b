@@ -2,17 +2,17 @@
 
 ## General Questions
 
-### What is Hive?
-Hive is a native macOS application that combines git worktree management with AI-powered coding assistance. It allows you to work on multiple branches simultaneously without the hassle of stashing and switching.
+### What is Octob?
+Octob is a native macOS application that combines git worktree management with AI-powered coding assistance. It allows you to work on multiple branches simultaneously without the hassle of stashing and switching.
 
-### Is Hive free?
-Yes, Hive is free and open source under the MIT license.
+### Is Octob free?
+Yes, Octob is free and open source under the MIT license.
 
-### Which platforms does Hive support?
-Currently, Hive is macOS-only. Windows and Linux support are planned for future releases.
+### Which platforms does Octob support?
+Currently, Octob is macOS-only. Windows and Linux support are planned for future releases.
 
-### Do I need to know git worktrees to use Hive?
-No! Hive handles all the worktree complexity for you. If you can use git branches, you can use Hive.
+### Do I need to know git worktrees to use Octob?
+No! Octob handles all the worktree complexity for you. If you can use git branches, you can use Octob.
 
 ## Installation & Setup
 
@@ -23,25 +23,25 @@ No! Hive handles all the worktree complexity for you. If you can use git branche
 - At least 4GB RAM
 - 500MB free disk space
 
-### How do I install Hive?
+### How do I install Octob?
 The easiest way is via Homebrew:
 ```bash
-brew install --cask hive-app
+brew install --cask octob-app
 ```
 
-Alternatively, download the `.dmg` file from [GitHub Releases](https://github.com/morapelker/hive/releases).
+Alternatively, download the `.dmg` file from [GitHub Releases](https://github.com/morapelker/octob/releases).
 
-### Why does macOS say "Hive can't be opened"?
+### Why does macOS say "Octob can't be opened"?
 This is macOS's Gatekeeper protection. To fix:
-1. Right-click on Hive in Applications
+1. Right-click on Octob in Applications
 2. Select "Open"
 3. Click "Open" in the dialog
 4. This only needs to be done once
 
-### How do I update Hive?
+### How do I update Octob?
 If installed via Homebrew:
 ```bash
-brew upgrade hive-app
+brew upgrade octob-app
 ```
 
 Otherwise, download the latest version from GitHub Releases.
@@ -51,35 +51,35 @@ Otherwise, download the latest version from GitHub Releases.
 ### What is a git worktree?
 A worktree is a linked working copy of your repository. Think of it as having multiple copies of your repo, each on different branches, without duplicating the entire `.git` history.
 
-### Where does Hive store worktrees?
+### Where does Octob store worktrees?
 By default, worktrees are stored in:
 ```
 ~/.octob-worktrees/{project-name}/{worktree-name}
 ```
 
 ### Can I use existing worktrees?
-Yes, if you have existing git worktrees, Hive will detect and manage them.
+Yes, if you have existing git worktrees, Octob will detect and manage them.
 
 ### What happens when I archive a worktree?
 Archiving a worktree:
 - Removes it from the active list
 - Preserves the branch
-- Moves files to `~/.hive-archive`
+- Moves files to `~/.octob-archive`
 - Keeps session history searchable
 
-### Can I delete branches through Hive?
+### Can I delete branches through Octob?
 Yes, use the "Unbranch" option to remove both the worktree and its associated branch.
 
 ### Why do worktrees have city names?
-Hive uses city names (Tokyo, Paris, London, etc.) to make worktrees memorable and fun. It's easier to remember "the Tokyo worktree" than "feature/user-auth-refactor-v2".
+Octob uses city names (Tokyo, Paris, London, etc.) to make worktrees memorable and fun. It's easier to remember "the Tokyo worktree" than "feature/user-auth-refactor-v2".
 
 ### What if I run out of city names?
-Hive has 200+ city names. If all are used, it adds version suffixes (tokyo-v1, tokyo-v2). You can also rename worktrees.
+Octob has 200+ city names. If all are used, it adds version suffixes (tokyo-v1, tokyo-v2). You can also rename worktrees.
 
 ## Connections
 
 ### What is the Connections feature?
-Hive's Connections feature allows you to link two worktrees together, creating a bridge between different branches. This enables you to reference code from one branch while working in another, share AI session context, and maintain awareness of related changes across your project.
+Octob's Connections feature allows you to link two worktrees together, creating a bridge between different branches. This enables you to reference code from one branch while working in another, share AI session context, and maintain awareness of related changes across your project.
 
 ### Why would I connect two worktrees?
 Common scenarios include:
@@ -111,8 +111,8 @@ Connected worktrees can share:
 ### Are changes synchronized between connected worktrees?
 No, connections don't synchronize changes. Each worktree remains independent. Connections provide visibility and context, not synchronization. You can view and reference files from connected worktrees but changes stay in their respective branches.
 
-### Do connections persist after closing Hive?
-Yes! Connections are saved and will be restored when you reopen Hive. You can also save connection patterns as templates for quick reuse.
+### Do connections persist after closing Octob?
+Yes! Connections are saved and will be restored when you reopen Octob. You can also save connection patterns as templates for quick reuse.
 
 ### Can AI sessions access connected worktrees?
 Yes, when AI session sharing is enabled, you can reference code from connected worktrees. For example: "Apply the same pattern used in the connected worktree's authentication system."
@@ -141,7 +141,7 @@ Look for these indicators:
 
 ## AI Coding Sessions
 
-### Which AI providers does Hive support?
+### Which AI providers does Octob support?
 - **OpenCode SDK** - Default provider with full features
 - **Claude Code SDK** - Anthropic's Claude assistant
 - **Codex CLI** - OpenAI's Codex coding agent
@@ -169,7 +169,7 @@ AI sessions can:
 - Answer questions about your code
 
 ### Are my code and conversations private?
-Yes. All AI interactions happen directly between your machine and the AI provider's API. Hive doesn't store or transmit your code to any intermediary servers.
+Yes. All AI interactions happen directly between your machine and the AI provider's API. Octob doesn't store or transmit your code to any intermediary servers.
 
 ### Can I undo AI changes?
 - **OpenCode**: Full undo/redo support
@@ -185,54 +185,54 @@ Common reasons:
 
 ## Performance & Troubleshooting
 
-### Hive is running slowly. What can I do?
+### Octob is running slowly. What can I do?
 1. Limit open worktrees to 10-15
 2. Close unused file tabs
 3. Check Activity Monitor for memory usage
-4. Restart Hive if it's been running for days
+4. Restart Octob if it's been running for days
 
 ### The file tree isn't showing all files
-Hive respects `.gitignore` by default. To show ignored files:
+Octob respects `.gitignore` by default. To show ignored files:
 1. Open Settings
 2. Toggle "Show ignored files"
 
-### How do I reset Hive to defaults?
-To completely reset Hive:
-1. Quit Hive
-2. Delete `~/.hive` directory
-3. Delete `~/Library/Application Support/hive`
-4. Restart Hive
+### How do I reset Octob to defaults?
+To completely reset Octob:
+1. Quit Octob
+2. Delete `~/.octob` directory
+3. Delete `~/Library/Application Support/octob`
+4. Restart Octob
 
 **Warning**: This will remove all projects, settings, and session history.
 
-### Where are Hive's logs?
+### Where are Octob's logs?
 Logs are stored in:
 ```
-~/Library/Logs/hive/
+~/Library/Logs/octob/
 ```
 
-Use Console.app or `tail -f ~/Library/Logs/hive/main.log` to view them.
+Use Console.app or `tail -f ~/Library/Logs/octob/main.log` to view them.
 
 ## Data & Privacy
 
-### Where does Hive store its data?
+### Where does Octob store its data?
 - Database: `~/.octob/octob.db` (SQLite)
 - Worktrees: `~/.octob-worktrees/`
-- Archives: `~/.hive-archive/`
-- Logs: `~/Library/Logs/hive/`
-- Settings: `~/Library/Application Support/hive/`
+- Archives: `~/.octob-archive/`
+- Logs: `~/Library/Logs/octob/`
+- Settings: `~/Library/Application Support/octob/`
 
 ### Is my data backed up?
-Hive doesn't automatically backup data. We recommend:
+Octob doesn't automatically backup data. We recommend:
 - Using Time Machine for system backups
-- Backing up `~/.hive` for settings and history
+- Backing up `~/.octob` for settings and history
 - Your git repositories are already backed up via git
 
 ### Can I sync settings across machines?
-Not yet, but this feature is on our roadmap. For now, you can manually copy the `~/.hive` directory.
+Not yet, but this feature is on our roadmap. For now, you can manually copy the `~/.octob` directory.
 
-### Does Hive collect telemetry?
-Hive includes optional, anonymous usage analytics via PostHog. You can disable this in Settings → Privacy.
+### Does Octob collect telemetry?
+Octob includes optional, anonymous usage analytics via PostHog. You can disable this in Settings → Privacy.
 
 ## Common Issues
 
@@ -262,19 +262,19 @@ Check:
 
 ## Advanced Usage
 
-### Can I use Hive with monorepos?
-Yes! Hive works great with monorepos. Each worktree can focus on different parts of your monorepo.
+### Can I use Octob with monorepos?
+Yes! Octob works great with monorepos. Each worktree can focus on different parts of your monorepo.
 
-### Does Hive support git submodules?
+### Does Octob support git submodules?
 Yes, with limitations. Submodules are supported but may require manual initialization in each worktree.
 
 ### Can I use custom git hooks?
 Yes, place hooks in your repository's `.git/hooks/` directory. They'll apply to all worktrees.
 
-### How do I use Hive with CI/CD?
+### How do I use Octob with CI/CD?
 Worktrees are regular git checkouts, so they work with any CI/CD system. Push from a worktree and your CI/CD will trigger normally.
 
-### Can I script Hive operations?
+### Can I script Octob operations?
 Not directly, but you can:
 - Use git commands on worktree directories
 - Access the SQLite database at `~/.octob/octob.db`
@@ -283,14 +283,14 @@ Not directly, but you can:
 ## Getting Help
 
 ### Where can I report bugs?
-[Create an issue](https://github.com/morapelker/hive/issues) on GitHub with:
+[Create an issue](https://github.com/morapelker/octob/issues) on GitHub with:
 - Steps to reproduce
 - Expected vs actual behavior
 - System information
 - Screenshots if applicable
 
 ### How can I request features?
-[Open a discussion](https://github.com/morapelker/hive/discussions) or [create a feature request](https://github.com/morapelker/hive/issues/new?template=feature_request.md).
+[Open a discussion](https://github.com/morapelker/octob/discussions) or [create a feature request](https://github.com/morapelker/octob/issues/new?template=feature_request.md).
 
 ### Where can I find more documentation?
 - [User Guide](GUIDE.md) - Detailed usage instructions
@@ -305,8 +305,8 @@ See our [Contributing Guidelines](../CONTRIBUTING.md). We welcome:
 - Translations
 
 ### Is there a community Discord/Slack?
-Not yet, but join our [GitHub Discussions](https://github.com/morapelker/hive/discussions) to connect with other users.
+Not yet, but join our [GitHub Discussions](https://github.com/morapelker/octob/discussions) to connect with other users.
 
 ---
 
-Still have questions? [Open a discussion](https://github.com/morapelker/hive/discussions/new?category=q-a) and we'll help!
+Still have questions? [Open a discussion](https://github.com/morapelker/octob/discussions/new?category=q-a) and we'll help!

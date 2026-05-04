@@ -1,6 +1,6 @@
-# Hive Implementation Plan
+# Octob Implementation Plan
 
-This document outlines the implementation plan for Hive, an Electron-based desktop application for managing multiple git projects and their worktrees with integrated OpenCode AI sessions.
+This document outlines the implementation plan for Octob, an Electron-based desktop application for managing multiple git projects and their worktrees with integrated OpenCode AI sessions.
 
 ---
 
@@ -306,7 +306,7 @@ describe('Session 3: Database', () => {
 - [ ] Duplicate projects are rejected with error toast
 - [ ] Projects are persisted to SQLite database
 - [ ] Context menu works with all actions
-- [ ] Projects can be removed from Hive
+- [ ] Projects can be removed from Octob
 - [ ] Project names are editable
 - [ ] lastAccessedAt updates on interaction
 

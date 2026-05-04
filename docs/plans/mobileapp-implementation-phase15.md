@@ -160,7 +160,7 @@ The server does NOT send push notifications directly. The mobile app handles all
        const token = await getDeviceToken()
        if (token) {
          set({ pushToken: token })
-         // Register with Hive server
+         // Register with Octob server
          await transport.systemOps.registerPushToken(token, Platform.OS)
        }
      },

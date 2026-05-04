@@ -9,7 +9,7 @@ import {
 } from '../../src/main/services/cursor-cli-models'
 
 describe('cursor-cli-models', () => {
-  it('defaults to auto for Hive model identity', () => {
+  it('defaults to auto for Octob model identity', () => {
     expect(CURSOR_CLI_DEFAULT_MODEL_ID).toBe('auto')
   })
 

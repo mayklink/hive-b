@@ -64,7 +64,7 @@ describe('ClaudeCodeImplementer – abort (Session 4)', () => {
   })
 
   it('aborts the abort controller', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     const key = (impl as any).getSessionKey('/proj', sessionId)
     const controller = sessions.get(key)!.abortController!
 
@@ -74,7 +74,7 @@ describe('ClaudeCodeImplementer – abort (Session 4)', () => {
   })
 
   it('calls query.interrupt() if a query is active', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     const key = (impl as any).getSessionKey('/proj', sessionId)
     const mockQ = createMockQuery()
     sessions.get(key)!.query = mockQ
@@ -84,7 +84,7 @@ describe('ClaudeCodeImplementer – abort (Session 4)', () => {
   })
 
   it('emits session.status idle after abort', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
 
     await impl.abort('/proj', sessionId)
 
@@ -98,13 +98,13 @@ describe('ClaudeCodeImplementer – abort (Session 4)', () => {
   })
 
   it('returns true on successful abort', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     const result = await impl.abort('/proj', sessionId)
     expect(result).toBe(true)
   })
 
   it('does not throw when query.interrupt() throws', async () => {
-    const { sessionId } = await impl.connect('/proj', 'hive-1')
+    const { sessionId } = await impl.connect('/proj', 'octob-1')
     const key = (impl as any).getSessionKey('/proj', sessionId)
     const mockQ = createMockQuery({
       interrupt: vi.fn().mockRejectedValue(new Error('interrupt failed'))

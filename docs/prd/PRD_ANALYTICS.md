@@ -2,7 +2,7 @@
 
 ## Context
 
-Hive has no usage analytics. We need anonymous metrics to understand onboarding funnels, activation milestones, and retention patterns to guide product decisions.
+Octob has no usage analytics. We need anonymous metrics to understand onboarding funnels, activation milestones, and retention patterns to guide product decisions.
 
 ## Decisions
 
@@ -23,7 +23,7 @@ A singleton `TelemetryService` in `src/main/services/` — follows the exact sam
 
 **Why this approach over alternatives:**
 - **vs. IPC middleware/interceptor**: IPC channels are implementation details, not user-meaningful events. Can't express state transitions like "first prompt ever" or "onboarding completed" via middleware. Also no existing middleware pattern in the codebase.
-- **vs. Event bus integration**: Hive has no central event bus. Building one just for analytics is over-engineering.
+- **vs. Event bus integration**: Octob has no central event bus. Building one just for analytics is over-engineering.
 - **Centralized service wins on**: simplicity, greppability, alignment with existing patterns, flexibility to add/remove events.
 
 ### Data Flow

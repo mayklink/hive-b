@@ -244,7 +244,7 @@ Expected: Zero errors.
 
 ```bash
 git add src/main/services/codex-app-server-manager.ts test/phase-22/session-6/codex-permission-requests.test.ts
-git commit -m "fix: map Hive approval decisions to correct Codex protocol values
+git commit -m "fix: map Octob approval decisions to correct Codex protocol values
 
 'once' → 'accept', 'always' → 'acceptForSession', 'reject' → 'decline'.
 Uses generated CommandExecutionApprovalDecision and FileChangeApprovalDecision
@@ -254,7 +254,7 @@ types from codex-schemas."
 ### Definition of Done
 
 - [ ] `respondToApproval` sends `'accept'` / `'acceptForSession'` / `'decline'` over the wire
-- [ ] The Hive-internal `'once'` / `'always'` / `'reject'` values remain at the UI/IPC boundary
+- [ ] The Octob-internal `'once'` / `'always'` / `'reject'` values remain at the UI/IPC boundary
 - [ ] All permission tests pass with updated assertions
 - [ ] `npx tsc --noEmit` passes
 
@@ -1161,7 +1161,7 @@ this.respond(message.id, { decision: 'accept' })
 
 In `test/phase-22/session-3/codex-implementer-skeleton.test.ts`, check if it references old decision values and update if needed.
 
-In `test/phase-22/session-9/graphql-codex-routing.test.ts`, the tests call `permissionReply('perm-7', 'once')` — these Hive-internal values are correct (the mapping happens in the manager), so these tests should pass as-is. Verify and add the codex-debug-logger mock if missing:
+In `test/phase-22/session-9/graphql-codex-routing.test.ts`, the tests call `permissionReply('perm-7', 'once')` — these Octob-internal values are correct (the mapping happens in the manager), so these tests should pass as-is. Verify and add the codex-debug-logger mock if missing:
 
 ```typescript
 vi.mock('../../../src/main/services/codex-debug-logger', () => ({

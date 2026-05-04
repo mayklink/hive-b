@@ -297,7 +297,7 @@ describe('Codex Question Prompts', () => {
       // Seed session
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        octobSessionId: 'hive-q-1',
+        octobSessionId: 'octob-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -308,7 +308,7 @@ describe('Codex Question Prompts', () => {
       // Seed pending question
       impl.getPendingQuestions().set('q-req-1', {
         threadId: 'thread-q-1',
-        octobSessionId: 'hive-q-1',
+        octobSessionId: 'octob-q-1',
         worktreePath: '/test'
       })
 
@@ -335,7 +335,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        octobSessionId: 'hive-q-1',
+        octobSessionId: 'octob-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -344,7 +344,7 @@ describe('Codex Question Prompts', () => {
       })
       impl.getPendingQuestions().set('q-req-1', {
         threadId: 'thread-q-1',
-        octobSessionId: 'hive-q-1',
+        octobSessionId: 'octob-q-1',
         worktreePath: '/test'
       })
 
@@ -371,7 +371,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        octobSessionId: 'hive-q-1',
+        octobSessionId: 'octob-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -380,7 +380,7 @@ describe('Codex Question Prompts', () => {
       })
       impl.getPendingQuestions().set('q-req-2', {
         threadId: 'thread-q-1',
-        octobSessionId: 'hive-q-1',
+        octobSessionId: 'octob-q-1',
         worktreePath: '/test'
       })
 
@@ -399,7 +399,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        octobSessionId: 'hive-q-1',
+        octobSessionId: 'octob-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -408,7 +408,7 @@ describe('Codex Question Prompts', () => {
       })
       impl.getPendingQuestions().set('q-req-2', {
         threadId: 'thread-q-1',
-        octobSessionId: 'hive-q-1',
+        octobSessionId: 'octob-q-1',
         worktreePath: '/test'
       })
 
@@ -434,7 +434,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getPendingQuestions().set('q-1', {
         threadId: 'thread-1',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/test'
       })
 
@@ -465,7 +465,7 @@ describe('Codex Question Prompts', () => {
       // Seed a session
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        octobSessionId: 'hive-q-1',
+        octobSessionId: 'octob-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -505,7 +505,7 @@ describe('Codex Question Prompts', () => {
 
       const questionEvent = streamCalls.find((e: any) => e.type === 'question.asked')
       expect(questionEvent).toBeDefined()
-      expect(questionEvent.sessionId).toBe('hive-q-1')
+      expect(questionEvent.sessionId).toBe('octob-q-1')
       expect(questionEvent.data.requestId).toBe('req-q-1')
       expect(questionEvent.data.questions).toHaveLength(1)
 
@@ -525,7 +525,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        octobSessionId: 'hive-q-1',
+        octobSessionId: 'octob-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -557,7 +557,7 @@ describe('Codex Question Prompts', () => {
 
       const approvalEvent = streamCalls.find((e: any) => e.type === 'permission.asked')
       expect(approvalEvent).toBeDefined()
-      expect(approvalEvent.sessionId).toBe('hive-q-1')
+      expect(approvalEvent.sessionId).toBe('octob-q-1')
       expect(approvalEvent.data.id).toBe('req-a-1')
       expect(approvalEvent.data.permission).toBe('bash')
       expect(approvalEvent.data.patterns).toEqual(['rm -rf /'])
@@ -610,7 +610,7 @@ describe('Codex Question Prompts', () => {
 
       impl.getSessions().set('/test::thread-q-1', {
         threadId: 'thread-q-1',
-        octobSessionId: 'hive-q-1',
+        octobSessionId: 'octob-q-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],

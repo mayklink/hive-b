@@ -20,7 +20,7 @@ function makeEvent(overrides: Partial<CodexManagerEvent>): CodexManagerEvent {
   }
 }
 
-const OCTOB_SESSION = 'hive-session-abc'
+const OCTOB_SESSION = 'octob-session-abc'
 
 describe('typed event mapper migration', () => {
   // ── Step 1: thread/name/updated with ThreadNameUpdatedNotification ──

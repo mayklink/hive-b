@@ -1,6 +1,6 @@
-# Hive Phase 18 Implementation Plan
+# Octob Phase 18 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 18, covering archive task stop, skill card UI, PR to GitHub, permission status, merge conflict header button, plain file rendering, grep UI restyle, /clear command, and plan ready status.
+This document outlines the implementation plan for Octob Phase 18, covering archive task stop, skill card UI, PR to GitHub, permission status, merge conflict header button, plain file rendering, grep UI restyle, /clear command, and plan ready status.
 
 ---
 
@@ -77,7 +77,7 @@ Rationale: S1-S3 are the smallest self-contained changes (single file each). S4-
 test/
 ├── phase-18/
 │   ├── session-1/
-│   │   └── archive-task-stop.test.ts
+│   │   └── arcoctob-task-stop.test.ts
 │   ├── session-2/
 │   │   └── clear-command.test.ts
 │   ├── session-3/
@@ -194,7 +194,7 @@ for (const sid of sessionIds) {
 ### Testing Criteria
 
 ```typescript
-// test/phase-18/session-1/archive-task-stop.test.ts
+// test/phase-18/session-1/arcoctob-task-stop.test.ts
 describe('Session 1: Archive Task Stop', () => {
   test('archiveWorktree kills running script before archive', async () => {
     // Mock useScriptStore with runRunning: true for worktreeId

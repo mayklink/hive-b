@@ -1,7 +1,7 @@
 # Session Title Generation — Reference Spec
 
 > Research extracted from the [opencode](https://github.com/sst/opencode) project.
-> Use this document to implement automatic session title generation in Hive.
+> Use this document to implement automatic session title generation in Octob.
 
 ---
 

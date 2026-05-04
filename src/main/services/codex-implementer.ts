@@ -1476,7 +1476,7 @@ export class CodexImplementer implements AgentSdkImplementer {
       return
     }
 
-    // Find hive session by matching agentSessionId (threadId)
+    // Find octob session by matching agentSessionId (threadId)
     const sessionKey = this.findSessionKeyByAgentId(agentSessionId)
     if (sessionKey) {
       const session = this.sessions.get(sessionKey)

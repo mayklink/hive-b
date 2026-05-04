@@ -53,7 +53,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       impl.getSessions().set('/test::thread-1', {
         threadId: 'thread-1',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -75,7 +75,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       const session: CodexSessionState = {
         threadId: 'thread-1',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -104,7 +104,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       impl.getSessions().set('/test::thread-1', {
         threadId: 'thread-1',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [
@@ -117,7 +117,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       internalManager.rollbackThread = vi.fn().mockResolvedValue({ ok: true })
 
-      await impl.undo('/test', 'thread-1', 'hive-1')
+      await impl.undo('/test', 'thread-1', 'octob-1')
 
       const info = await impl.getSessionInfo('/test', 'thread-1')
       expect(info.revertMessageID).toBeTruthy()
@@ -135,13 +135,13 @@ describe('Codex getSessionInfo & renameSession', () => {
       const impl = new CodexImplementer()
 
       const mockDbService = {
-        updateSession: vi.fn().mockReturnValue({ id: 'hive-1', name: 'New Title' })
+        updateSession: vi.fn().mockReturnValue({ id: 'octob-1', name: 'New Title' })
       }
       impl.setDatabaseService(mockDbService as any)
 
       impl.getSessions().set('/test::thread-1', {
         threadId: 'thread-1',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -151,7 +151,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       await impl.renameSession('/test', 'thread-1', 'New Title')
 
-      expect(mockDbService.updateSession).toHaveBeenCalledWith('hive-1', { name: 'New Title' })
+      expect(mockDbService.updateSession).toHaveBeenCalledWith('octob-1', { name: 'New Title' })
     })
 
     it('does not throw without dbService', async () => {
@@ -162,7 +162,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       impl.getSessions().set('/test::thread-1', {
         threadId: 'thread-1',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -211,7 +211,7 @@ describe('Codex getSessionInfo & renameSession', () => {
 
       impl.getSessions().set('/test::thread-1', {
         threadId: 'thread-1',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],

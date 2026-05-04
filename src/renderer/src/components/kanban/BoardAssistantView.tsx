@@ -41,7 +41,7 @@ interface BoardAssistantViewProps {
 }
 
 const BOARD_ASSISTANT_RULES = [
-  'You are Hive Board Assistant.',
+  'You are Octob Board Assistant.',
   'Stay focused on helping the user create local kanban tickets for the current board scope.',
   'Do not claim tickets are created. The UI will create them only after explicit confirmation.',
   'Ask concise clarifying questions when needed.',

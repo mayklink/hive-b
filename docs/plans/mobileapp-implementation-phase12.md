@@ -5,7 +5,7 @@
 
 ## Phase Overview
 
-Phase 12 ports all 13 Zustand stores from the Hive desktop app to the React Native mobile app. Each store's `window.*` IPC calls are replaced with GraphQL transport calls via the `HiveTransport` abstraction created in Phase 11. The business logic (state management, derived data, actions) remains identical.
+Phase 12 ports all 13 Zustand stores from the Octob desktop app to the React Native mobile app. Each store's `window.*` IPC calls are replaced with GraphQL transport calls via the `HiveTransport` abstraction created in Phase 11. The business logic (state management, derived data, actions) remains identical.
 
 At the end of this phase, all stores are functional in the mobile app — the same data flows and state management patterns from the desktop app work over GraphQL.
 
@@ -453,7 +453,7 @@ pnpm tsc --noEmit
    }
    ```
 
-4. `[app]` **Desktop side** (future, in Hive Electron repo): Replace the IPC-based listener with:
+4. `[app]` **Desktop side** (future, in Octob Electron repo): Replace the IPC-based listener with:
    ```typescript
    // In useOpenCodeGlobalListener.ts
    ipcRenderer.on('opencode:stream', (_event, data) => {

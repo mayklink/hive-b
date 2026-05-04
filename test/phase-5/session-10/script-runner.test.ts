@@ -47,7 +47,7 @@ describe('ScriptRunner process lifecycle', () => {
   test('runPersistent uses latest PATH at spawn time', async () => {
     const runner = new ScriptRunner()
     const proc = new MockChildProcess(3001)
-    const nextPath = '/tmp/hive-path-from-finder'
+    const nextPath = '/tmp/octob-path-from-finder'
     const previousPath = process.env.PATH
 
     spawnMock.mockReturnValue(proc)

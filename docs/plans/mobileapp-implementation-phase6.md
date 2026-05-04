@@ -5,7 +5,7 @@
 
 ## Phase Overview
 
-Phase 6 implements the most complex resolvers — AI session management with dual SDK dispatch. The Hive app supports two AI backends: **OpenCode** (default) and **Claude Code**. The IPC handler at `src/main/ipc/opencode-handlers.ts` routes requests based on the session's `agent_sdk` field. GraphQL resolvers must replicate this same dispatch pattern.
+Phase 6 implements the most complex resolvers — AI session management with dual SDK dispatch. The Octob app supports two AI backends: **OpenCode** (default) and **Claude Code**. The IPC handler at `src/main/ipc/opencode-handlers.ts` routes requests based on the session's `agent_sdk` field. GraphQL resolvers must replicate this same dispatch pattern.
 
 At the end of this phase, all 20+ OpenCode operations work via GraphQL, including connect, disconnect, prompt, abort, model selection, undo/redo, commands, permissions, questions, plans, fork, and rename.
 

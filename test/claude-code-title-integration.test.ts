@@ -58,7 +58,7 @@ function createMockDbService(worktreeOverrides: Record<string, any> = {}) {
 function createMockSession(overrides: Partial<ClaudeSessionState> = {}): ClaudeSessionState {
   return {
     claudeSessionId: 'sdk-session-123',
-    octobSessionId: 'hive-session-456',
+    octobSessionId: 'octob-session-456',
     worktreePath: '/path/to/worktree',
     abortController: null,
     checkpointCounter: 0,
@@ -112,7 +112,7 @@ describe('handleTitleGeneration', () => {
 
     await (impl as any).handleTitleGeneration(session, 'Fix the auth token refresh bug')
 
-    expect(mockDb.updateSession).toHaveBeenCalledWith('hive-session-456', {
+    expect(mockDb.updateSession).toHaveBeenCalledWith('octob-session-456', {
       name: 'Fix auth refresh'
     })
   })
@@ -126,7 +126,7 @@ describe('handleTitleGeneration', () => {
 
     expect(mockWindow.webContents.send).toHaveBeenCalledWith('opencode:stream', {
       type: 'session.updated',
-      sessionId: 'hive-session-456',
+      sessionId: 'octob-session-456',
       data: {
         title: 'Add dark mode',
         info: { title: 'Add dark mode' }
@@ -273,7 +273,7 @@ describe('handleTitleGeneration', () => {
 
     // Should not throw — DB still gets updated
     await expect((impl as any).handleTitleGeneration(session, 'message')).resolves.toBeUndefined()
-    expect(mockDb.updateSession).toHaveBeenCalledWith('hive-session-456', { name: 'Some title' })
+    expect(mockDb.updateSession).toHaveBeenCalledWith('octob-session-456', { name: 'Some title' })
   })
 
   it('handles generateSessionTitle rejection gracefully', async () => {

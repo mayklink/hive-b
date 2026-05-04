@@ -1,6 +1,6 @@
-# Hive Phase 9 Implementation Plan
+# Octob Phase 9 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 9, focusing on platform polish (Cmd+W override, PATH fix), session control (abort streaming, input persistence), UX affordances (copy on hover, file search), file tree completeness (hidden files), and streaming correctness (subagent routing, subtool loading).
+This document outlines the implementation plan for Octob Phase 9, focusing on platform polish (Cmd+W override, PATH fix), session control (abort streaming, input persistence), UX affordances (copy on hover, file search), file tree completeness (hidden files), and streaming correctness (subagent routing, subtool loading).
 
 ---
 
@@ -585,7 +585,7 @@ describe('Session 4: Abort Streaming', () => {
 
 #### 1. Detect child events in `handleEvent()`
 
-In `src/main/services/opencode-service.ts`, in the `handleEvent()` method (around line 987), after resolving the hive session ID, track whether this event came from a child session:
+In `src/main/services/opencode-service.ts`, in the `handleEvent()` method (around line 987), after resolving the octob session ID, track whether this event came from a child session:
 
 ```typescript
 // After line 999 (octobSessionId resolved):
@@ -705,7 +705,7 @@ describe('Session 5: Subagent Event Tagging', () => {
   })
 
   test('parent event detected when direct mapping exists', () => {
-    // getMappedOctobSessionId returns hive ID directly
+    // getMappedOctobSessionId returns octob ID directly
     // Verify isChildEvent = false
   })
 

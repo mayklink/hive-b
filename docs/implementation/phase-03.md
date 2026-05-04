@@ -1,6 +1,6 @@
-# Hive Phase 3 Implementation Plan
+# Octob Phase 3 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 3, focusing on UX/UI polish, markdown rendering, tool call refinement, and response logging.
+This document outlines the implementation plan for Octob Phase 3, focusing on UX/UI polish, markdown rendering, tool call refinement, and response logging.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for Hive
+about: Suggest an idea for Octob
 title: '[FEATURE] '
 labels: 'enhancement, needs-triage'
 assignees: ''

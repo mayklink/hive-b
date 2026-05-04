@@ -1,4 +1,4 @@
-# Hive — Phase 9 Product Requirements Document
+# Octob — Phase 9 Product Requirements Document
 
 ## Overview
 
@@ -860,7 +860,7 @@ There are three distinct bugs in how subagents are handled:
 
 **Bug A — Premature Notifications** (`opencode-service.ts` lines 1003–1008):
 
-When a child/subagent session emits `session.idle`, the event is routed to the parent Hive session via `resolveParentSession()`. Then `maybeNotifySessionComplete(octobSessionId)` fires for the parent, sending a "session completed" notification even though only a subagent finished — the parent may still be processing.
+When a child/subagent session emits `session.idle`, the event is routed to the parent Octob session via `resolveParentSession()`. Then `maybeNotifySessionComplete(octobSessionId)` fires for the parent, sending a "session completed" notification even though only a subagent finished — the parent may still be processing.
 
 **Bug B — Subagent Content Streams to Main Page** (`opencode-service.ts` lines 987–999):
 

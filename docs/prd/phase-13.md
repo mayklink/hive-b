@@ -1,4 +1,4 @@
-# Hive — Phase 13 Product Requirements Document
+# Octob — Phase 13 Product Requirements Document
 
 ## Overview
 
@@ -665,7 +665,7 @@ const selectedWorktree = (() => {
 // In JSX — replace the <h1>Octob</h1> section:
 <div className="flex items-center gap-2 flex-1 min-w-0">
   <img
-    src="hive-logo.svg"  // or inline SVG component
+    src="octob-logo.svg"  // or inline SVG component
     alt="Octob"
     className="h-5 w-5 shrink-0"
   />
@@ -695,7 +695,7 @@ Alternatively, copy the app icon to the renderer's `public/` or `assets/` direct
 | File                                            | Change                                                            |
 | ----------------------------------------------- | ----------------------------------------------------------------- |
 | `src/renderer/src/components/layout/Header.tsx` | Replace `<h1>Octob</h1>` with logo + project/branch display        |
-| `src/renderer/src/assets/hive-logo.svg`         | **New file** — SVG logo asset (or inline SVG component in Header) |
+| `src/renderer/src/assets/octob-logo.svg`         | **New file** — SVG logo asset (or inline SVG component in Header) |
 
 ---
 
@@ -1023,7 +1023,7 @@ Note: `isStreaming` is already a parameter of `renderParts()` — it just needs 
 | File                                                     | Feature |
 | -------------------------------------------------------- | ------- |
 | `src/renderer/src/components/projects/GitInitDialog.tsx` | 3       |
-| `src/renderer/src/assets/hive-logo.svg`                  | 5       |
+| `src/renderer/src/assets/octob-logo.svg`                  | 5       |
 
 ### Modified Files
 

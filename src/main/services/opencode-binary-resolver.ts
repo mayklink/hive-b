@@ -13,7 +13,7 @@ export interface OpenCodeLaunchSpec {
  * Resolve the system-wide OpenCode CLI launch command.
  *
  * Windows installs commonly expose `opencode` through a `.cmd` shim.
- * Returning both the resolved command and whether Hive should launch it
+ * Returning both the resolved command and whether Octob should launch it
  * through the shell keeps runtime launch behavior aligned with detection.
  */
 export function resolveOpenCodeLaunchSpec(): OpenCodeLaunchSpec | null {

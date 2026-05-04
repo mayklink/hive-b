@@ -1,6 +1,6 @@
-# Hive Phase 4 Implementation Plan
+# Octob Phase 4 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 4, focusing on a modern UI redesign, model selection, streaming improvements, file viewer, project language detection, session auto-naming, and header quick actions.
+This document outlines the implementation plan for Octob Phase 4, focusing on a modern UI redesign, model selection, streaming improvements, file viewer, project language detection, session auto-naming, and header quick actions.
 
 ---
 

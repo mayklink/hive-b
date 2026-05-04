@@ -1,8 +1,8 @@
-# Hive -- Phase 17 Product Requirements Document
+# Octob -- Phase 17 Product Requirements Document
 
 ## Overview
 
-Phase 17 delivers a broad set of UX polish, data persistence, and organizational improvements across Hive. It includes: refreshing git status on window focus so users always see current file changes; showing a fun, randomized "Worked for Xs" completion badge after streaming; making model selection per-session with persistence; fixing tab-bar loading indicator accuracy; persisting default variant per model to the database; creating styled toast variants (success/info/error); auto-populating commit messages from session names; opening changed files as proper tabs instead of overlays; stripping the plan-mode prefix from displayed messages and showing a PLANNER badge; and introducing project spaces for logical grouping with customizable icons and a bottom tab bar.
+Phase 17 delivers a broad set of UX polish, data persistence, and organizational improvements across Octob. It includes: refreshing git status on window focus so users always see current file changes; showing a fun, randomized "Worked for Xs" completion badge after streaming; making model selection per-session with persistence; fixing tab-bar loading indicator accuracy; persisting default variant per model to the database; creating styled toast variants (success/info/error); auto-populating commit messages from session names; opening changed files as proper tabs instead of overlays; stripping the plan-mode prefix from displayed messages and showing a PLANNER badge; and introducing project spaces for logical grouping with customizable icons and a bottom tab bar.
 
 ### Phase 17 Goals
 
@@ -46,7 +46,7 @@ Git file statuses are only refreshed in response to explicit mutations (stage, u
 
 The renderer subscribes to these events in `ChangesView.tsx` (lines 62-83) via `window.gitOps.onStatusChanged()` and reloads file statuses for the matching worktree path.
 
-There is **no polling** and **no window focus detection** for git refreshes. The only existing focus handler is in `NotificationService` (`src/main/services/notification-service.ts`, lines 21-24) which clears the dock badge on focus. If a user switches to their terminal, runs git commands, and switches back to Hive, the changes sidebar is stale until they manually trigger a refresh.
+There is **no polling** and **no window focus detection** for git refreshes. The only existing focus handler is in `NotificationService` (`src/main/services/notification-service.ts`, lines 21-24) which clears the dock badge on focus. If a user switches to their terminal, runs git commands, and switches back to Octob, the changes sidebar is stale until they manually trigger a refresh.
 
 #### 1.2 New Design
 

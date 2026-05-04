@@ -1,4 +1,4 @@
-# Hive Kanban Board Implementation Plan
+# Octob Kanban Board Implementation Plan
 
 This document outlines the implementation plan for the Kanban Board View, covering database schema, IPC handlers, renderer stores, board UI components, drag-and-drop, session coordination, and ticket attachment integration.
 

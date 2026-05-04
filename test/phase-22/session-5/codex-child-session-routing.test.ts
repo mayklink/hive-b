@@ -101,8 +101,8 @@ describe('Codex child session routing', () => {
 
   describe('prompt routing', () => {
     it('routes prompt to correct session by worktreePath and agentSessionId', async () => {
-      seedSession('/project-a', 'thread-a', 'hive-a')
-      seedSession('/project-b', 'thread-b', 'hive-b')
+      seedSession('/project-a', 'thread-a', 'octob-a')
+      seedSession('/project-b', 'thread-b', 'octob-b')
 
       simulateEvents([
         {
@@ -133,8 +133,8 @@ describe('Codex child session routing', () => {
     })
 
     it('does not cross-pollinate events between sessions', async () => {
-      seedSession('/project-a', 'thread-a', 'hive-a')
-      seedSession('/project-b', 'thread-b', 'hive-b')
+      seedSession('/project-a', 'thread-a', 'octob-a')
+      seedSession('/project-b', 'thread-b', 'octob-b')
 
       // Events for thread-a
       simulateEvents([
@@ -169,16 +169,16 @@ describe('Codex child session routing', () => {
 
       await impl.prompt('/project-a', 'thread-a', 'test')
 
-      // Check that events sent to renderer use hive-a session ID
+      // Check that events sent to renderer use octob-a session ID
       const sendCalls = mockWindow.webContents.send.mock.calls
       const textEvents = sendCalls
         .filter((c: any[]) => c[0] === 'opencode:stream')
         .map((c: any[]) => c[1])
         .filter((e: any) => e.type === 'message.part.updated' && e.data?.type === 'text')
 
-      // Only thread-a events should produce text updates for hive-a
+      // Only thread-a events should produce text updates for octob-a
       for (const evt of textEvents) {
-        expect(evt.sessionId).toBe('hive-a')
+        expect(evt.sessionId).toBe('octob-a')
       }
 
       // Session A should only have accumulated thread-a text
@@ -191,7 +191,7 @@ describe('Codex child session routing', () => {
     })
 
     it('routes child-thread text into a subtask instead of leaking it into the parent assistant text', async () => {
-      const session = seedSession('/project-a', 'thread-a', 'hive-a')
+      const session = seedSession('/project-a', 'thread-a', 'octob-a')
 
       simulateEvents([
         {
@@ -253,7 +253,7 @@ describe('Codex child session routing', () => {
 
   describe('context injection compatibility', () => {
     it('accepts string message with context prefix (IPC handler style)', async () => {
-      seedSession('/project', 'thread-ctx', 'hive-ctx')
+      seedSession('/project', 'thread-ctx', 'octob-ctx')
 
       simulateEvents([
         {
@@ -281,11 +281,11 @@ describe('Codex child session routing', () => {
     })
 
     it('accepts parts array with context prefix in text part', async () => {
-      seedSession('/project', 'thread-ctx2', 'hive-ctx2')
+      seedSession('/project', 'thread-ctx2', 'octob-ctx2')
 
       // Reset the session key
       impl.getSessions().delete('/project::thread-ctx2')
-      seedSession('/project', 'thread-ctx2', 'hive-ctx2')
+      seedSession('/project', 'thread-ctx2', 'octob-ctx2')
 
       simulateEvents([
         {
@@ -320,8 +320,8 @@ describe('Codex child session routing', () => {
 
   describe('multiple concurrent sessions', () => {
     it('maintains separate message histories per session', async () => {
-      const sessionA = seedSession('/project-a', 'thread-a', 'hive-a')
-      const sessionB = seedSession('/project-b', 'thread-b', 'hive-b')
+      const sessionA = seedSession('/project-a', 'thread-a', 'octob-a')
+      const sessionB = seedSession('/project-b', 'thread-b', 'octob-b')
 
       // Prompt session A
       simulateEvents([
@@ -386,8 +386,8 @@ describe('Codex child session routing', () => {
     })
 
     it('getMessages returns correct history for each session', async () => {
-      const sessionA = seedSession('/project-a', 'thread-a', 'hive-a')
-      const sessionB = seedSession('/project-b', 'thread-b', 'hive-b')
+      const sessionA = seedSession('/project-a', 'thread-a', 'octob-a')
+      const sessionB = seedSession('/project-b', 'thread-b', 'octob-b')
 
       sessionA.messages = [
         { role: 'user', parts: [{ type: 'text', text: 'Q-A' }] },
@@ -409,7 +409,7 @@ describe('Codex child session routing', () => {
 
   describe('session status tracking', () => {
     it('sets status to running during prompt', async () => {
-      const session = seedSession('/project', 'thread-status', 'hive-status')
+      const session = seedSession('/project', 'thread-status', 'octob-status')
 
       let statusDuringTurn: string | undefined
       mockManager.sendTurn.mockImplementation(async () => {
@@ -437,11 +437,11 @@ describe('Codex child session routing', () => {
     })
 
     it('sets status to error when turn fails', async () => {
-      seedSession('/project', 'thread-err', 'hive-err')
+      seedSession('/project', 'thread-err', 'octob-err')
       mockManager.sendTurn.mockRejectedValue(new Error('Network error'))
 
       impl.getSessions().delete('/project::thread-err')
-      seedSession('/project', 'thread-err', 'hive-err')
+      seedSession('/project', 'thread-err', 'octob-err')
       const updatedSession = impl.getSessions().get('/project::thread-err')!
 
       mockManager.sendTurn.mockRejectedValue(new Error('Network error'))
@@ -456,7 +456,7 @@ describe('Codex child session routing', () => {
 
   describe('renderer event delivery', () => {
     it('all events are sent on opencode:stream channel', async () => {
-      seedSession('/project', 'thread-ch', 'hive-ch')
+      seedSession('/project', 'thread-ch', 'octob-ch')
 
       simulateEvents([
         {
@@ -489,7 +489,7 @@ describe('Codex child session routing', () => {
     })
 
     it('does not send events when window is destroyed', async () => {
-      seedSession('/project', 'thread-nowin', 'hive-nowin')
+      seedSession('/project', 'thread-nowin', 'octob-nowin')
 
       const destroyedWindow = {
         isDestroyed: () => true,

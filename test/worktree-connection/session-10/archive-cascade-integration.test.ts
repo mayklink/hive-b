@@ -128,7 +128,7 @@ function makeConnection(overrides: Record<string, unknown> = {}) {
     id: 'conn-1',
     name: 'golden-retriever',
     status: 'active' as const,
-    path: '/home/.hive/connections/golden-retriever',
+    path: '/home/.octob/connections/golden-retriever',
     created_at: '2025-01-01T00:00:00.000Z',
     updated_at: '2025-01-01T00:00:00.000Z',
     members: [
@@ -165,7 +165,7 @@ function makeConnectionSingleMember() {
   return makeConnection({
     id: 'conn-single',
     name: 'poodle',
-    path: '/home/.hive/connections/poodle',
+    path: '/home/.octob/connections/poodle',
     members: [
       {
         id: 'mem-solo',
@@ -187,7 +187,7 @@ function makeSecondConnection(overrides: Record<string, unknown> = {}) {
   return makeConnection({
     id: 'conn-2',
     name: 'labrador',
-    path: '/home/.hive/connections/labrador',
+    path: '/home/.octob/connections/labrador',
     members: [
       {
         id: 'mem-3',

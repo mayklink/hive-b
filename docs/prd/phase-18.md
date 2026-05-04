@@ -1,4 +1,4 @@
-# Hive -- Phase 18 Product Requirements Document
+# Octob -- Phase 18 Product Requirements Document
 
 ## Overview
 
@@ -255,7 +255,7 @@ if (isFileOperation(toolUse.name) || isSkill) {
 
 #### 3.1 Current State
 
-There is no PR creation functionality in Hive. The git integration (`GitPushPull.tsx`, `GitStatusPanel.tsx`) supports push, pull, merge, and branch management, but not pull request creation.
+There is no PR creation functionality in Octob. The git integration (`GitPushPull.tsx`, `GitStatusPanel.tsx`) supports push, pull, merge, and branch management, but not pull request creation.
 
 Remote tracking information is available through `GitBranchInfo.tracking` (e.g., `origin/main`) in `useGitStore.ts` (line 19). The system knows which remote branch a worktree tracks but has **no IPC endpoint to fetch the remote URL** (e.g., `git remote get-url origin`) or detect whether the remote is GitHub specifically.
 
@@ -1245,7 +1245,7 @@ Icon for plan_ready — use a subtle indicator (e.g., `Map` icon in blue, matchi
 
 ## Out of Scope
 
-- Full GitHub PR dashboard or PR list viewer inside Hive
+- Full GitHub PR dashboard or PR list viewer inside Octob
 - PR review / approval workflow within the app
 - Permission auto-approval rules or "always allow" persistence across sessions
 - Merge conflict resolution UI (inline editor with conflict markers) — we delegate to AI
@@ -1287,7 +1287,7 @@ Icon for plan_ready — use a subtle indicator (e.g., `Map` icon in blue, matchi
 
 | Test File                                     | Feature               | Validates                                                         |
 | --------------------------------------------- | --------------------- | ----------------------------------------------------------------- |
-| `test/phase-18/archive-task-stop.test.ts`     | Archive Task Stop     | Kill called before archive, handles already-stopped processes     |
+| `test/phase-18/arcoctob-task-stop.test.ts`     | Archive Task Stop     | Kill called before archive, handles already-stopped processes     |
 | `test/phase-18/skill-card.test.ts`            | Skill Card            | Renders skill name, parses output tags, expands/collapses         |
 | `test/phase-18/pr-github.test.ts`             | PR to GitHub          | Remote detection, button visibility, session creation with prompt |
 | `test/phase-18/permission-status.test.ts`     | Permission Status     | Status set on permission.asked, cleared on reply, sidebar shows   |

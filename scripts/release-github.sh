@@ -33,7 +33,7 @@ if $SKIP_FINALIZE; then
 fi
 
 # ── Constants ─────────────────────────────────────────────────────
-REPO="morapelker/hive"
+REPO="morapelker/octob"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 WORKFLOW_FILE="release-github.yml"

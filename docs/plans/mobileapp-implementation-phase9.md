@@ -34,11 +34,11 @@ At the end of this phase, the headless server is production-ready with full secu
 
 ### Audit Logging
 
-The audit plugin is a yoga plugin that logs every request with timing, operation name, IP, and result status. Sensitive operations (terminal, script, git push, kill switch) get extra detail logged. Logs go to the existing Winston logger at `~/Library/Logs/hive/`.
+The audit plugin is a yoga plugin that logs every request with timing, operation name, IP, and result status. Sensitive operations (terminal, script, git push, kill switch) get extra detail logged. Logs go to the existing Winston logger at `~/Library/Logs/octob/`.
 
 ### Auto-Lock
 
-After `inactivityTimeoutMin` (default 30 minutes) with no authenticated requests, the server enters "locked" mode. In locked mode, ALL requests return a specific GraphQL error (`SERVER_LOCKED`) except `systemServerStatus` (which returns the locked status). The server is unlocked via `hive --headless --unlock` CLI command.
+After `inactivityTimeoutMin` (default 30 minutes) with no authenticated requests, the server enters "locked" mode. In locked mode, ALL requests return a specific GraphQL error (`SERVER_LOCKED`) except `systemServerStatus` (which returns the locked status). The server is unlocked via `octob --headless --unlock` CLI command.
 
 ### Kill Switch
 
@@ -49,7 +49,7 @@ The `systemKillSwitch` mutation immediately:
 4. Logs the kill event
 5. Shuts down the server process
 
-Also accessible via `hive --headless --kill` CLI command (sends SIGTERM to the PID from the PID file).
+Also accessible via `octob --headless --kill` CLI command (sends SIGTERM to the PID from the PID file).
 
 ### QR Code Pairing
 
@@ -247,23 +247,23 @@ pnpm build
 
 ## Session 92: Auto-Lock — Unlock CLI
 
-**Goal:** Implement `hive --headless --unlock` to resume a locked server.
+**Goal:** Implement `octob --headless --unlock` to resume a locked server.
 
 **Definition of Done:** Running `--unlock` clears the lock state and the server resumes normal operation.
 
 **Tasks:**
 
 1. `[server]` The `--unlock` CLI command (in `src/main/index.ts`) needs to communicate with the running server process. Two approaches:
-   - **Option A (recommended):** Write a signal file (`~/.octob/hive-headless.unlock`) that the running server watches.
+   - **Option A (recommended):** Write a signal file (`~/.octob/octob-headless.unlock`) that the running server watches.
    - **Option B:** Send a SIGUSR1 signal to the PID from the PID file.
 
 2. `[server]` Implement Option A:
-   - `--unlock` command writes `~/.octob/hive-headless.unlock` file and exits.
+   - `--unlock` command writes `~/.octob/octob-headless.unlock` file and exits.
    - Running server watches for this file (via `fs.watch` or periodic check).
    - When detected, calls `unlock()` and deletes the file.
    ```typescript
    // In headless bootstrap:
-   const unlockPath = path.join(octobDir, 'hive-headless.unlock')
+   const unlockPath = path.join(octobDir, 'octob-headless.unlock')
    setInterval(() => {
      if (fs.existsSync(unlockPath)) {
        fs.unlinkSync(unlockPath)
@@ -275,7 +275,7 @@ pnpm build
 3. `[server]` In `src/main/index.ts` headless one-shot commands:
    ```typescript
    if (isUnlock) {
-     const unlockPath = path.join(octobDir, 'hive-headless.unlock')
+     const unlockPath = path.join(octobDir, 'octob-headless.unlock')
      fs.writeFileSync(unlockPath, Date.now().toString())
      console.log('Unlock signal sent. Server will resume within 5 seconds.')
      app.quit()
@@ -333,7 +333,7 @@ pnpm build
 3. `[server]` Implement `--kill` CLI command in `src/main/index.ts`:
    ```typescript
    if (isKill) {
-     const pidPath = path.join(octobDir, 'hive-headless.pid')
+     const pidPath = path.join(octobDir, 'octob-headless.pid')
      if (fs.existsSync(pidPath)) {
        const pid = parseInt(fs.readFileSync(pidPath, 'utf-8').trim())
        try {
@@ -388,11 +388,11 @@ pnpm build
        certFingerprint
      })
 
-     console.log('\n=== Hive Headless Server — First Run Setup ===\n')
+     console.log('\n=== Octob Headless Server — First Run Setup ===\n')
      console.log(`API Key: ${apiKey}`)
      console.log(`Port: ${config.port}`)
      console.log(`Cert Fingerprint: ${certFingerprint}\n`)
-     console.log('Scan this QR code with the Hive mobile app:\n')
+     console.log('Scan this QR code with the Octob mobile app:\n')
      qrcode.generate(pairingPayload, { small: true })
      console.log('\n⚠️  Save your API key now — it cannot be shown again.')
      console.log('Use --rotate-key to generate a new key if needed.\n')
@@ -456,7 +456,7 @@ pnpm build
 
      console.log('\n=== API Key Rotated ===\n')
      console.log(`New API Key: ${apiKey}`)
-     console.log('\nScan this QR code with the Hive mobile app:\n')
+     console.log('\nScan this QR code with the Octob mobile app:\n')
      qrcode.generate(pairingPayload, { small: true })
      console.log('\n⚠️  The old key is now invalid. Update your mobile app.')
      console.log('If the headless server is running, restart it.\n')
@@ -524,7 +524,7 @@ pnpm build
 
 ## Session 97: PID File
 
-**Goal:** Write and manage `~/.octob/hive-headless.pid` for the running headless server.
+**Goal:** Write and manage `~/.octob/octob-headless.pid` for the running headless server.
 
 **Definition of Done:** PID file created on startup, deleted on shutdown, stale PID files detected.
 
@@ -532,7 +532,7 @@ pnpm build
 
 1. `[server]` In `src/server/headless-bootstrap.ts`, after server starts:
    ```typescript
-   const pidPath = path.join(octobDir, 'hive-headless.pid')
+   const pidPath = path.join(octobDir, 'octob-headless.pid')
 
    // Check for stale PID file
    if (fs.existsSync(pidPath)) {
@@ -571,7 +571,7 @@ pnpm build
 
 ## Session 98: Status File
 
-**Goal:** Write `~/.octob/hive-headless.status.json` every 30 seconds with server status.
+**Goal:** Write `~/.octob/octob-headless.status.json` every 30 seconds with server status.
 
 **Definition of Done:** Status file updated periodically with uptime, connections, request count, lock state.
 
@@ -579,7 +579,7 @@ pnpm build
 
 1. `[server]` In `src/server/headless-bootstrap.ts`, set up status file writer:
    ```typescript
-   const statusPath = path.join(octobDir, 'hive-headless.status.json')
+   const statusPath = path.join(octobDir, 'octob-headless.status.json')
    const startTime = Date.now()
    let requestCount = 0
 
@@ -616,10 +616,10 @@ pnpm build
 2. `[server]` Implement `--show-status` CLI command in `src/main/index.ts`:
    ```typescript
    if (isShowStatus) {
-     const statusPath = path.join(octobDir, 'hive-headless.status.json')
+     const statusPath = path.join(octobDir, 'octob-headless.status.json')
      if (fs.existsSync(statusPath)) {
        const status = JSON.parse(fs.readFileSync(statusPath, 'utf-8'))
-       console.log('\n=== Hive Headless Server Status ===\n')
+       console.log('\n=== Octob Headless Server Status ===\n')
        console.log(`PID:          ${status.pid}`)
        console.log(`Port:         ${status.port}`)
        console.log(`Uptime:       ${status.uptimeFormatted}`)

@@ -2,9 +2,9 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Stop storing session messages in Hive SQLite and use OpenCode storage as the canonical transcript source so a session can be continued across Hive and native OpenCode CLI without transcript divergence.
+**Goal:** Stop storing session messages in Octob SQLite and use OpenCode storage as the canonical transcript source so a session can be continued across Octob and native OpenCode CLI without transcript divergence.
 
-**Architecture:** Keep Hive SQLite for local product metadata (projects, worktrees, session tabs, session mode, drafts, statuses), but move transcript reads/writes fully to OpenCode APIs (`session.messages` and stream events). SessionView becomes an OpenCode-backed transcript consumer with optimistic UI for local sends, and main-process event forwarding no longer mirrors messages into SQLite. Session history/search behavior is adjusted to remove dependence on `session_messages` content.
+**Architecture:** Keep Octob SQLite for local product metadata (projects, worktrees, session tabs, session mode, drafts, statuses), but move transcript reads/writes fully to OpenCode APIs (`session.messages` and stream events). SessionView becomes an OpenCode-backed transcript consumer with optimistic UI for local sends, and main-process event forwarding no longer mirrors messages into SQLite. Session history/search behavior is adjusted to remove dependence on `session_messages` content.
 
 **Tech Stack:** Electron 33, React 19, TypeScript 5.7, Zustand 5, SQLite (metadata only), OpenCode SDK/API
 
@@ -15,11 +15,11 @@
 - In scope:
   - No new message rows written to `session_messages`.
   - Session transcript loads from OpenCode data source.
-  - Cross-client continuation support (Hive <-> OpenCode CLI) for sessions created in Hive.
+  - Cross-client continuation support (Octob <-> OpenCode CLI) for sessions created in Octob.
   - Session history preview/search adapted to non-SQLite transcript storage.
 - Out of scope for this migration:
   - Full removal of SQLite `sessions` table.
-  - Full import/discovery of arbitrary sessions created only outside Hive.
+  - Full import/discovery of arbitrary sessions created only outside Octob.
   - Dropping `session_messages` table in same PR (defer to cleanup phase).
 
 ---
@@ -334,16 +334,16 @@ Expected: PASS.
 
 **Step 2: Manual scenario validation (required)**
 
-1. In Hive, create a session in a worktree and send prompt A.
+1. In Octob, create a session in a worktree and send prompt A.
 2. In native OpenCode terminal (same worktree), continue same session (`--session <id>`) and send prompt B.
-3. Return to Hive and verify prompt B + assistant reply appear after transcript refresh (session switch or app focus).
-4. In Hive, send prompt C and verify OpenCode terminal can continue with C context.
+3. Return to Octob and verify prompt B + assistant reply appear after transcript refresh (session switch or app focus).
+4. In Octob, send prompt C and verify OpenCode terminal can continue with C context.
 5. Validate one tool-heavy response and one plan-mode response.
 
 **Step 3: Acceptance criteria**
 
 - No new rows appear in `session_messages` for new traffic.
-- Hive and OpenCode show same canonical transcript for the same `opencode_session_id`.
+- Octob and OpenCode show same canonical transcript for the same `opencode_session_id`.
 - Session title updates, unread badges, question/permission prompts continue working.
 - No regressions in session tab behavior, drafts, or mode toggling.
 
@@ -351,7 +351,7 @@ Expected: PASS.
 
 ```bash
 git add .
-git commit -m "feat: migrate Hive transcript source of truth to OpenCode storage"
+git commit -m "feat: migrate Octob transcript source of truth to OpenCode storage"
 ```
 
 ---

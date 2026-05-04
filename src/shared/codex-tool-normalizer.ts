@@ -2,7 +2,7 @@
  * Shared normalizer for Codex tool names and command text.
  *
  * Codex uses internal item types (e.g. `commandExecution`, `fileChange`) that
- * differ from the standard tool names the Hive UI expects (`Bash`, `fileChange`,
+ * differ from the standard tool names the Octob UI expects (`Bash`, `fileChange`,
  * `Read`, etc.). This module provides a canonical mapping so every layer —
  * event mapper, activity mapper, timeline merger, and thread-snapshot parser —
  * produces consistent names that the renderer's ToolCard can match.
@@ -33,7 +33,7 @@ const CODEX_TOOL_NAME_MAP: Record<string, string> = {
 
 /**
  * Normalize a Codex-specific tool/item-type name to the canonical name the
- * Hive UI expects. Unknown names pass through unchanged.
+ * Octob UI expects. Unknown names pass through unchanged.
  */
 export function normalizeCodexToolName(rawName: string): string {
   const lower = rawName.toLowerCase()

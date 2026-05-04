@@ -283,7 +283,7 @@ describe('Codex Abort & getMessages', () => {
 
       const session = {
         threadId: 'thread-abort-1',
-        octobSessionId: 'hive-abort-1',
+        octobSessionId: 'octob-abort-1',
         worktreePath: '/test',
         status: 'running' as const,
         messages: [],
@@ -315,7 +315,7 @@ describe('Codex Abort & getMessages', () => {
 
       impl.getSessions().set('/test::thread-abort-1', {
         threadId: 'thread-abort-1',
-        octobSessionId: 'hive-abort-1',
+        octobSessionId: 'octob-abort-1',
         worktreePath: '/test',
         status: 'running',
         messages: [],
@@ -359,7 +359,7 @@ describe('Codex Abort & getMessages', () => {
 
       impl.getSessions().set('/test::thread-abort-1', {
         threadId: 'thread-abort-1',
-        octobSessionId: 'hive-abort-1',
+        octobSessionId: 'octob-abort-1',
         worktreePath: '/test',
         status: 'running',
         messages: [],
@@ -385,7 +385,7 @@ describe('Codex Abort & getMessages', () => {
 
       const session = {
         threadId: 'thread-msg-1',
-        octobSessionId: 'hive-msg-1',
+        octobSessionId: 'octob-msg-1',
         worktreePath: '/test',
         status: 'ready' as const,
         messages: [
@@ -412,7 +412,7 @@ describe('Codex Abort & getMessages', () => {
 
       impl.getSessions().set('/test::thread-msg-1', {
         threadId: 'thread-msg-1',
-        octobSessionId: 'hive-msg-1',
+        octobSessionId: 'octob-msg-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -455,7 +455,7 @@ describe('Codex Abort & getMessages', () => {
 
       const session = {
         threadId: 'thread-msg-1',
-        octobSessionId: 'hive-msg-1',
+        octobSessionId: 'octob-msg-1',
         worktreePath: '/test',
         status: 'ready' as const,
         messages: [] as unknown[],
@@ -494,7 +494,7 @@ describe('Codex Abort & getMessages', () => {
 
       impl.getSessions().set('/test::thread-msg-1', {
         threadId: 'thread-msg-1',
-        octobSessionId: 'hive-msg-1',
+        octobSessionId: 'octob-msg-1',
         worktreePath: '/test',
         status: 'closed',
         messages: [],
@@ -519,7 +519,7 @@ describe('Codex Abort & getMessages', () => {
 
       impl.setDatabaseService({
         getSessionByOpenCodeSessionId: vi.fn().mockReturnValue({
-          id: 'hive-msg-1',
+          id: 'octob-msg-1',
           opencode_session_id: 'thread-msg-1',
           agent_sdk: 'codex',
           model_id: null
@@ -567,7 +567,7 @@ describe('Codex Abort & getMessages', () => {
       expect((messages[0] as any).parts[0].text).toBe('Recovered question')
       expect((messages[1] as any).parts[0].text).toBe('Recovered answer')
       expect(impl.getSessions().get('/test::thread-msg-1')).toMatchObject({
-        octobSessionId: 'hive-msg-1',
+        octobSessionId: 'octob-msg-1',
         threadId: 'thread-msg-1',
         worktreePath: '/test'
       })
@@ -588,7 +588,7 @@ describe('Codex Abort & getMessages', () => {
 
       impl.getSessions().set('/test::thread-msg-1', {
         threadId: 'thread-msg-1',
-        octobSessionId: 'hive-msg-1',
+        octobSessionId: 'octob-msg-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -611,7 +611,7 @@ describe('Codex Abort & getMessages', () => {
 
       impl.getSessions().set('/test::thread-msg-1', {
         threadId: 'thread-msg-1',
-        octobSessionId: 'hive-msg-1',
+        octobSessionId: 'octob-msg-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -650,7 +650,7 @@ describe('Codex Abort & getMessages', () => {
 
       impl.getSessions().set('/test::thread-msg-1', {
         threadId: 'thread-msg-1',
-        octobSessionId: 'hive-msg-1',
+        octobSessionId: 'octob-msg-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -701,7 +701,7 @@ describe('Codex Abort & getMessages', () => {
 
       impl.getSessions().set('/test::thread-msg-1', {
         threadId: 'thread-msg-1',
-        octobSessionId: 'hive-msg-1',
+        octobSessionId: 'octob-msg-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],

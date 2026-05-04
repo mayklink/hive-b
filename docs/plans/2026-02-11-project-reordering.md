@@ -376,7 +376,7 @@ Run: `pnpm dev`
 
 **Step 4: Verify localStorage**
 
-Open DevTools > Application > Local Storage > look for `hive-projects` key. Verify it contains a `projectOrder` array with the correct IDs in the reordered sequence.
+Open DevTools > Application > Local Storage > look for `octob-projects` key. Verify it contains a `projectOrder` array with the correct IDs in the reordered sequence.
 
 **Step 5: Commit any fixes**
 

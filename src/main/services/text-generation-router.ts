@@ -294,9 +294,9 @@ async function generateWithCodex(
   const resolvedBinary = resolveCodexBinaryPath()
   const binary = codexBinaryPath || resolvedBinary || 'codex'
   const spawnEnv = getCodexCliEnv()
-  const outputFile = join(tmpdir(), `hive-codex-${randomUUID()}.txt`)
+  const outputFile = join(tmpdir(), `octob-codex-${randomUUID()}.txt`)
   const schemaFile = outputSchema
-    ? join(tmpdir(), `hive-codex-schema-${randomUUID()}.json`)
+    ? join(tmpdir(), `octob-codex-schema-${randomUUID()}.json`)
     : null
   const model = modelOverride ?? 'gpt-5.4-mini'
   const fullPrompt = `${systemPrompt}\n\n${prompt}`

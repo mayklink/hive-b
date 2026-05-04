@@ -295,7 +295,7 @@ describe('Codex Permission Requests', () => {
       // Seed a session
       impl.getSessions().set('/test::thread-perm-1', {
         threadId: 'thread-perm-1',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -306,7 +306,7 @@ describe('Codex Permission Requests', () => {
       // Seed a pending approval in the implementer's map
       impl.getPendingApprovalSessions().set('req-perm-1', {
         threadId: 'thread-perm-1',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/test'
       })
 
@@ -334,7 +334,7 @@ describe('Codex Permission Requests', () => {
       // Seed sessions
       impl.getSessions().set('/test::thread-1', {
         threadId: 'thread-1',
-        octobSessionId: 'hive-1',
+        octobSessionId: 'octob-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -343,7 +343,7 @@ describe('Codex Permission Requests', () => {
       })
       impl.getSessions().set('/test::thread-2', {
         threadId: 'thread-2',
-        octobSessionId: 'hive-2',
+        octobSessionId: 'octob-2',
         worktreePath: '/test',
         status: 'ready',
         messages: [],

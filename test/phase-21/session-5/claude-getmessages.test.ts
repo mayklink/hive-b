@@ -39,7 +39,7 @@ describe('ClaudeCodeImplementer.getMessages', () => {
 
   // 1. Returns in-memory cache when available
   it('returns in-memory cache when session has messages', async () => {
-    const { sessionId } = await implementer.connect('/test/project', 'hive-session-1')
+    const { sessionId } = await implementer.connect('/test/project', 'octob-session-1')
 
     // Access the internal session and inject messages
     const session = (implementer as any).getSession(
@@ -73,7 +73,7 @@ describe('ClaudeCodeImplementer.getMessages', () => {
 
   // 3. Falls back to JSONL when session exists but messages array is empty
   it('falls back to JSONL when session exists but messages are empty', async () => {
-    const { sessionId } = await implementer.connect('/test/project', 'hive-session-2')
+    const { sessionId } = await implementer.connect('/test/project', 'octob-session-2')
 
     const transcriptMessages = [
       { id: 'disk-1', role: 'assistant', content: 'Transcript data', parts: [] }
@@ -95,7 +95,7 @@ describe('ClaudeCodeImplementer.getMessages', () => {
 
   // 5. In-memory messages persist across prompt turns (not cleared)
   it('does not clear messages array between calls', async () => {
-    const { sessionId } = await implementer.connect('/test/project', 'hive-session-3')
+    const { sessionId } = await implementer.connect('/test/project', 'octob-session-3')
     const session = (implementer as any).getSession(
       '/test/project',
       sessionId

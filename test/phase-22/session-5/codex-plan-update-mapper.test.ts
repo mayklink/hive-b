@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { mapCodexEventToStreamEvents } from '../../../src/main/services/codex-event-mapper'
 import type { CodexManagerEvent } from '../../../src/main/services/codex-app-server-manager'
 
-const OCTOB_SESSION = 'hive-session-123'
+const OCTOB_SESSION = 'octob-session-123'
 
 function makeEvent(overrides: Partial<CodexManagerEvent>): CodexManagerEvent {
   return {

@@ -1,5 +1,5 @@
 /**
- * Utility functions for the Hive-side permission auto-approve system.
+ * Utility functions for the Octob-side permission auto-approve system.
  *
  * Used by the OpenCode backend permission prompt (PermissionPrompt.tsx) to:
  *  1. Split bash && chains into individual sub-commands for display

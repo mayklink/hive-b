@@ -155,10 +155,10 @@ describe('Session 8: Integration & Verification', () => {
         ]
       }
 
-      useQuestionStore.getState().addQuestion('hive-1', request)
+      useQuestionStore.getState().addQuestion('octob-1', request)
 
       // Question is in the store
-      const active = useQuestionStore.getState().getActiveQuestion('hive-1')
+      const active = useQuestionStore.getState().getActiveQuestion('octob-1')
       expect(active).not.toBeNull()
       expect(active!.id).toBe('q1')
       expect(active!.questions[0].question).toBe('Which package manager?')
@@ -169,30 +169,30 @@ describe('Session 8: Integration & Verification', () => {
 
     test('question.replied removes from store, streaming can continue', () => {
       // Add a question
-      useQuestionStore.getState().addQuestion('hive-1', {
+      useQuestionStore.getState().addQuestion('octob-1', {
         id: 'q1',
         sessionID: 'opc-1',
         questions: [{ question: 'Pick one', header: 'Choice', options: [] }]
       })
 
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')).not.toBeNull()
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')).not.toBeNull()
 
       // question.replied event arrives
-      useQuestionStore.getState().removeQuestion('hive-1', 'q1')
+      useQuestionStore.getState().removeQuestion('octob-1', 'q1')
 
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')).toBeNull()
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')).toBeNull()
     })
 
     test('question.rejected removes from store', () => {
-      useQuestionStore.getState().addQuestion('hive-1', {
+      useQuestionStore.getState().addQuestion('octob-1', {
         id: 'q1',
         sessionID: 'opc-1',
         questions: [{ question: 'Pick one', header: 'Choice', options: [] }]
       })
 
       // question.rejected event
-      useQuestionStore.getState().removeQuestion('hive-1', 'q1')
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')).toBeNull()
+      useQuestionStore.getState().removeQuestion('octob-1', 'q1')
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')).toBeNull()
     })
   })
 
@@ -286,7 +286,7 @@ describe('Session 8: Integration & Verification', () => {
       expect(currentMode).toBe('plan')
 
       // After mode switch, command is sent, then question arrives
-      useQuestionStore.getState().addQuestion('hive-1', {
+      useQuestionStore.getState().addQuestion('octob-1', {
         id: 'q-plan',
         sessionID: 'opc-1',
         questions: [
@@ -299,7 +299,7 @@ describe('Session 8: Integration & Verification', () => {
       })
 
       // Question renders in plan mode context
-      const active = useQuestionStore.getState().getActiveQuestion('hive-1')
+      const active = useQuestionStore.getState().getActiveQuestion('octob-1')
       expect(active).not.toBeNull()
       expect(currentMode).toBe('plan')
     })
@@ -431,7 +431,7 @@ describe('Session 8: Integration & Verification', () => {
       expect(tracker.state.showScrollFab).toBe(true)
 
       // Question arrives (question store is independent of scroll state)
-      useQuestionStore.getState().addQuestion('hive-1', {
+      useQuestionStore.getState().addQuestion('octob-1', {
         id: 'q1',
         sessionID: 'opc-1',
         questions: [{ question: 'Pick', header: 'Q', options: [] }]
@@ -439,7 +439,7 @@ describe('Session 8: Integration & Verification', () => {
 
       // Both FAB and question are active simultaneously
       expect(tracker.state.showScrollFab).toBe(true)
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')).not.toBeNull()
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')).not.toBeNull()
     })
 
     test('clicking FAB scrolls to bottom but question remains answerable', () => {
@@ -452,7 +452,7 @@ describe('Session 8: Integration & Verification', () => {
       expect(tracker.state.showScrollFab).toBe(true)
 
       // Question is pending
-      useQuestionStore.getState().addQuestion('hive-1', {
+      useQuestionStore.getState().addQuestion('octob-1', {
         id: 'q1',
         sessionID: 'opc-1',
         questions: [{ question: 'Pick', header: 'Q', options: [] }]
@@ -463,7 +463,7 @@ describe('Session 8: Integration & Verification', () => {
       expect(tracker.state.showScrollFab).toBe(false)
 
       // Question is still in the store and answerable
-      const active = useQuestionStore.getState().getActiveQuestion('hive-1')
+      const active = useQuestionStore.getState().getActiveQuestion('octob-1')
       expect(active).not.toBeNull()
       expect(active!.id).toBe('q1')
     })
@@ -478,16 +478,16 @@ describe('Session 8: Integration & Verification', () => {
       expect(tracker.state.showScrollFab).toBe(true)
 
       // Question added and answered
-      useQuestionStore.getState().addQuestion('hive-1', {
+      useQuestionStore.getState().addQuestion('octob-1', {
         id: 'q1',
         sessionID: 'opc-1',
         questions: [{ question: 'Pick', header: 'Q', options: [] }]
       })
-      useQuestionStore.getState().removeQuestion('hive-1', 'q1')
+      useQuestionStore.getState().removeQuestion('octob-1', 'q1')
 
       // FAB state is still visible (independent)
       expect(tracker.state.showScrollFab).toBe(true)
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')).toBeNull()
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')).toBeNull()
     })
   })
 
@@ -563,23 +563,23 @@ describe('Session 8: Integration & Verification', () => {
 
   describe('Question queueing behavior', () => {
     test('only first question is active, second waits in queue', () => {
-      useQuestionStore.getState().addQuestion('hive-1', {
+      useQuestionStore.getState().addQuestion('octob-1', {
         id: 'q1',
         sessionID: 'opc-1',
         questions: [{ question: 'First?', header: 'Q1', options: [] }]
       })
-      useQuestionStore.getState().addQuestion('hive-1', {
+      useQuestionStore.getState().addQuestion('octob-1', {
         id: 'q2',
         sessionID: 'opc-1',
         questions: [{ question: 'Second?', header: 'Q2', options: [] }]
       })
 
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')?.id).toBe('q1')
-      expect(useQuestionStore.getState().getQuestions('hive-1')).toHaveLength(2)
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')?.id).toBe('q1')
+      expect(useQuestionStore.getState().getQuestions('octob-1')).toHaveLength(2)
 
       // Answer first, second becomes active
-      useQuestionStore.getState().removeQuestion('hive-1', 'q1')
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')?.id).toBe('q2')
+      useQuestionStore.getState().removeQuestion('octob-1', 'q1')
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')?.id).toBe('q2')
     })
   })
 
@@ -587,23 +587,23 @@ describe('Session 8: Integration & Verification', () => {
 
   describe('Session switch cleanup', () => {
     test('clearing session removes all pending questions', () => {
-      useQuestionStore.getState().addQuestion('hive-1', {
+      useQuestionStore.getState().addQuestion('octob-1', {
         id: 'q1',
         sessionID: 'opc-1',
         questions: [{ question: 'Q1', header: 'H', options: [] }]
       })
-      useQuestionStore.getState().addQuestion('hive-1', {
+      useQuestionStore.getState().addQuestion('octob-1', {
         id: 'q2',
         sessionID: 'opc-1',
         questions: [{ question: 'Q2', header: 'H', options: [] }]
       })
 
-      expect(useQuestionStore.getState().getQuestions('hive-1')).toHaveLength(2)
+      expect(useQuestionStore.getState().getQuestions('octob-1')).toHaveLength(2)
 
       // Session switch triggers clearSession
-      useQuestionStore.getState().clearSession('hive-1')
-      expect(useQuestionStore.getState().getQuestions('hive-1')).toHaveLength(0)
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')).toBeNull()
+      useQuestionStore.getState().clearSession('octob-1')
+      expect(useQuestionStore.getState().getQuestions('octob-1')).toHaveLength(0)
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')).toBeNull()
     })
   })
 
@@ -634,7 +634,7 @@ describe('Session 8: Integration & Verification', () => {
       expect(tracker.state.showScrollFab).toBe(false)
 
       // 5. Question arrives mid-stream
-      useQuestionStore.getState().addQuestion('hive-1', {
+      useQuestionStore.getState().addQuestion('octob-1', {
         id: 'q-plan',
         sessionID: 'opc-1',
         questions: [
@@ -648,7 +648,7 @@ describe('Session 8: Integration & Verification', () => {
           }
         ]
       })
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')).not.toBeNull()
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')).not.toBeNull()
 
       // 6. User scrolls up to review previous content — FAB appears
       tracker.wheel()
@@ -660,8 +660,8 @@ describe('Session 8: Integration & Verification', () => {
       expect(tracker.state.showScrollFab).toBe(false)
 
       // 8. User answers the question
-      useQuestionStore.getState().removeQuestion('hive-1', 'q-plan')
-      expect(useQuestionStore.getState().getActiveQuestion('hive-1')).toBeNull()
+      useQuestionStore.getState().removeQuestion('octob-1', 'q-plan')
+      expect(useQuestionStore.getState().getActiveQuestion('octob-1')).toBeNull()
 
       // 9. Streaming resumes — auto-scroll active, no FAB
       tracker.handleScroll(400, 900, 400, true)

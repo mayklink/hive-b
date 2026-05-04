@@ -99,25 +99,25 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
 
   describe('connect()', () => {
     it('should return a placeholder session ID starting with "pending::"', async () => {
-      const result = await implementer.connect('/path/to/worktree', 'hive-session-1')
+      const result = await implementer.connect('/path/to/worktree', 'octob-session-1')
       expect(result.sessionId).toMatch(/^pending::/)
     })
 
     it('should return a unique UUID in the placeholder ID', async () => {
-      const result1 = await implementer.connect('/path/to/worktree', 'hive-session-1')
-      const result2 = await implementer.connect('/path/to/worktree2', 'hive-session-2')
+      const result1 = await implementer.connect('/path/to/worktree', 'octob-session-1')
+      const result2 = await implementer.connect('/path/to/worktree2', 'octob-session-2')
       expect(result1.sessionId).not.toBe(result2.sessionId)
     })
 
     it('should register the session in the internal sessions map', async () => {
-      const result = await implementer.connect('/path/to/worktree', 'hive-session-1')
+      const result = await implementer.connect('/path/to/worktree', 'octob-session-1')
       // Access internal state via the protected getSession helper
       // We cast to access protected members in tests
       const session = (implementer as any).sessions.get(
         (implementer as any).getSessionKey('/path/to/worktree', result.sessionId)
       ) as ClaudeSessionState
       expect(session).toBeDefined()
-      expect(session.octobSessionId).toBe('hive-session-1')
+      expect(session.octobSessionId).toBe('octob-session-1')
       expect(session.worktreePath).toBe('/path/to/worktree')
       expect(session.claudeSessionId).toBe(result.sessionId)
       expect(session.materialized).toBe(false)
@@ -125,7 +125,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
     })
 
     it('should create an AbortController for the session', async () => {
-      const result = await implementer.connect('/path/to/worktree', 'hive-session-1')
+      const result = await implementer.connect('/path/to/worktree', 'octob-session-1')
       const session = (implementer as any).sessions.get(
         (implementer as any).getSessionKey('/path/to/worktree', result.sessionId)
       ) as ClaudeSessionState
@@ -134,7 +134,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
     })
 
     it('should initialize empty checkpoints map', async () => {
-      const result = await implementer.connect('/path/to/worktree', 'hive-session-1')
+      const result = await implementer.connect('/path/to/worktree', 'octob-session-1')
       const session = (implementer as any).sessions.get(
         (implementer as any).getSessionKey('/path/to/worktree', result.sessionId)
       ) as ClaudeSessionState
@@ -145,7 +145,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
     it('should log the connection', async () => {
       // Just verify no error is thrown — logging is a side effect
       await expect(
-        implementer.connect('/path/to/worktree', 'hive-session-1')
+        implementer.connect('/path/to/worktree', 'octob-session-1')
       ).resolves.toBeDefined()
     })
   })
@@ -155,7 +155,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
       const result = await implementer.reconnect(
         '/path/to/worktree',
         'claude-session-abc123',
-        'hive-session-1'
+        'octob-session-1'
       )
       expect(result.success).toBe(true)
       const session = (implementer as any).sessions.get(
@@ -163,12 +163,12 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
       ) as ClaudeSessionState
       expect(session).toBeDefined()
       expect(session.claudeSessionId).toBe('claude-session-abc123')
-      expect(session.octobSessionId).toBe('hive-session-1')
+      expect(session.octobSessionId).toBe('octob-session-1')
       expect(session.worktreePath).toBe('/path/to/worktree')
     })
 
     it('should mark reconnected sessions as materialized', async () => {
-      await implementer.reconnect('/path/to/worktree', 'claude-session-abc123', 'hive-session-1')
+      await implementer.reconnect('/path/to/worktree', 'claude-session-abc123', 'octob-session-1')
       const session = (implementer as any).sessions.get(
         (implementer as any).getSessionKey('/path/to/worktree', 'claude-session-abc123')
       ) as ClaudeSessionState
@@ -179,7 +179,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
       const result = await implementer.reconnect(
         '/path/to/worktree',
         'claude-session-abc123',
-        'hive-session-1'
+        'octob-session-1'
       )
       expect(result).toEqual({
         success: true,
@@ -189,7 +189,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
     })
 
     it('should create a fresh AbortController for the reconnected session', async () => {
-      await implementer.reconnect('/path/to/worktree', 'claude-session-abc123', 'hive-session-1')
+      await implementer.reconnect('/path/to/worktree', 'claude-session-abc123', 'octob-session-1')
       const session = (implementer as any).sessions.get(
         (implementer as any).getSessionKey('/path/to/worktree', 'claude-session-abc123')
       ) as ClaudeSessionState
@@ -198,10 +198,10 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
 
     it('should replace existing session state if reconnecting to same session', async () => {
       // First connect creates a session
-      const connectResult = await implementer.connect('/path/to/worktree', 'hive-session-1')
+      const connectResult = await implementer.connect('/path/to/worktree', 'octob-session-1')
 
       // Reconnect with a real session ID should add a NEW entry (different key)
-      await implementer.reconnect('/path/to/worktree', 'real-claude-id', 'hive-session-1')
+      await implementer.reconnect('/path/to/worktree', 'real-claude-id', 'octob-session-1')
 
       // Both entries exist (placeholder + real)
       const sessions = (implementer as any).sessions as Map<string, ClaudeSessionState>
@@ -209,7 +209,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
     })
 
     it('should set query to null (deferred SDK interaction)', async () => {
-      await implementer.reconnect('/path/to/worktree', 'claude-session-abc123', 'hive-session-1')
+      await implementer.reconnect('/path/to/worktree', 'claude-session-abc123', 'octob-session-1')
       const session = (implementer as any).sessions.get(
         (implementer as any).getSessionKey('/path/to/worktree', 'claude-session-abc123')
       ) as ClaudeSessionState
@@ -219,7 +219,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
 
   describe('disconnect()', () => {
     it('should remove the session from the sessions map', async () => {
-      const { sessionId } = await implementer.connect('/path/to/worktree', 'hive-session-1')
+      const { sessionId } = await implementer.connect('/path/to/worktree', 'octob-session-1')
       await implementer.disconnect('/path/to/worktree', sessionId)
       const session = (implementer as any).sessions.get(
         (implementer as any).getSessionKey('/path/to/worktree', sessionId)
@@ -228,7 +228,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
     })
 
     it('should abort the AbortController on disconnect', async () => {
-      const { sessionId } = await implementer.connect('/path/to/worktree', 'hive-session-1')
+      const { sessionId } = await implementer.connect('/path/to/worktree', 'octob-session-1')
       const session = (implementer as any).sessions.get(
         (implementer as any).getSessionKey('/path/to/worktree', sessionId)
       ) as ClaudeSessionState
@@ -238,7 +238,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
     })
 
     it('should call query.close() if a Query is active', async () => {
-      const { sessionId } = await implementer.connect('/path/to/worktree', 'hive-session-1')
+      const { sessionId } = await implementer.connect('/path/to/worktree', 'octob-session-1')
       // Simulate an active query by manually setting it
       const session = (implementer as any).sessions.get(
         (implementer as any).getSessionKey('/path/to/worktree', sessionId)
@@ -256,7 +256,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
     })
 
     it('should not throw if query is null', async () => {
-      const { sessionId } = await implementer.connect('/path/to/worktree', 'hive-session-1')
+      const { sessionId } = await implementer.connect('/path/to/worktree', 'octob-session-1')
       // query is already null by default from connect
       await expect(implementer.disconnect('/path/to/worktree', sessionId)).resolves.not.toThrow()
     })
@@ -264,8 +264,8 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
 
   describe('cleanup()', () => {
     it('should close all active queries', async () => {
-      const { sessionId: id1 } = await implementer.connect('/wt1', 'hive-1')
-      const { sessionId: id2 } = await implementer.connect('/wt2', 'hive-2')
+      const { sessionId: id1 } = await implementer.connect('/wt1', 'octob-1')
+      const { sessionId: id2 } = await implementer.connect('/wt2', 'octob-2')
 
       // Attach mock queries
       const sessions = (implementer as any).sessions as Map<string, ClaudeSessionState>
@@ -281,8 +281,8 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
     })
 
     it('should abort all AbortControllers and clear the sessions map', async () => {
-      const { sessionId: id1 } = await implementer.connect('/wt1', 'hive-1')
-      const { sessionId: id2 } = await implementer.connect('/wt2', 'hive-2')
+      const { sessionId: id1 } = await implementer.connect('/wt1', 'octob-1')
+      const { sessionId: id2 } = await implementer.connect('/wt2', 'octob-2')
 
       const sessions = (implementer as any).sessions as Map<string, ClaudeSessionState>
       const ac1 = sessions.get((implementer as any).getSessionKey('/wt1', id1))!.abortController!
@@ -296,7 +296,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
     })
 
     it('should handle query.close() throwing without propagating', async () => {
-      const { sessionId } = await implementer.connect('/wt1', 'hive-1')
+      const { sessionId } = await implementer.connect('/wt1', 'octob-1')
       const sessions = (implementer as any).sessions as Map<string, ClaudeSessionState>
       const badQuery = {
         close: vi.fn(() => {
@@ -315,7 +315,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
   describe('lifecycle integration', () => {
     it('connect -> disconnect -> reconnect: full cycle', async () => {
       // 1. Connect creates placeholder
-      const { sessionId: placeholderId } = await implementer.connect('/wt', 'hive-1')
+      const { sessionId: placeholderId } = await implementer.connect('/wt', 'octob-1')
       expect(placeholderId).toMatch(/^pending::/)
 
       // 2. Disconnect removes it
@@ -323,7 +323,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
       expect((implementer as any).sessions.size).toBe(0)
 
       // 3. Reconnect with a "real" session ID from DB
-      const reconResult = await implementer.reconnect('/wt', 'real-claude-id', 'hive-1')
+      const reconResult = await implementer.reconnect('/wt', 'real-claude-id', 'octob-1')
       expect(reconResult.success).toBe(true)
 
       const session = (implementer as any).sessions.get(
@@ -334,8 +334,8 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
     })
 
     it('multiple sessions on different worktrees coexist independently', async () => {
-      const r1 = await implementer.connect('/wt1', 'hive-1')
-      const r2 = await implementer.connect('/wt2', 'hive-2')
+      const r1 = await implementer.connect('/wt1', 'octob-1')
+      const r2 = await implementer.connect('/wt2', 'octob-2')
       expect((implementer as any).sessions.size).toBe(2)
 
       await implementer.disconnect('/wt1', r1.sessionId)
@@ -346,7 +346,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
         (implementer as any).getSessionKey('/wt2', r2.sessionId)
       )
       expect(remaining).toBeDefined()
-      expect(remaining.octobSessionId).toBe('hive-2')
+      expect(remaining.octobSessionId).toBe('octob-2')
     })
 
     it('reconnect after app restart simulation (fresh implementer)', async () => {
@@ -357,7 +357,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
       const result = await freshImplementer.reconnect(
         '/wt',
         'persisted-claude-session-id',
-        'hive-session-from-db'
+        'octob-session-from-db'
       )
 
       expect(result.success).toBe(true)
@@ -369,7 +369,7 @@ describe('ClaudeCodeImplementer - Session Lifecycle (Session 3)', () => {
       ) as ClaudeSessionState
       expect(session.materialized).toBe(true)
       expect(session.query).toBeNull()
-      expect(session.octobSessionId).toBe('hive-session-from-db')
+      expect(session.octobSessionId).toBe('octob-session-from-db')
     })
   })
 })

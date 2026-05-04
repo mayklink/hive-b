@@ -245,7 +245,7 @@ describe('Codex Undo/Redo', () => {
 
       const session = {
         threadId: 'thread-undo-1',
-        octobSessionId: 'hive-undo-1',
+        octobSessionId: 'octob-undo-1',
         worktreePath: '/test',
         status: 'ready' as const,
         messages: [
@@ -269,7 +269,7 @@ describe('Codex Undo/Redo', () => {
         thread: { id: 'thread-undo-1', turns: [] }
       })
 
-      const result = await impl.undo('/test', 'thread-undo-1', 'hive-undo-1')
+      const result = await impl.undo('/test', 'thread-undo-1', 'octob-undo-1')
 
       expect(internalManager.rollbackThread).toHaveBeenCalledWith('thread-undo-1', 1)
       expect(result).toHaveProperty('revertMessageID')
@@ -291,7 +291,7 @@ describe('Codex Undo/Redo', () => {
 
       const session = {
         threadId: 'thread-undo-1',
-        octobSessionId: 'hive-undo-1',
+        octobSessionId: 'octob-undo-1',
         worktreePath: '/test',
         status: 'ready' as const,
         messages: [
@@ -313,7 +313,7 @@ describe('Codex Undo/Redo', () => {
 
       internalManager.rollbackThread = vi.fn().mockResolvedValue({ ok: true })
 
-      await impl.undo('/test', 'thread-undo-1', 'hive-undo-1')
+      await impl.undo('/test', 'thread-undo-1', 'octob-undo-1')
 
       expect(session.revertMessageID).toBeTruthy()
       expect(session.revertDiff).toBeNull()
@@ -334,7 +334,7 @@ describe('Codex Undo/Redo', () => {
 
       impl.getSessions().set('/test::thread-undo-1', {
         threadId: 'thread-undo-1',
-        octobSessionId: 'hive-undo-1',
+        octobSessionId: 'octob-undo-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [
@@ -347,7 +347,7 @@ describe('Codex Undo/Redo', () => {
 
       internalManager.rollbackThread = vi.fn().mockResolvedValue({ ok: true })
 
-      await impl.undo('/test', 'thread-undo-1', 'hive-undo-1')
+      await impl.undo('/test', 'thread-undo-1', 'octob-undo-1')
 
       const sendCalls = mockWindow.webContents.send.mock.calls
       const streamCalls = sendCalls
@@ -366,7 +366,7 @@ describe('Codex Undo/Redo', () => {
       const impl = new CodexImplementer()
 
       await expect(
-        impl.undo('/unknown', 'thread-x', 'hive-x')
+        impl.undo('/unknown', 'thread-x', 'octob-x')
       ).rejects.toThrow('session not found')
     })
 
@@ -378,7 +378,7 @@ describe('Codex Undo/Redo', () => {
 
       impl.getSessions().set('/test::thread-undo-1', {
         threadId: 'thread-undo-1',
-        octobSessionId: 'hive-undo-1',
+        octobSessionId: 'octob-undo-1',
         worktreePath: '/test',
         status: 'ready',
         messages: [],
@@ -387,7 +387,7 @@ describe('Codex Undo/Redo', () => {
       })
 
       await expect(
-        impl.undo('/test', 'thread-undo-1', 'hive-undo-1')
+        impl.undo('/test', 'thread-undo-1', 'octob-undo-1')
       ).rejects.toThrow('Nothing to undo')
     })
 
@@ -405,7 +405,7 @@ describe('Codex Undo/Redo', () => {
 
       const session = {
         threadId: 'thread-undo-1',
-        octobSessionId: 'hive-undo-1',
+        octobSessionId: 'octob-undo-1',
         worktreePath: '/test',
         status: 'ready' as const,
         messages: [
@@ -426,7 +426,7 @@ describe('Codex Undo/Redo', () => {
 
       internalManager.rollbackThread = vi.fn().mockResolvedValue({ ok: true })
 
-      const result = await impl.undo('/test', 'thread-undo-1', 'hive-undo-1')
+      const result = await impl.undo('/test', 'thread-undo-1', 'octob-undo-1')
 
       // First exchange should remain, second should be removed
       expect(session.messages).toHaveLength(2)
@@ -446,7 +446,7 @@ describe('Codex Undo/Redo', () => {
       const impl = new CodexImplementer()
 
       await expect(
-        impl.redo('/test', 'thread-1', 'hive-1')
+        impl.redo('/test', 'thread-1', 'octob-1')
       ).rejects.toThrow('Redo is not supported for Codex sessions')
     })
   })

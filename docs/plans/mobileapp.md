@@ -1,14 +1,14 @@
-# PRD: Hive Headless Server Mode + React Native Mobile Client
+# PRD: Octob Headless Server Mode + React Native Mobile Client
 
 ## Context
 
-Hive is an Electron desktop app for managing git projects, worktrees, and AI coding sessions (OpenCode + Claude Code). The user wants to control Hive remotely from their phone. This requires:
+Octob is an Electron desktop app for managing git projects, worktrees, and AI coding sessions (OpenCode + Claude Code). The user wants to control Octob remotely from their phone. This requires:
 
-1. A **headless server mode** that exposes all Hive capabilities over the network via **GraphQL** (implemented in this repo)
+1. A **headless server mode** that exposes all Octob capabilities over the network via **GraphQL** (implemented in this repo)
 2. A **React Native mobile app** with full feature parity (separate repo — documented here, built later)
 3. **Zero disruption** to the existing desktop app functionality
 
-**Repository structure**: The GraphQL server, EventBus, shared types, and headless mode are all implemented in this Hive Electron repo. The React Native mobile app is a separate project/repository that consumes the GraphQL API. This PRD documents both sides for completeness, but implementation in this repo focuses on the server side.
+**Repository structure**: The GraphQL server, EventBus, shared types, and headless mode are all implemented in this Octob Electron repo. The React Native mobile app is a separate project/repository that consumes the GraphQL API. This PRD documents both sides for completeness, but implementation in this repo focuses on the server side.
 
 The desktop app's architecture is already well-suited for this: services (`src/main/services/`) are completely decoupled from Electron UI. The IPC handlers (`src/main/ipc/`) are thin wrappers. We add GraphQL resolvers as a second thin wrapper over the same services.
 
@@ -20,7 +20,7 @@ The desktop app's architecture is already well-suited for this: services (`src/m
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Hive Process (Electron)                            │
+│  Octob Process (Electron)                            │
 │                                                     │
 │  ┌──────────────┐  ┌───────────┐  ┌──────────────┐ │
 │  │ Services     │  │ EventBus  │  │ GraphQL      │ │
@@ -51,12 +51,12 @@ The desktop app's architecture is already well-suited for this: services (`src/m
 
 **GUI mode** (default, unchanged):
 ```bash
-hive          # Creates BrowserWindow, registers IPC, normal desktop app
+octob          # Creates BrowserWindow, registers IPC, normal desktop app
 ```
 
 **Headless mode** (new):
 ```bash
-hive --headless --port 8443    # No window, starts GraphQL server on port
+octob --headless --port 8443    # No window, starts GraphQL server on port
 ```
 
 Both modes initialize the same services (Database, Git, OpenCode, ClaudeCode, Scripts, Terminal). The difference is:
@@ -732,7 +732,7 @@ Format: `hive_Ks7dF2mPq9xR4wN8vT3jL6hB0yU5cA1eG7iO2sD4fH`
 
 **Pairing**: First run displays key in terminal + ASCII QR code. QR payload includes host, port, key, and TLS cert fingerprint.
 
-**Rotation**: `hive --headless --rotate-key` generates new key, invalidates old hash, drops all connections.
+**Rotation**: `octob --headless --rotate-key` generates new key, invalidates old hash, drops all connections.
 
 ### 3.3 TLS
 
@@ -757,21 +757,21 @@ Certificate fingerprint included in QR code pairing payload. React Native app pi
 
 - **Audit logging**: Auth success/failure, API calls, sensitive ops (terminal, scripts, git push), kill switch.
 - **Failed auth alerting**: 3+ failures → ERROR log + system notification (if GUI active).
-- **Kill switch**: `systemKillSwitch` mutation invalidates key, closes all connections. Also via CLI: `hive --headless --kill`.
-- **Auto-lock**: 30 min inactivity → locked mode (all API calls return errors). Unlock via `hive --headless --unlock`.
-- **Status file**: `~/.octob/hive-headless.status.json` updated every 30s with uptime, connections, request count.
+- **Kill switch**: `systemKillSwitch` mutation invalidates key, closes all connections. Also via CLI: `octob --headless --kill`.
+- **Auto-lock**: 30 min inactivity → locked mode (all API calls return errors). Unlock via `octob --headless --unlock`.
+- **Status file**: `~/.octob/octob-headless.status.json` updated every 30s with uptime, connections, request count.
 
 ### 3.7 CLI Interface
 
 ```
-hive --headless                   # Start headless mode
-hive --headless --port 9443       # Custom port
-hive --headless --bind 127.0.0.1  # Bind to specific interface
-hive --headless --rotate-key      # Rotate API key
-hive --headless --regen-certs     # Regenerate TLS certs
-hive --headless --show-status     # Print status of running instance
-hive --headless --kill            # Stop and revoke key
-hive --headless --unlock          # Unlock after inactivity timeout
+octob --headless                   # Start headless mode
+octob --headless --port 9443       # Custom port
+octob --headless --bind 127.0.0.1  # Bind to specific interface
+octob --headless --rotate-key      # Rotate API key
+octob --headless --regen-certs     # Regenerate TLS certs
+octob --headless --show-status     # Print status of running instance
+octob --headless --kill            # Stop and revoke key
+octob --headless --unlock          # Unlock after inactivity timeout
 ```
 
 ### 3.8 Configuration
@@ -1120,7 +1120,7 @@ react-native-camera       # QR scanning
 
 ## 8. Implementation Phases
 
-### THIS REPO: Hive Electron (Server Side)
+### THIS REPO: Octob Electron (Server Side)
 
 #### Phase 1: Foundation
 1. Create `src/shared/types/` — extract types from `src/preload/index.d.ts`
@@ -1262,7 +1262,7 @@ react-native-camera       # QR scanning
 ## 10. Verification Plan
 
 ### Server Testing
-- Start headless: `hive --headless --port 8443`
+- Start headless: `octob --headless --port 8443`
 - Verify TLS cert generation and QR code display
 - Test auth via GraphQL query: `curl -k https://localhost:8443/graphql -H "Authorization: Bearer hive_..." -d '{"query":"{ systemAppVersion }"}'`
 - Test rate limiting: 6 rapid requests with wrong key → 5th blocked
@@ -1299,7 +1299,7 @@ react-native-camera       # QR scanning
 
 ### Adding New Features
 
-When a new feature is added to Hive:
+When a new feature is added to Octob:
 
 1. **Service layer**: Implement the feature in `src/main/services/` (as usual)
 2. **IPC handler**: Add IPC channel in `src/main/ipc/` (as usual, for desktop)

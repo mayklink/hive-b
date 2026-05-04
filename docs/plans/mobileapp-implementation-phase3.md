@@ -5,7 +5,7 @@
 
 ## Phase Overview
 
-Phase 3 builds the core GraphQL server infrastructure: the context factory, server entry point (yoga + HTTPS + WebSocket), headless bootstrap sequence, authentication system (API key generation, verification plugin, brute force protection, WebSocket auth), path guard plugin, TLS certificate generation, config loader, and headless CLI flag handling in `src/main/index.ts`. At the end of this phase, `hive --headless` starts a functional (but mostly empty) GraphQL server with authentication and TLS.
+Phase 3 builds the core GraphQL server infrastructure: the context factory, server entry point (yoga + HTTPS + WebSocket), headless bootstrap sequence, authentication system (API key generation, verification plugin, brute force protection, WebSocket auth), path guard plugin, TLS certificate generation, config loader, and headless CLI flag handling in `src/main/index.ts`. At the end of this phase, `octob --headless` starts a functional (but mostly empty) GraphQL server with authentication and TLS.
 
 ## Prerequisites
 
@@ -28,8 +28,8 @@ Phase 3 builds the core GraphQL server infrastructure: the context factory, serv
 ## Architecture Notes
 
 **Dual startup mode:**
-- **GUI mode** (default): `hive` → creates BrowserWindow, registers IPC handlers, normal desktop app
-- **Headless mode** (new): `hive --headless --port 8443` → no window, starts GraphQL server
+- **GUI mode** (default): `octob` → creates BrowserWindow, registers IPC handlers, normal desktop app
+- **Headless mode** (new): `octob --headless --port 8443` → no window, starts GraphQL server
 
 Both modes share the same services (Database, Git, OpenCode, Scripts, Terminal). The difference is:
 - GUI mode: `createWindow()` + IPC handlers
@@ -389,9 +389,9 @@ pnpm vitest run test/server/path-guard.test.ts
      - Creates self-signed X.509 certificate (10-year validity)
      - NOTE: Node.js doesn't have built-in X.509 cert creation. Use `crypto.X509Certificate` for reading, but for creation either use a small library or shell out to `openssl` (preferred for simplicity):
        ```bash
-       openssl req -new -x509 -key server.key -out server.crt -days 3650 -subj "/CN=hive-headless"
+       openssl req -new -x509 -key server.key -out server.crt -days 3650 -subj "/CN=octob-headless"
        ```
-     - Alternatively, generate via `openssl ecparam -genkey -name prime256v1 | openssl ec -out server.key` and `openssl req -new -x509 -key server.key -out server.crt -days 3650 -subj "/CN=hive-headless"`
+     - Alternatively, generate via `openssl ecparam -genkey -name prime256v1 | openssl ec -out server.key` and `openssl req -new -x509 -key server.key -out server.crt -days 3650 -subj "/CN=octob-headless"`
    - `getCertFingerprint(certPath: string): string`:
      - Reads cert, computes SHA-256 fingerprint of DER-encoded cert
      - Returns fingerprint as hex string (64 chars)
@@ -534,7 +534,7 @@ pnpm build && pnpm test
 
 **Goal:** Add the `--headless` branch to `app.whenReady()` that starts GraphQL server instead of creating a window.
 
-**Definition of Done:** `hive --headless` starts server, `hive` (no flag) starts desktop as before.
+**Definition of Done:** `octob --headless` starts server, `octob` (no flag) starts desktop as before.
 
 **Tasks:**
 
@@ -604,8 +604,8 @@ pnpm build && pnpm test
 2. `[server]` Implement `handleManagementCommand(opts)` in `src/server/headless-bootstrap.ts`:
    - `--rotate-key`: Initialize DB, generate new API key, store hash, display new key + QR code, log rotation
    - `--regen-certs`: Delete old certs from `~/.octob/tls/`, regenerate new certs, update fingerprint in DB
-   - `--show-status`: Read `~/.octob/hive-headless.status.json`, pretty-print to stdout (uptime, connections, request count, locked state)
-   - `--kill`: Read PID file `~/.octob/hive-headless.pid`, send SIGTERM to running process
+   - `--show-status`: Read `~/.octob/octob-headless.status.json`, pretty-print to stdout (uptime, connections, request count, locked state)
+   - `--kill`: Read PID file `~/.octob/octob-headless.pid`, send SIGTERM to running process
    - `--unlock`: Initialize DB, delete auto-lock state from settings table
 
 3. `[server]` Each command calls `app.quit()` after completing (they don't start the server).

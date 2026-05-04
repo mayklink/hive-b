@@ -187,10 +187,10 @@ describe('AgentSdkManager with Codex', () => {
   describe('codex implementer methods route correctly', () => {
     it('connect routes through codex implementer', async () => {
       const impl = manager.getImplementer('codex')
-      const result = await impl.connect('/path', 'hive-session-1')
+      const result = await impl.connect('/path', 'octob-session-1')
 
       expect(result).toEqual({ sessionId: 'codex-session-1' })
-      expect(mockCodex.connect).toHaveBeenCalledWith('/path', 'hive-session-1')
+      expect(mockCodex.connect).toHaveBeenCalledWith('/path', 'octob-session-1')
     })
 
     it('prompt routes through codex implementer', async () => {

@@ -82,7 +82,7 @@ describe('CodexImplementer.prompt()', () => {
   function seedSession(overrides?: Partial<CodexSessionState>): CodexSessionState {
     const session: CodexSessionState = {
       threadId: 'thread-1',
-      octobSessionId: 'hive-session-1',
+      octobSessionId: 'octob-session-1',
       worktreePath: '/test/project',
       status: 'ready',
       messages: [],
@@ -144,20 +144,20 @@ describe('CodexImplementer.prompt()', () => {
     expect(mockLogInfo).toHaveBeenCalledWith(
       'Prompt: evaluating title generation',
       expect.objectContaining({
-        octobSessionId: 'hive-session-1',
+        octobSessionId: 'octob-session-1',
         threadId: 'thread-1',
         shouldGenerateTitle: true
       })
     )
     expect(mockLogWarn).toHaveBeenCalledWith(
       'handleTitleGeneration: generator returned null title',
-      { octobSessionId: 'hive-session-1', threadId: 'thread-1' }
+      { octobSessionId: 'octob-session-1', threadId: 'thread-1' }
     )
   })
 
   it('logs when title generation is skipped for a pre-titled session', async () => {
     impl.setDatabaseService({
-      getSession: vi.fn().mockReturnValue({ id: 'hive-session-1', name: 'Existing title' })
+      getSession: vi.fn().mockReturnValue({ id: 'octob-session-1', name: 'Existing title' })
     } as any)
     seedSession()
 
@@ -178,7 +178,7 @@ describe('CodexImplementer.prompt()', () => {
     expect(mockGenerateCodexSessionTitle).not.toHaveBeenCalled()
     expect(mockLogInfo).toHaveBeenCalledWith(
       'Prompt: skipped title generation for pre-titled session',
-      { octobSessionId: 'hive-session-1', currentTitle: 'Existing title' }
+      { octobSessionId: 'octob-session-1', currentTitle: 'Existing title' }
     )
   })
 
@@ -391,8 +391,8 @@ describe('CodexImplementer.prompt()', () => {
       updateSession: vi.fn(),
       getSession: vi
         .fn()
-        .mockReturnValueOnce({ id: 'hive-session-1', name: 'Session 1' })
-        .mockReturnValueOnce({ id: 'hive-session-1', name: 'Fix auth token refresh bug' }),
+        .mockReturnValueOnce({ id: 'octob-session-1', name: 'Session 1' })
+        .mockReturnValueOnce({ id: 'octob-session-1', name: 'Fix auth token refresh bug' }),
       getWorktreeBySessionId: vi.fn().mockReturnValue(null)
     }
     impl.setDatabaseService(mockDb as any)
@@ -415,7 +415,7 @@ describe('CodexImplementer.prompt()', () => {
     await new Promise((resolve) => setTimeout(resolve, 0))
 
     expect(mockDb.updateSession).toHaveBeenCalledTimes(1)
-    expect(mockDb.updateSession).toHaveBeenNthCalledWith(1, 'hive-session-1', {
+    expect(mockDb.updateSession).toHaveBeenNthCalledWith(1, 'octob-session-1', {
       name: 'Auth refresh fix'
     })
 
@@ -427,7 +427,7 @@ describe('CodexImplementer.prompt()', () => {
     expect(streamCalls).toEqual([
       {
         type: 'session.updated',
-        sessionId: 'hive-session-1',
+        sessionId: 'octob-session-1',
         data: {
           title: 'Auth refresh fix',
           info: { title: 'Auth refresh fix' }
@@ -462,7 +462,7 @@ describe('CodexImplementer.prompt()', () => {
     seedSession()
 
     const mockDb = {
-      getSession: vi.fn().mockReturnValue({ id: 'hive-session-1', name: 'Existing manual title' }),
+      getSession: vi.fn().mockReturnValue({ id: 'octob-session-1', name: 'Existing manual title' }),
       updateSession: vi.fn(),
       getWorktreeBySessionId: vi.fn().mockReturnValue(null)
     }
@@ -939,7 +939,7 @@ describe('CodexImplementer.prompt()', () => {
       seedSession()
 
       const mockDbService = {
-        getSession: vi.fn().mockReturnValue({ id: 'hive-session-1', mode: 'plan' }),
+        getSession: vi.fn().mockReturnValue({ id: 'octob-session-1', mode: 'plan' }),
         updateSession: vi.fn()
       } as any
       impl.setDatabaseService(mockDbService)
@@ -969,7 +969,7 @@ describe('CodexImplementer.prompt()', () => {
       seedSession()
 
       const mockDbService = {
-        getSession: vi.fn().mockReturnValue({ id: 'hive-session-1', mode: 'build' }),
+        getSession: vi.fn().mockReturnValue({ id: 'octob-session-1', mode: 'build' }),
         updateSession: vi.fn()
       } as any
       impl.setDatabaseService(mockDbService)
@@ -1024,7 +1024,7 @@ describe('CodexImplementer.prompt()', () => {
       seedSession()
 
       const mockDbService = {
-        getSession: vi.fn().mockReturnValue({ id: 'hive-session-1', mode: 'plan' }),
+        getSession: vi.fn().mockReturnValue({ id: 'octob-session-1', mode: 'plan' }),
         updateSession: vi.fn()
       } as any
       impl.setDatabaseService(mockDbService)
@@ -1072,7 +1072,7 @@ describe('CodexImplementer.prompt()', () => {
       seedSession()
 
       const mockDbService = {
-        getSession: vi.fn().mockReturnValue({ id: 'hive-session-1', mode: 'plan' }),
+        getSession: vi.fn().mockReturnValue({ id: 'octob-session-1', mode: 'plan' }),
         updateSession: vi.fn()
       } as any
       impl.setDatabaseService(mockDbService)

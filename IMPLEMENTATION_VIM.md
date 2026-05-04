@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add vim-style modal navigation covering ALL navigable areas of Hive — sidebar, session tabs, file viewer tabs, right sidebar tabs (changes/files/diffs), bottom panel tabs (setup/run/terminal), and a `?` help overlay with highlighted mnemonic letters.
+**Goal:** Add vim-style modal navigation covering ALL navigable areas of Octob — sidebar, session tabs, file viewer tabs, right sidebar tabs (changes/files/diffs), bottom panel tabs (setup/run/terminal), and a `?` help overlay with highlighted mnemonic letters.
 
 **Architecture:** `useVimModeStore` tracks modal state. A capture-phase `useVimNavigation` hook intercepts keystrokes in normal mode. Two-letter hint codes use the existing hint system (sessions reserved under `S` prefix). Single-letter mnemonics (`c`/`f`/`d`/`s`/`r`/`t`/`[`/`]`) navigate panels and tabs directly.
 

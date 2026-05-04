@@ -255,7 +255,7 @@ describe('Capability contracts are stable', () => {
   })
 
   describe('Mistral Vibe capabilities', () => {
-    it('matches the non-OpenCode agent subset we document for Hive', () => {
+    it('matches the non-OpenCode agent subset we document for Octob', () => {
       expect(MISTRAL_VIBE_CAPABILITIES.supportsUndo).toBe(false)
       expect(MISTRAL_VIBE_CAPABILITIES.supportsRedo).toBe(false)
       expect(MISTRAL_VIBE_CAPABILITIES.supportsCommands).toBe(true)
@@ -264,7 +264,7 @@ describe('Capability contracts are stable', () => {
   })
 
   describe('Cursor CLI capabilities', () => {
-    it('matches the Mistral-style ACP agent subset we document for Hive', () => {
+    it('matches the Mistral-style ACP agent subset we document for Octob', () => {
       expect(CURSOR_CLI_CAPABILITIES.supportsUndo).toBe(false)
       expect(CURSOR_CLI_CAPABILITIES.supportsRedo).toBe(false)
       expect(CURSOR_CLI_CAPABILITIES.supportsCommands).toBe(true)

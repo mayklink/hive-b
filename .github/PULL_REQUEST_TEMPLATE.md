@@ -88,4 +88,4 @@ Fixes #(issue number)
 - [ ] Other:
 
 ---
-<!-- Thank you for contributing to Hive! 🚀 -->
+<!-- Thank you for contributing to Octob! 🚀 -->

@@ -10,7 +10,7 @@
 
 ---
 
-All paths relative to `/Users/mor/.octob-worktrees/hive-electron/hive-electron--canary-v3/`.
+All paths relative to `/Users/mor/.octob-worktrees/octob-electron/octob-electron--canary-v3/`.
 
 ## File Map
 

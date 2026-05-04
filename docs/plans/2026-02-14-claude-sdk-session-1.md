@@ -4,7 +4,7 @@
 
 **Goal:** Lock all integration decisions for the Claude Code SDK integration, define the `AgentSdkImplementer` interface, add the `agent_sdk` DB column, and validate with contract tests.
 
-**Architecture:** Strategy pattern — define an `AgentSdkImplementer` interface that both OpenCode and Claude adapters implement. A manager (Session 2+) will route operations to the correct implementer based on the session's `agent_sdk` column. The Claude SDK (`@anthropic-ai/claude-agent-sdk`) uses a `query()` function that returns an async iterator of `SDKMessage` events, which maps to Hive's `OpenCodeStreamEvent` format.
+**Architecture:** Strategy pattern — define an `AgentSdkImplementer` interface that both OpenCode and Claude adapters implement. A manager (Session 2+) will route operations to the correct implementer based on the session's `agent_sdk` column. The Claude SDK (`@anthropic-ai/claude-agent-sdk`) uses a `query()` function that returns an async iterator of `SDKMessage` events, which maps to Octob's `OpenCodeStreamEvent` format.
 
 **Tech Stack:** TypeScript, `@anthropic-ai/claude-agent-sdk@^0.2.42`, SQLite migrations, Vitest
 
@@ -34,9 +34,9 @@
 | `supportsReconnect`          | `true`   | `true`      | Claude: via `options.resume`                                 |
 | `supportsPartialStreaming`   | `true`   | `true`      | Claude: via `includePartialMessages: true`                   |
 
-## Claude SDK Event → Hive Stream Mapping
+## Claude SDK Event → Octob Stream Mapping
 
-| SDK Message Type                       | Hive `type`            | Hive `statusPayload` | Notes                                           |
+| SDK Message Type                       | Octob `type`            | Octob `statusPayload` | Notes                                           |
 | -------------------------------------- | ---------------------- | -------------------- | ----------------------------------------------- |
 | `system` (subtype: `init`)             | `session.init`         | `{ type: 'idle' }`   | Extract `session_id`, tools, model              |
 | `user`                                 | `message.created`      | —                    | Forward message, capture `uuid` for checkpoints |
@@ -65,7 +65,7 @@
 
 - Claude SDK discovers credentials from `~/.claude/` directory (OAuth tokens from `claude` CLI login)
 - If no credentials found, SDK throws an authentication error on first `query()` call
-- Hive should catch this and surface: "Claude Code not authenticated. Run `claude login` in your terminal."
+- Octob should catch this and surface: "Claude Code not authenticated. Run `claude login` in your terminal."
 - `ANTHROPIC_API_KEY` env var is an alternative but deferred to a later phase
 
 ---
@@ -454,7 +454,7 @@ git commit -m "test: add agent SDK contract tests for capabilities and identifie
 
 **Step 1: Write the spec**
 
-The spec document should contain all the tables from the "Confirmed Decisions", "Capability Truth Table", "Claude SDK Event → Hive Stream Mapping", "Session Persistence / Resume Contract", and "Credential Discovery / Failure States" sections at the top of this plan. This is the single source of truth referenced by all subsequent sessions.
+The spec document should contain all the tables from the "Confirmed Decisions", "Capability Truth Table", "Claude SDK Event → Octob Stream Mapping", "Session Persistence / Resume Contract", and "Credential Discovery / Failure States" sections at the top of this plan. This is the single source of truth referenced by all subsequent sessions.
 
 **Step 2: Commit**
 

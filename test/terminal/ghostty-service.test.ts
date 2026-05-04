@@ -15,7 +15,7 @@ vi.mock('electron', () => ({
   BrowserWindow: vi.fn(),
   app: {
     isPackaged: false,
-    getAppPath: vi.fn(() => '/tmp/hive-test-app')
+    getAppPath: vi.fn(() => '/tmp/octob-test-app')
   }
 }))
 

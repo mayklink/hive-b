@@ -41,8 +41,8 @@
 │  Phase 5: Update Homebrew cask                                   │
 │    ├─ Download both DMGs from the GH release                     │
 │    ├─ Compute SHA256 for arm64 + x64 DMGs                        │
-│    ├─ Update version + SHA256s in Casks/hive.rb                  │
-│    ├─ git commit + push in the homebrew-hive repo                │
+│    ├─ Update version + SHA256s in Casks/octob.rb                  │
+│    ├─ git commit + push in the homebrew-octob repo                │
 │    └─ Clean up downloaded DMGs                                   │
 │                                                                  │
 │  Phase 6: Summary                                                │
@@ -58,13 +58,13 @@ Before writing the script, confirm these are correct (they are based on current 
 
 | Fact                     | Value                                              |
 | ------------------------ | -------------------------------------------------- |
-| GitHub repo              | `morapelker/hive`                                  |
+| GitHub repo              | `morapelker/octob`                                  |
 | Signing identity         | `Developer ID Application: Your Name (XXXXXXXXXX)` |
 | Ghostty deps release tag | `ghostty-deps-v1`                                  |
-| DMG naming (arm64)       | `Hive-{version}-arm64.dmg`                         |
-| DMG naming (x64)         | `Hive-{version}.dmg`                               |
-| Homebrew repo local path | `~/Documents/dev/hive-brew`                        |
-| Homebrew cask file       | `Casks/hive.rb`                                    |
+| DMG naming (arm64)       | `Octob-{version}-arm64.dmg`                         |
+| DMG naming (x64)         | `Octob-{version}.dmg`                               |
+| Homebrew repo local path | `~/Documents/dev/octob-brew`                        |
+| Homebrew cask file       | `Casks/octob.rb`                                    |
 | Default branch           | `main`                                             |
 
 ---
@@ -138,10 +138,10 @@ err()   { echo -e "${RED}✗${NC} $1" >&2; }
 fatal() { err "$1"; exit 1; }
 
 # ── Constants ─────────────────────────────────────────────────────
-REPO="morapelker/hive"
+REPO="morapelker/octob"
 GHOSTTY_DEPS_TAG="ghostty-deps-v1"
-HOMEBREW_REPO="$HOME/Documents/dev/hive-brew"
-HOMEBREW_CASK="Casks/hive.rb"
+HOMEBREW_REPO="$HOME/Documents/dev/octob-brew"
+HOMEBREW_CASK="Casks/octob.rb"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
@@ -367,8 +367,8 @@ fi
 
 # Wait for release assets to be available (notarization can cause delays)
 info "Waiting for release assets to be available..."
-DMG_ARM="Hive-${NEW_VERSION}-arm64.dmg"
-DMG_X64="Hive-${NEW_VERSION}.dmg"
+DMG_ARM="Octob-${NEW_VERSION}-arm64.dmg"
+DMG_X64="Octob-${NEW_VERSION}.dmg"
 
 MAX_ATTEMPTS=30
 ATTEMPT=0
@@ -408,11 +408,11 @@ ok "SHA256 (x64):   $SHA_X64"
 #   version "1.0.4"
 #   on_arm do
 #     sha256 "..."
-#     url "https://github.com/morapelker/hive/releases/download/v#{version}/Hive-#{version}-arm64.dmg"
+#     url "https://github.com/morapelker/octob/releases/download/v#{version}/Octob-#{version}-arm64.dmg"
 #   end
 #   on_intel do
 #     sha256 "..."
-#     url "https://github.com/morapelker/hive/releases/download/v#{version}/Hive-#{version}.dmg"
+#     url "https://github.com/morapelker/octob/releases/download/v#{version}/Octob-#{version}.dmg"
 #   end
 
 # We need to:
@@ -445,7 +445,7 @@ ok "Cask file updated"
 # Commit and push homebrew repo
 cd "$HOMEBREW_REPO"
 git add "$HOMEBREW_CASK"
-git commit -m "Update Hive to v${NEW_VERSION}"
+git commit -m "Update Octob to v${NEW_VERSION}"
 git push origin main
 cd "$PROJECT_DIR"
 
@@ -473,13 +473,13 @@ echo -e "${GREEN}  Release v${NEW_VERSION} complete!${NC}"
 echo -e "${GREEN}══════════════════════════════════════════════════${NC}"
 echo ""
 echo "  GitHub Release: https://github.com/${REPO}/releases/tag/v${NEW_VERSION}"
-echo "  Homebrew:       brew install --cask morapelker/hive/hive"
+echo "  Homebrew:       brew install --cask morapelker/octob/octob"
 echo ""
 echo "  Assets published:"
-echo "    • Hive-${NEW_VERSION}-arm64.dmg  (Apple Silicon)"
-echo "    • Hive-${NEW_VERSION}.dmg        (Intel)"
-echo "    • Hive-${NEW_VERSION}-arm64-mac.zip"
-echo "    • Hive-${NEW_VERSION}-mac.zip"
+echo "    • Octob-${NEW_VERSION}-arm64.dmg  (Apple Silicon)"
+echo "    • Octob-${NEW_VERSION}.dmg        (Intel)"
+echo "    • Octob-${NEW_VERSION}-arm64-mac.zip"
+echo "    • Octob-${NEW_VERSION}-mac.zip"
 echo "    • latest-mac.yml (auto-updater)"
 echo ""
 ```
@@ -562,7 +562,7 @@ Not needed locally. `electron-builder` auto-discovers the signing identity from 
 
 If the script fails mid-way:
 
-- **Phase 2 (git) succeeded but Phase 3/4 failed:** The tag exists on GitHub. Delete it with `gh release delete vX.Y.Z --repo morapelker/hive -y && git push origin :refs/tags/vX.Y.Z && git tag -d vX.Y.Z`, then re-run.
+- **Phase 2 (git) succeeded but Phase 3/4 failed:** The tag exists on GitHub. Delete it with `gh release delete vX.Y.Z --repo morapelker/octob -y && git push origin :refs/tags/vX.Y.Z && git tag -d vX.Y.Z`, then re-run.
 - **Phase 4 succeeded but Phase 5 (homebrew) failed:** Re-run just the homebrew portion manually, or re-run the script (it will fail at Phase 2 since the tag exists — we could add a `--homebrew-only` flag later if needed).
 
 ### Future improvements (out of scope)

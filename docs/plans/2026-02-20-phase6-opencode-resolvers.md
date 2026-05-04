@@ -1122,7 +1122,7 @@ vi.mock('electron', () => ({
       return '/tmp'
     },
     getVersion: () => '0.0.0-test',
-    getAppPath: () => '/tmp/hive-test-app'
+    getAppPath: () => '/tmp/octob-test-app'
   },
   ipcMain: { handle: vi.fn() },
   BrowserWindow: vi.fn()
@@ -1227,7 +1227,7 @@ describe('OpenCode Resolvers — Integration Tests', () => {
 
   describe('opencodeConnect', () => {
     it('routes to openCodeService for opencode sessions', async () => {
-      // Create a hive session with opencode sdk
+      // Create a octob session with opencode sdk
       const project = db.projects[0]
       const worktree = db.worktrees[0]
       const session = db.createSession({

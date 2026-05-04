@@ -1,4 +1,4 @@
-# Hive Worktree Connections Implementation Plan
+# Octob Worktree Connections Implementation Plan
 
 This document outlines the implementation plan for Worktree Connections, covering database schema, filesystem operations, IPC handlers, renderer stores, sidebar UI, session integration, and the connect dialog.
 
@@ -96,7 +96,7 @@ test/
 │   ├── session-9/
 │   │   └── session-view-connections.test.tsx
 │   └── session-10/
-│       └── archive-cascade-integration.test.ts
+│       └── arcoctob-cascade-integration.test.ts
 ```
 
 ### New Dependencies
@@ -1358,7 +1358,7 @@ Fix any failures.
 
 - Create connection when `~/.octob/connections/` doesn't exist -> verify it's created
 - Two connections referencing the same worktree -> both work
-- Broken symlink (worktree deleted outside Hive) -> connection still loads, warning shown
+- Broken symlink (worktree deleted outside Octob) -> connection still loads, warning shown
 
 #### 4. Verify no regressions
 
@@ -1387,7 +1387,7 @@ Fix any failures.
 ### Testing Criteria
 
 ```typescript
-// test/worktree-connection/session-10/archive-cascade-integration.test.ts
+// test/worktree-connection/session-10/arcoctob-cascade-integration.test.ts
 describe('Session 10: Archive Cascade & Integration', () => {
   test('archiving a worktree calls removeWorktreeFromAll', () => {
     // Mock archiveWorktree flow

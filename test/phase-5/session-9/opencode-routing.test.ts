@@ -45,8 +45,8 @@ describe('Session 9: OpenCode session routing', () => {
       },
       server: { url: 'http://localhost', close: vi.fn() },
       sessionMap: new Map<string, string>([
-        ['/repo/a::opc-session-1', 'hive-session-a'],
-        ['/repo/b::opc-session-1', 'hive-session-b']
+        ['/repo/a::opc-session-1', 'octob-session-a'],
+        ['/repo/b::opc-session-1', 'octob-session-b']
       ]),
       sessionDirectories: new Map<string, string>(),
       directorySubscriptions: new Map(),
@@ -78,7 +78,7 @@ describe('Session 9: OpenCode session routing', () => {
 
     expect(send).toHaveBeenCalledWith(
       'opencode:stream',
-      expect.objectContaining({ sessionId: 'hive-session-a', type: 'session.idle' })
+      expect.objectContaining({ sessionId: 'octob-session-a', type: 'session.idle' })
     )
   })
 
@@ -99,8 +99,8 @@ describe('Session 9: OpenCode session routing', () => {
       },
       server: { url: 'http://localhost', close: vi.fn() },
       sessionMap: new Map<string, string>([
-        ['/repo/a::opc-session-1', 'hive-session-a'],
-        ['/repo/b::opc-session-1', 'hive-session-b']
+        ['/repo/a::opc-session-1', 'octob-session-a'],
+        ['/repo/b::opc-session-1', 'octob-session-b']
       ]),
       sessionDirectories: new Map<string, string>(),
       directorySubscriptions: new Map(),
@@ -135,7 +135,7 @@ describe('Session 9: OpenCode session routing', () => {
 
     expect(send).toHaveBeenCalledWith(
       'opencode:stream',
-      expect.objectContaining({ sessionId: 'hive-session-b', type: 'message.updated' })
+      expect.objectContaining({ sessionId: 'octob-session-b', type: 'message.updated' })
     )
     expect(mockDb.getSessionMessageByOpenCodeId).not.toHaveBeenCalled()
     expect(mockDb.upsertSessionMessageByOpenCodeId).not.toHaveBeenCalled()

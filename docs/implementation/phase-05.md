@@ -1,6 +1,6 @@
-# Hive Phase 5 Implementation Plan
+# Octob Phase 5 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 5, focusing on project lifecycle scripts (setup/run/archive), worktree status badges, a default worktree, app icon replacement, and streaming bug fixes.
+This document outlines the implementation plan for Octob Phase 5, focusing on project lifecycle scripts (setup/run/archive), worktree status badges, a default worktree, app icon replacement, and streaming bug fixes.
 
 ---
 
@@ -34,7 +34,7 @@ test/
 │   ├── session-5/
 │   │   └── run-tab-cmd-r.test.ts
 │   ├── session-6/
-│   │   └── archive-script-default-worktree.test.ts
+│   │   └── arcoctob-script-default-worktree.test.ts
 │   ├── session-7/
 │   │   └── worktree-status-badges.test.ts
 │   ├── session-8/
@@ -772,7 +772,7 @@ describe('Session 5: Run Tab & Cmd+R', () => {
 ### Testing Criteria
 
 ```typescript
-// test/phase-5/session-6/archive-script-default-worktree.test.ts
+// test/phase-5/session-6/arcoctob-script-default-worktree.test.ts
 describe('Session 6: Archive Script & Default Worktree', () => {
   test('Archive script runs before worktree deletion', () => {
     // Configure archive_script "echo archiving"

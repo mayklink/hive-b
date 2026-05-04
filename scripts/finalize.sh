@@ -15,7 +15,7 @@ err()   { echo -e "${RED}✗${NC} $1" >&2; }
 fatal() { err "$1"; exit 1; }
 
 # ── Constants ─────────────────────────────────────────────────────
-REPO="morapelker/hive"
+REPO="morapelker/octob"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
@@ -79,14 +79,14 @@ ok "SHA256 (arm64): ${SHA_ARM}"
 ok "SHA256 (x64):   ${SHA_X64}"
 
 # Clone homebrew repo
-info "Cloning homebrew-hive..."
-gh repo clone morapelker/homebrew-hive homebrew-hive
-cd homebrew-hive
+info "Cloning homebrew-octob..."
+gh repo clone morapelker/homebrew-octob homebrew-octob
+cd homebrew-octob
 
 # Update cask file
 node -e "
   const fs = require('fs');
-  let cask = fs.readFileSync('Casks/hive.rb', 'utf8');
+  let cask = fs.readFileSync('Casks/octob.rb', 'utf8');
   cask = cask.replace(/version \"[^\"]+\"/, 'version \"${VERSION}\"');
   let shaIndex = 0;
   cask = cask.replace(/sha256 \"[a-f0-9]+\"/g, (match) => {
@@ -95,11 +95,11 @@ node -e "
     if (shaIndex === 2) return 'sha256 \"${SHA_X64}\"';
     return match;
   });
-  fs.writeFileSync('Casks/hive.rb', cask);
+  fs.writeFileSync('Casks/octob.rb', cask);
 "
 ok "Cask file updated"
 
-git add Casks/hive.rb
+git add Casks/octob.rb
 git commit -m "Update Octob to v${VERSION}"
 git push origin main
 ok "Homebrew repo pushed"
@@ -111,5 +111,5 @@ echo -e "${GREEN}  Release v${VERSION} finalized!${NC}"
 echo -e "${GREEN}══════════════════════════════════════════════════${NC}"
 echo ""
 echo "  GitHub Release: https://github.com/${REPO}/releases/tag/v${VERSION}"
-echo "  Homebrew:       brew install --cask hive-app"
+echo "  Homebrew:       brew install --cask octob-app"
 echo ""

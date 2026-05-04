@@ -1,4 +1,4 @@
-# Hive — Phase 11 Product Requirements Document
+# Octob — Phase 11 Product Requirements Document
 
 ## Overview
 
@@ -31,7 +31,7 @@
 | Session Loading State Fix   | Guard in session tab click handler to preserve `isStreaming` state on tab switch                     |
 | File Sidebar Redesign       | New tabbed layout component wrapping existing `FileTree` and new `ChangesView` extraction            |
 | Tool Call Result Detach Fix | Persist and restore pending tool call state across session switches via message part matching        |
-| Streaming Cross-Tab Fix     | Scope stream subscriptions + streaming state to opencode session ID, not just hive session ID        |
+| Streaming Cross-Tab Fix     | Scope stream subscriptions + streaming state to opencode session ID, not just octob session ID        |
 | UI Text Changes             | Remove "Streaming..." span in `AssistantCanvas.tsx`, rename "Task" → "Agent" in `ToolCard.tsx`       |
 
 ---
@@ -42,7 +42,7 @@
 
 #### 1.1 Current State
 
-Hive currently implements its own title generation system that duplicates what the OpenCode server already does:
+Octob currently implements its own title generation system that duplicates what the OpenCode server already does:
 
 - **`src/main/services/opencode-service.ts` lines 1159-1231**: `generateSessionName(userMessage, worktreePath)` creates a temporary OpenCode session, sends a naming prompt to Claude Haiku (`claude-haiku-4-5-20251001`), collects streamed text via the `namingCallbacks` Map (lines 141-155), and resolves with a 10-second timeout (line 1194).
 
@@ -103,7 +103,7 @@ New Title Flow:
 - Handle `session.updated` events in the stream handler to extract and apply the server-generated title
 - New `renameSession` method in opencode-service using PATCH `/session/:sessionID`
 - IPC handler, preload exposure, and type declarations for `renameSession`
-- Store the `opencode_session_id` ↔ hive session mapping for title updates
+- Store the `opencode_session_id` ↔ octob session mapping for title updates
 
 #### 1.3 Implementation
 
@@ -1415,7 +1415,7 @@ The stream event handler in `SessionView.tsx` (line 770) checks:
 if (event.sessionId !== sessionId) return
 ```
 
-This check uses the `sessionId` prop (the hive session ID). The `onStream` callback is set up per-component, so each `SessionView` instance has its own subscription.
+This check uses the `sessionId` prop (the octob session ID). The `onStream` callback is set up per-component, so each `SessionView` instance has its own subscription.
 
 However, the potential issue is that React may keep multiple `SessionView` instances mounted simultaneously during tab transitions (e.g., with `keep-alive` behavior or animation transitions). If two `SessionView` instances are mounted for different sessions but the stream events contain the same `sessionId` due to a mapping issue, content could bleed.
 
@@ -1670,7 +1670,7 @@ setIsStreaming(false)
 ## Success Metrics
 
 - Session titles automatically appear within seconds of sending the first message, matching the quality of OpenCode's built-in title generation
-- No Haiku API calls are made by Hive for title generation (all title generation is server-side)
+- No Haiku API calls are made by Octob for title generation (all title generation is server-side)
 - The `renameSession` API correctly sets manual titles that the server does not overwrite
 - Branch names automatically change from city names to descriptive names derived from the first session title
 - Manually renamed branches are never auto-renamed again

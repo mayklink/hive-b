@@ -46,7 +46,7 @@ vi.mock('electron', () => ({
       return '/tmp'
     },
     getVersion: () => '0.0.0-test',
-    getAppPath: () => '/tmp/hive-test-app'
+    getAppPath: () => '/tmp/octob-test-app'
   },
   ipcMain: { handle: vi.fn() },
   BrowserWindow: vi.fn()
@@ -217,7 +217,7 @@ vi.mock('electron', () => ({
       return '/tmp'
     },
     getVersion: () => '0.0.0-test',
-    getAppPath: () => '/tmp/hive-test-app'
+    getAppPath: () => '/tmp/octob-test-app'
   },
   ipcMain: { handle: vi.fn() },
   BrowserWindow: vi.fn()

@@ -2,11 +2,11 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add first-class `codex` agent SDK support to Hive using the Codex CLI `app-server` flow already implemented in `t3code`, while preserving Hive's current renderer, preload, IPC, DB, and GraphQL integration patterns.
+**Goal:** Add first-class `codex` agent SDK support to Octob using the Codex CLI `app-server` flow already implemented in `t3code`, while preserving Octob's current renderer, preload, IPC, DB, and GraphQL integration patterns.
 
-**Architecture:** Implement Codex as a new Electron main-process `AgentSdkImplementer` that manages a `codex app-server` child process, normalizes JSON-RPC events into Hive's existing `OpenCodeStreamEvent` stream shape, and participates in the existing session-based provider routing used by OpenCode and Claude Code. Generalize current Claude-specific dispatch points so all provider-aware operations route by `sessions.agent_sdk` instead of hard-coded branching.
+**Architecture:** Implement Codex as a new Electron main-process `AgentSdkImplementer` that manages a `codex app-server` child process, normalizes JSON-RPC events into Octob's existing `OpenCodeStreamEvent` stream shape, and participates in the existing session-based provider routing used by OpenCode and Claude Code. Generalize current Claude-specific dispatch points so all provider-aware operations route by `sessions.agent_sdk` instead of hard-coded branching.
 
-**Tech Stack:** Electron 33, React 19, TypeScript 5.7, Zustand 5, SQLite, Vitest, Codex CLI app-server, Hive IPC/preload bridge, GraphQL server resolvers.
+**Tech Stack:** Electron 33, React 19, TypeScript 5.7, Zustand 5, SQLite, Vitest, Codex CLI app-server, Octob IPC/preload bridge, GraphQL server resolvers.
 
 ---
 
@@ -15,7 +15,7 @@
 - Implement one session at a time.
 - Do not start a later session until the current session's automated tests pass.
 - Keep commits small and session-scoped.
-- Prefer porting logic from `t3code` into Hive-native service classes rather than copying Effect-specific architecture.
+- Prefer porting logic from `t3code` into Octob-native service classes rather than copying Effect-specific architecture.
 - Keep the existing `opencode:*` IPC and GraphQL API names in this feature unless a session explicitly says otherwise.
 - Reuse `opencode_session_id` as the provider-side session/thread identifier for Codex just like Claude does today.
 - Default Codex v1 capabilities to:
@@ -53,11 +53,11 @@ Use these files throughout implementation:
 
 ## Session 1: Generalize SDK IDs And Provider Routing Foundations
 
-**Goal:** Make Hive's core SDK abstractions understand `codex` and remove the assumption that only Claude is the non-OpenCode provider.
+**Goal:** Make Octob's core SDK abstractions understand `codex` and remove the assumption that only Claude is the non-OpenCode provider.
 
 **Reference files:**
 
-- Hive:
+- Octob:
   - `src/main/services/agent-sdk-types.ts`
   - `src/main/services/agent-sdk-manager.ts`
   - `src/main/ipc/opencode-handlers.ts`
@@ -122,7 +122,7 @@ Use these files throughout implementation:
 
 **Reference files:**
 
-- Hive:
+- Octob:
   - `src/main/services/system-info.ts`
   - `src/main/index.ts`
   - `src/renderer/src/components/setup/AgentSetupGuard.tsx`
@@ -170,14 +170,14 @@ Use these files throughout implementation:
 
 **Definition of done:**
 
-- Hive can detect a locally installed Codex CLI.
+- Octob can detect a locally installed Codex CLI.
 - Users can select Codex in onboarding and settings.
 - New sessions can be created with `agent_sdk = 'codex'` without type errors.
 
 **Manual test list:**
 
-- Start Hive with only `codex` installed on `PATH`; verify onboarding auto-selects Codex.
-- Start Hive with OpenCode, Claude, and Codex installed; verify picker shows all three AI providers plus Terminal where applicable.
+- Start Octob with only `codex` installed on `PATH`; verify onboarding auto-selects Codex.
+- Start Octob with OpenCode, Claude, and Codex installed; verify picker shows all three AI providers plus Terminal where applicable.
 - Open Settings and switch default provider to Codex; verify the setting persists after reload.
 
 **Suggested commit:**
@@ -192,7 +192,7 @@ Use these files throughout implementation:
 
 **Reference files:**
 
-- Hive:
+- Octob:
   - `src/main/services/claude-code-implementer.ts`
   - `src/main/services/agent-sdk-types.ts`
   - `src/main/ipc/opencode-handlers.ts`
@@ -214,7 +214,7 @@ Use these files throughout implementation:
 
 **Task list:**
 
-1. Port the pure health-check logic from `ProviderHealth.ts` into a Hive-native `codex-health.ts`.
+1. Port the pure health-check logic from `ProviderHealth.ts` into a Octob-native `codex-health.ts`.
 2. Implement helpers to:
    - run `codex --version`
    - optionally run `codex login status`
@@ -253,7 +253,7 @@ Use these files throughout implementation:
 
 **Reference files:**
 
-- Hive:
+- Octob:
   - `src/main/services/claude-code-implementer.ts`
   - `src/main/ipc/opencode-handlers.ts`
 - `t3code`:
@@ -269,7 +269,7 @@ Use these files throughout implementation:
 
 **Task list:**
 
-1. Port the child-process manager shape from `codexAppServerManager.ts` into a Hive-native class.
+1. Port the child-process manager shape from `codexAppServerManager.ts` into a Octob-native class.
 2. Implement child spawn for `codex app-server` with stdout/stderr/readline processing.
 3. Port the Windows child-tree kill logic from `t3code`.
 4. Implement JSON-RPC request/response correlation and timeouts.
@@ -278,7 +278,7 @@ Use these files throughout implementation:
    - `initialized`
    - account read if needed
    - thread start or thread resume
-6. Add session state tracking keyed by Hive session and provider session/thread ID.
+6. Add session state tracking keyed by Octob session and provider session/thread ID.
 7. Implement `connect()`, `reconnect()`, `disconnect()`, and `cleanup()` in `CodexImplementer` using the manager.
 8. Store enough metadata for future prompt, abort, and undo work.
 
@@ -290,13 +290,13 @@ Use these files throughout implementation:
 **Definition of done:**
 
 - Codex child processes can be started and stopped predictably.
-- A Hive Codex session can connect and reconnect through the implementer.
+- A Octob Codex session can connect and reconnect through the implementer.
 - Session state survives the handoff between `connect()` and later prompt calls.
 
 **Manual test list:**
 
 - Start a Codex session, close it, and verify no orphan `codex app-server` process remains.
-- Restart Hive and verify a stored Codex session can attempt reconnect without crashing.
+- Restart Octob and verify a stored Codex session can attempt reconnect without crashing.
 
 **Suggested commit:**
 
@@ -306,11 +306,11 @@ Use these files throughout implementation:
 
 ## Session 5: Prompting, Event Mapping, And Streaming Message Delivery
 
-**Goal:** Send prompts to Codex, map app-server notifications into Hive stream events, and render Codex responses in the existing session UI without UI rewrites.
+**Goal:** Send prompts to Codex, map app-server notifications into Octob stream events, and render Codex responses in the existing session UI without UI rewrites.
 
 **Reference files:**
 
-- Hive:
+- Octob:
   - `src/shared/types/opencode.ts`
   - `src/main/ipc/opencode-handlers.ts`
   - `src/renderer/src/components/sessions/SessionView.tsx`
@@ -333,7 +333,7 @@ Use these files throughout implementation:
 **Task list:**
 
 1. Identify the minimum Codex app-server methods/notifications needed for prompt streaming.
-2. Port the event classification ideas from `CodexAdapter.ts` into a Hive mapper that outputs `OpenCodeStreamEvent` objects.
+2. Port the event classification ideas from `CodexAdapter.ts` into a Octob mapper that outputs `OpenCodeStreamEvent` objects.
 3. Cover at least these flows:
    - assistant text delta
    - reasoning delta
@@ -353,7 +353,7 @@ Use these files throughout implementation:
 
 **Definition of done:**
 
-- A prompt sent through existing Hive session plumbing can stream Codex output into the UI event model.
+- A prompt sent through existing Octob session plumbing can stream Codex output into the UI event model.
 - Reasoning and task progress do not break existing message rendering.
 - Error paths surface a session error instead of hanging the session.
 
@@ -365,7 +365,7 @@ Use these files throughout implementation:
 
 **Suggested commit:**
 
-- `feat: stream codex app-server events through hive`
+- `feat: stream codex app-server events through octob`
 
 ---
 
@@ -375,7 +375,7 @@ Use these files throughout implementation:
 
 **Reference files:**
 
-- Hive:
+- Octob:
   - `src/main/ipc/opencode-handlers.ts`
   - `src/renderer/src/stores/useQuestionStore.ts`
   - `src/renderer/src/stores/usePermissionStore.ts`
@@ -396,12 +396,12 @@ Use these files throughout implementation:
 **Task list:**
 
 1. Implement request tracking for Codex approval requests.
-2. Map Codex request kinds into Hive permission and command approval shapes.
-3. Implement user-input question flow bridging from Codex `requestUserInput` style events into Hive's question store plumbing.
+2. Map Codex request kinds into Octob permission and command approval shapes.
+3. Implement user-input question flow bridging from Codex `requestUserInput` style events into Octob's question store plumbing.
 4. Implement `permissionReply()`, `questionReply()`, and `questionReject()`.
 5. Implement `abort()` via Codex turn interruption.
 6. Implement `getMessages()` using in-memory session state first; add transcript/thread-read fallback if needed for reconnect cases.
-7. Implement `permissionList()` with behavior compatible with Hive's existing UI expectations, even if that is initially a best-effort list.
+7. Implement `permissionList()` with behavior compatible with Octob's existing UI expectations, even if that is initially a best-effort list.
 
 **Automated tests:**
 
@@ -434,7 +434,7 @@ Use these files throughout implementation:
 
 **Reference files:**
 
-- Hive:
+- Octob:
   - `src/main/services/claude-code-implementer.ts`
   - `src/main/ipc/opencode-handlers.ts`
   - `src/renderer/src/components/sessions/SessionView.tsx`
@@ -495,7 +495,7 @@ Use these files throughout implementation:
 
 **Reference files:**
 
-- Hive:
+- Octob:
   - `src/renderer/src/components/worktrees/ModelIcon.tsx`
   - `src/renderer/src/components/sessions/SessionTabs.tsx`
   - `src/renderer/src/components/sessions/SessionView.tsx`
@@ -549,7 +549,7 @@ Use these files throughout implementation:
 
 **Reference files:**
 
-- Hive:
+- Octob:
   - `src/server/resolvers/query/opencode.resolvers.ts`
   - `src/server/resolvers/mutation/opencode.resolvers.ts`
   - `src/server/resolvers/query/db.resolvers.ts`

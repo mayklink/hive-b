@@ -1,6 +1,6 @@
-# Hive Phase 6 Implementation Plan
+# Octob Phase 6 Implementation Plan
 
-This document outlines the implementation plan for Hive Phase 6, focusing on enhanced message rendering, context awareness, notifications, queued messages, image attachments, slash commands, UX improvements, and session state persistence.
+This document outlines the implementation plan for Octob Phase 6, focusing on enhanced message rendering, context awareness, notifications, queued messages, image attachments, slash commands, UX improvements, and session state persistence.
 
 ---
 

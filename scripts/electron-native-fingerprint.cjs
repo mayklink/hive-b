@@ -25,7 +25,7 @@ function getFingerprint(root) {
 }
 
 function markerPath(root) {
-  return path.join(root, 'node_modules', '.hive-electron-native-fingerprint')
+  return path.join(root, 'node_modules', '.octob-electron-native-fingerprint')
 }
 
 /** @param {string} root */

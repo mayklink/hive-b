@@ -7,7 +7,7 @@
 
 Phase 16 is the final phase. It adds comprehensive testing at all levels (unit, component, E2E) and prepares the app for App Store and Play Store submission. This ensures the mobile app is reliable, well-tested, and ready for production use.
 
-At the end of this phase, the entire Hive mobile app project is complete — from server infrastructure to mobile testing and release.
+At the end of this phase, the entire Octob mobile app project is complete — from server infrastructure to mobile testing and release.
 
 ## Prerequisites
 
@@ -377,7 +377,7 @@ pnpm vitest run test/screens/ test/components/
      })
 
      it('shows pairing screen on first launch', async () => {
-       await expect(element(by.text('Connect to Hive'))).toBeVisible()
+       await expect(element(by.text('Connect to Octob'))).toBeVisible()
      })
 
      it('can enter server URL and API key manually', async () => {
@@ -470,7 +470,7 @@ pnpm vitest run test/screens/ test/components/
 **Verification:**
 ```bash
 # Start headless server first:
-# hive --headless --port 8443
+# octob --headless --port 8443
 
 # Build app for testing:
 detox build --configuration ios.sim.debug
@@ -490,14 +490,14 @@ detox test --configuration ios.sim.debug
 **Tasks:**
 
 1. `[app]` Create app icon set:
-   - Design app icon (Hive logo adapted for mobile)
+   - Design app icon (Octob logo adapted for mobile)
    - Generate all required sizes:
      - iOS: 1024x1024 (App Store), 180x180 (iPhone @3x), 120x120 (iPhone @2x), etc.
      - Android: 512x512 (Play Store), adaptive icon layers, various DPIs
    - Place icons in `assets/` directory
 
 2. `[app]` Create splash screen:
-   - Hive logo on dark background
+   - Octob logo on dark background
    - Configure in `app.json` (Expo) or native config files
    ```json
    {
@@ -516,19 +516,19 @@ detox test --configuration ios.sim.debug
    {
      "expo": {
        "name": "Octob",
-       "slug": "hive-mobile",
+       "slug": "octob-mobile",
        "version": "1.0.0",
        "ios": {
-         "bundleIdentifier": "com.hive.mobile",
+         "bundleIdentifier": "com.octob.mobile",
          "buildNumber": "1",
          "supportsTablet": true,
          "infoPlist": {
-           "NSCameraUsageDescription": "Scan QR code to connect to Hive server",
-           "NSLocalNetworkUsageDescription": "Connect to Hive server on your local network"
+           "NSCameraUsageDescription": "Scan QR code to connect to Octob server",
+           "NSLocalNetworkUsageDescription": "Connect to Octob server on your local network"
          }
        },
        "android": {
-         "package": "com.hive.mobile",
+         "package": "com.octob.mobile",
          "versionCode": 1,
          "permissions": ["CAMERA", "INTERNET"]
        }
@@ -538,9 +538,9 @@ detox test --configuration ios.sim.debug
 
 4. `[app]` Prepare App Store description:
    ```
-   Hive Mobile — Remote control for your AI development environment.
+   Octob Mobile — Remote control for your AI development environment.
 
-   Control Hive from your phone:
+   Control Octob from your phone:
    • Browse projects and worktrees
    • Start and monitor AI coding sessions
    • Approve permissions and review plans on the go
@@ -548,7 +548,7 @@ detox test --configuration ios.sim.debug
    • Manage git operations (stage, commit, push)
    • Run terminal commands remotely
 
-   Requires a running Hive desktop app with headless mode enabled.
+   Requires a running Octob desktop app with headless mode enabled.
    ```
 
 5. `[app]` Prepare screenshots (5-10 per platform):
@@ -676,4 +676,4 @@ All 16 phases (148 sessions) are now documented:
 - **Phases 1-10** (server, this repo): Foundation, SDL Schema, Server Core, DB Resolvers, Operation Resolvers, OpenCode AI Resolvers, Script/Terminal/Logging Resolvers, Subscriptions, Security & Operations, Server Testing
 - **Phases 11-16** (mobile app, separate repo): React Native Foundation, Shared Logic Port, Mobile Core Screens, Mobile Feature Screens, Mobile Polish, Mobile Testing
 
-The Hive headless server exposes the full desktop app capability via GraphQL, and the React Native mobile app provides feature-complete remote control.
+The Octob headless server exposes the full desktop app capability via GraphQL, and the React Native mobile app provides feature-complete remote control.
